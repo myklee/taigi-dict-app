@@ -4,6 +4,7 @@
     <input
       v-model="searchTerm"
       placeholder="Search for a word"
+      @keyup.enter="searchWords" 
     />
     <button @click="searchWords(searchTerm)">Search</button>
     <ul v-if="results.length">
