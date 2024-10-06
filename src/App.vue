@@ -5,13 +5,17 @@ import CVSUploader from "./components/CVSUploader.vue";
 
 <template>
   <header>
-    <h1>Taigi Dictionary</h1>
+    <h1>台語 English 華語</h1>
+    <h2></h2>
   </header>
 
   <main>
     <DictionarySearch />
     <CVSUploader />
   </main>
+  <footer>
+    <!-- Data provided by 2024 Ministry of Education, R.O.C.  -->
+  </footer>
 </template>
 
 <style scoped>

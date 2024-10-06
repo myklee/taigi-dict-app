@@ -7,8 +7,8 @@ export async function insertWord(word, definition) {
 }
 
 // You can add words manually or import from a file
-insertWord('apple', 'A fruit');
-insertWord('banana', 'A yellow fruit');
+// insertWord('apple', 'A fruit');
+// insertWord('banana', 'A yellow fruit');
 
 // src/utils.js
 export async function searchWord(term) {

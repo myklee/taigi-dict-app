@@ -4,17 +4,28 @@
     <input
       v-model="searchTerm"
       placeholder="Search for a word"
-      @keyup.enter="searchWords" 
+      @keyup.enter="searchWords"
     />
     <button @click="searchWords(searchTerm)">Search</button>
-    <ul v-if="results.length">
-      <li v-for="(word, index) in results" :key="index">
-        <strong>{{ word.english }}</strong
-        >: {{ word.chinese }} <strong>{{ word.romaji }}</strong
-        >: {{ word.audioid }}
+    <ul class="results" v-if="results.length">
+      <li class="entry" v-for="(word, index) in results" :key="index">
+        <div class="entry_definition">
+          <h3>
+            <strong>{{ word.english }}</strong>
+          </h3>
+          <h3>
+            <strong>{{ word.chinese }}</strong>
+          </h3>
+          <h3>
+            <strong>{{ word.romaji }}</strong>
+          </h3>
+        </div>
         <figure v-if="word.audioid">
           <!-- <figcaption>Listen to the T-Rex:</figcaption> -->
-          <audio controls :src="`/src/assets/audio/${word.audioid}.mp3`"></audio>
+          <audio
+            controls
+            :src="`/src/assets/audio/${word.audioid}.mp3`"
+          ></audio>
           <!-- <a href="/media/cc0-audio/t-rex-roar.mp3"> Download audio </a> -->
         </figure>
       </li>

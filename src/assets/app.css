@@ -1,0 +1,14 @@
+.entry {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 1rem;
+  margin: 1rem 0;
+  list-style-type: none;
+  padding: 1rem;
+}
+.audio {
+  background-color: black;
+}
+.results {
+  padding: 0;
+  margin: 0;
+}
