@@ -8,4 +8,5 @@
 *.wma
 
 # Optionally, you can also ignore an entire folder
-/src/assets/audio/*
+# /src/assets/audio/*
+node_modules
