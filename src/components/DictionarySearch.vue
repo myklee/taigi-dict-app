@@ -15,6 +15,7 @@
           </h3>
           <h3>
             <strong>{{ word.chinese }}</strong>
+            <button @click="speakChinese(word.chinese)">Speak</button>
           </h3>
           <h3>
             <strong>{{ word.romaji }}</strong>
@@ -50,6 +51,11 @@ export default {
       } else {
         this.results = [];
       }
+    },
+    async speakChinese(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "zh-TW";
+      window.speechSynthesis.speak(utterance);
     },
   },
 };
