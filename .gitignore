@@ -1,0 +1,11 @@
+# Ignore all audio files
+*.mp3
+*.ogg
+*.wav
+*.flac
+*.aac
+*.m4a
+*.wma
+
+# Optionally, you can also ignore an entire folder
+/src/assets/audio/*
