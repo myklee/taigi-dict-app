@@ -1,5 +1,5 @@
 # Ignore all audio files
-*.mp3
+# *.mp3
 *.ogg
 *.wav
 *.flac
