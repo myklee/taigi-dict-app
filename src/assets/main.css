@@ -1,11 +1,39 @@
 @import "./base.css";
-@import "./app.css";
 
-#app {
-  /* max-width: 1280px; */
-  margin: 0 auto;
+.entry {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 1rem;
+  margin: 1rem 0;
+  list-style-type: none;
+  padding: 1rem;
+}
+.audio {
+  background-color: black;
+}
+.results {
+  padding: 0;
+  margin: 0;
+}
+input,
+textarea {
+  font-size: 16px; /* Set font size to 16px or larger */
+}
+/* main search */
+#main-search-container {
+  width: 100vw;
+  padding: 0 2rem;
+  display: flex;
+}
+#main-search {
+  width: 100%;
+  height: 48px;
+  padding: 0 1rem;
+}
+.results {
   padding: 2rem;
-  font-weight: normal;
+}
+.uploader {
+  padding: 2rem;
 }
 
 a,
@@ -24,13 +52,13 @@ a,
 
 @media (min-width: 1024px) {
   body {
-    display: flex;
-    place-items: center;
+    /* display: flex;
+    place-items: center; */
   }
 
   #app {
     /* display: grid;
     grid-template-columns: 1fr 1fr; */
-    padding: 0 2rem;
+    /* padding: 0 2rem; */
   }
 }
