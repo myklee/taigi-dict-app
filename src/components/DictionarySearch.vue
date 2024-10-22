@@ -2,6 +2,7 @@
 <template>
   <div>
     <input
+      id="main-search"
       v-model="searchTerm"
       placeholder="Search for a word"
       @keyup.enter="searchWords"
