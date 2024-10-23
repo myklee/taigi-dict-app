@@ -12,7 +12,6 @@
       <button @click="searchWords(searchTerm)">Search</button>
       <!-- <div>Choose a voice <button @click="voices()">Show me voices</button></div> -->
     </div>
-    
 
     <ul class="results" v-if="results.length">
       <li class="entry" v-for="(word, index) in results" :key="index">
