@@ -5,7 +5,7 @@ import CVSUploader from "./components/CVSUploader.vue";
 
 <template>
   <header>
-    <h1>台語 English 華語</h1>
+    <h1>English · 台語 · 中文</h1>
     <h2></h2>
   </header>
 

@@ -15,7 +15,7 @@ button {
   width: 100vw;
   padding: 0 2rem;
   display: flex;
-  gap: .5rem;
+  gap: 0.5rem;
 }
 #main-search {
   width: 100%;
@@ -36,4 +36,19 @@ button {
 }
 .uploader {
   padding: 2rem;
+}
+.entry-definition,
+.english-entry,
+.chinese-entry,
+.taigi-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.entry-definition {
+  gap: 2rem;
+}
+.play-audio {
+  cursor: pointer;
+  flex-shrink: 0;
 }

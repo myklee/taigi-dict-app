@@ -5,16 +5,53 @@
       ref="audio"
       :src="`${this.baseSrc}${getAudioFolder(audioID)}/${audioID}.mp3`"
       @ended="audioEnded"
-    >
-      {{ audioID }}
-    </audio>
-
+    ></audio>
+    <IconPlayAudio @click="togglePlay"></IconPlayAudio>
     <!-- Play/Pause Button -->
-    <button @click="togglePlay">{{ isPlaying ? "Pause" : "Play" }}</button>
+    <!-- <div class="play-taigi play-audio" @click="togglePlay">
+      <svg
+        v-if="isPlaying"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M3 5.76923C3 4.23983 4.19884 3 5.67769 3H7.98347C9.46232 3 10.6612 4.23983 10.6612 5.76923V18.2308C10.6612 19.7602 9.46232 21 7.98347 21H5.67769C4.19884 21 3 19.7602 3 18.2308V5.76923ZM5.67769 4.73077H7.98347C8.53804 4.73077 8.9876 5.1957 8.9876 5.76923V18.2308C8.9876 18.8043 8.53804 19.2692 7.98347 19.2692H5.67769C5.12312 19.2692 4.67355 18.8043 4.67355 18.2308V5.76923C4.67355 5.1957 5.12312 4.73077 5.67769 4.73077Z"
+          fill="#ccc"
+        />
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M13.3388 5.76923C13.3388 4.23983 14.5377 3 16.0165 3H18.3223C19.8012 3 21 4.23983 21 5.76923V18.2308C21 19.7602 19.8012 21 18.3223 21H16.0165C14.5377 21 13.3388 19.7602 13.3388 18.2308V5.76923ZM16.0165 4.73077H18.3223C18.8769 4.73077 19.3264 5.1957 19.3264 5.76923V18.2308C19.3264 18.8043 18.8769 19.2692 18.3223 19.2692H16.0165C15.462 19.2692 15.0124 18.8043 15.0124 18.2308V5.76923C15.0124 5.1957 15.462 4.73077 16.0165 4.73077Z"
+          fill="#ccc"
+        />
+      </svg>
+      <svg
+        v-else
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M18.7907 9.87402C20.4031 10.8189 20.4031 13.1811 18.7907 14.126L7.62791 20.6674C6.0155 21.6123 4 20.4312 4 18.5415L4 5.45853C4 3.56877 6.0155 2.38767 7.62791 3.33255L18.7907 9.87402ZM17.8605 12.4906C18.2326 12.2726 18.2326 11.7274 17.8605 11.5094L6.69767 4.96792C6.32558 4.74987 5.86046 5.02243 5.86046 5.45853L5.86046 18.5415C5.86046 18.9776 6.32558 19.2501 6.69767 19.0321L17.8605 12.4906Z"
+          fill="#ccc"
+        />
+      </svg>
+    </div> -->
   </div>
 </template>
 
 <script>
+import IconPlayAudio from "./icons/IconPlayAudio.vue";
+
 export default {
   props: {
     audioID: {
@@ -22,11 +59,12 @@ export default {
       required: true,
     },
   },
+  components: {
+    IconPlayAudio,
+  },
   data() {
     return {
       isPlaying: false, // Boolean to track whether the audio is playing
-      duration: 0, // Total audio duration
-      currentTime: 0, // Current playback position
       baseSrc: "src/assets/audio_taigi/",
     };
   },
@@ -130,28 +168,9 @@ export default {
 
 <style scoped>
 .audio-player {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background-color: #f5f5f5;
-  padding: 10px;
-  border-radius: 8px;
+  height: 24px;
 }
-
-button {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
+.play-taigi {
   cursor: pointer;
-}
-
-button:hover {
-  background-color: #0056b3;
-}
-span {
-  font-family: Arial, sans-serif;
-  font-size: 14px;
 }
 </style>
