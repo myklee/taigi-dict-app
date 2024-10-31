@@ -1,3 +1,16 @@
+/* Font styles */
+
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100..900&display=swap");
+
+.noto-sans-tc {
+  font-family: "Noto Sans TC", serif;
+  font-optical-sizing: auto;
+  &.display {
+    font-size: 64px;
+    font-weight: 750;
+  }
+}
+
 /* color palette from <https://github.com/vuejs/theme> */
 :root {
   --vt-c-white: #ffffff;

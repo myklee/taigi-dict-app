@@ -15,6 +15,8 @@
 
     <ul class="results" v-if="results.length">
       <li class="entry" v-for="(word, index) in results" :key="index">
+        <div class="index">{{ index + 1 }}</div>
+
         <div class="entry-definition">
           <div class="english-entry">
             <strong>{{ word.english }}</strong>

@@ -1,5 +1,10 @@
 @import "./base.css";
 
+header {
+  display: flex;
+  gap: 1rem;
+}
+
 input,
 textarea {
   font-size: 1rem; /* Set font size to 16px or larger */
@@ -37,15 +42,35 @@ button {
 .uploader {
   padding: 2rem;
 }
-.entry-definition,
+
+.index {
+  font-size:1.5rem;
+  font-weight: 600;
+  margin-right: 20px;
+  float:left;
+}
 .english-entry,
 .chinese-entry,
 .taigi-entry {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  padding: 0.5rem;
+  font-size: 2rem;
+
+}
+.english-entry {
+  border-left: 5px solid blue;
+}
+.chinese-entry {
+  border-left: 5px solid red;
+}
+.taigi-entry {
+  border-left: 5px solid green;
 }
 .entry-definition {
+  display: flex;
+  flex-direction: column;
   gap: 2rem;
 }
 .play-audio {

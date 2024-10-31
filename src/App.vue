@@ -5,8 +5,14 @@ import CVSUploader from "./components/CVSUploader.vue";
 
 <template>
   <header>
-    <h1>English · 台語 · 中文</h1>
-    <h2></h2>
+    <div>
+      <h1>台語</h1>
+      <h1>辭典</h1>
+    </div>
+    <div>
+      <h1>Taigi</h1>
+      <h1>Dict</h1>
+    </div>
   </header>
 
   <main>
