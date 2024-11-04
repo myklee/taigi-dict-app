@@ -42,3 +42,8 @@ export function importCSVFile(file) {
   export async function saveWordsToDB(wordsArray) {
     await db.words.bulkAdd(wordsArray);
   }
+  export async function saveDefinitionsToDB(defArray) {
+    await db.definitons.bulkAdd(defArray);
+  }
+
+ 

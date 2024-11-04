@@ -19,6 +19,7 @@
 
         <div class="entry-definition">
           <div class="english-entry">
+            {{ word.id }}
             <strong>{{ word.english }}</strong>
             <IconPlayAudio @click="speakEnglish(word.english)"></IconPlayAudio>
 

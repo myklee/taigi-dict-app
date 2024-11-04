@@ -3,6 +3,8 @@
   <div class="uploader csv">
     <input type="file" @change="handleFileUpload" accept=".csv" />
     <p v-if="statusMessage">{{ statusMessage }}</p>
+    <input type="file" @change="handleFileUploadDef" accept=".csv" />
+    <p v-if="statusMessage">{{ statusMessage }}</p>
   </div>
 </template>
 
@@ -30,6 +32,26 @@ export default {
 
         // Insert the parsed data into IndexedDB
         await saveWordsToDB(parsedData);
+
+        this.statusMessage = "CSV file imported successfully!";
+      } catch (error) {
+        this.statusMessage = "Error importing CSV: " + error.message;
+      }
+    },
+    async handleFileUploadDef(event) {
+      const file = event.target.files[0];
+
+      if (!file) {
+        this.statusMessage = "Please select a CSV file to upload.";
+        return;
+      }
+
+      try {
+        // Parse the CSV file
+        const parsedData = await importCSVFile(file);
+
+        // Insert the parsed data into IndexedDB
+        await saveDefinitionsToDB(parsedData);
 
         this.statusMessage = "CSV file imported successfully!";
       } catch (error) {
