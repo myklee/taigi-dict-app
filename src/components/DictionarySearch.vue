@@ -9,10 +9,12 @@
         @keyup.enter="searchWords(searchTerm, exactSearch)"
         type="search"
       />
-      <label for="exactSearch"><input id="exactSearch" type="checkbox" v-model="exactSearch" />Exact search</label>
       <button @click="searchWords(searchTerm, exactSearch)">Search</button>
-      <!-- <div>Choose a voice <button @click="voices()">Show me voices</button></div> -->
     </div>
+    <label id="exact_search" for="exactSearch"
+      ><input id="exactSearch" type="checkbox" v-model="exactSearch" />Exact
+      search</label
+    >
 
     <ul class="results" v-if="results.length">
       <li>{{ results.length }}</li>
