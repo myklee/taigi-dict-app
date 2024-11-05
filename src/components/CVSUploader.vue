@@ -9,7 +9,7 @@
 </template>
 
 <script>
-import { importCSVFile, saveWordsToDB } from "@/utils";
+import { importCSVFile, saveWordsToDB, saveDefinitionsToDB} from "@/utils";
 
 export default {
   data() {
@@ -50,6 +50,7 @@ export default {
         // Parse the CSV file
         const parsedData = await importCSVFile(file);
 
+        console.log(parsedData);
         // Insert the parsed data into IndexedDB
         await saveDefinitionsToDB(parsedData);
 

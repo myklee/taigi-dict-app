@@ -14,57 +14,51 @@
     </div>
 
     <ul class="results" v-if="results.length">
-      <li class="entry" v-for="(word, index) in results" :key="index">
+      <li class="entry" v-for="(entry, index) in results" :key="index">
         <div class="index">{{ index + 1 }}</div>
 
         <div class="entry-definition">
           <div class="english-entry">
-            {{ word.id }}
-            <strong>{{ word.english }}</strong>
-            <IconPlayAudio @click="speakEnglish(word.english)"></IconPlayAudio>
-
-            <!-- <svg
-              class="play-audio"
-              @click="speakEnglish(word.english)"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fill-rule="evenodd"
-                clip-rule="evenodd"
-                d="M18.7907 9.87402C20.4031 10.8189 20.4031 13.1811 18.7907 14.126L7.62791 20.6674C6.0155 21.6123 4 20.4312 4 18.5415L4 5.45853C4 3.56877 6.0155 2.38767 7.62791 3.33255L18.7907 9.87402ZM17.8605 12.4906C18.2326 12.2726 18.2326 11.7274 17.8605 11.5094L6.69767 4.96792C6.32558 4.74987 5.86046 5.02243 5.86046 5.45853L5.86046 18.5415C5.86046 18.9776 6.32558 19.2501 6.69767 19.0321L17.8605 12.4906Z"
-                fill="#fff"
-              />
-            </svg> -->
+            {{ entry.word.id }}
+            <strong>{{ entry.word.english }}</strong>
+            <IconPlayAudio
+              @click="speakEnglish(entry.word.english)"
+            ></IconPlayAudio>
           </div>
           <div class="chinese-entry">
-            <strong>{{ word.chinese }}</strong>
-            <IconPlayAudio @click="speakChinese(word.chinese)"></IconPlayAudio>
-            <!-- <button @click="speakChinese(word.chinese)">Speak</button> -->
-            <!-- <svg
-              class="play-audio"
-              @click="speakChinese(word.chinese)"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fill-rule="evenodd"
-                clip-rule="evenodd"
-                d="M18.7907 9.87402C20.4031 10.8189 20.4031 13.1811 18.7907 14.126L7.62791 20.6674C6.0155 21.6123 4 20.4312 4 18.5415L4 5.45853C4 3.56877 6.0155 2.38767 7.62791 3.33255L18.7907 9.87402ZM17.8605 12.4906C18.2326 12.2726 18.2326 11.7274 17.8605 11.5094L6.69767 4.96792C6.32558 4.74987 5.86046 5.02243 5.86046 5.45853L5.86046 18.5415C5.86046 18.9776 6.32558 19.2501 6.69767 19.0321L17.8605 12.4906Z"
-                fill="#fff"
-              />
-            </svg> -->
+            <strong>{{ entry.word.chinese }}</strong>
+            <IconPlayAudio
+              @click="speakChinese(entry.word.chinese)"
+            ></IconPlayAudio>
           </div>
           <div class="taigi-entry">
-            <strong>{{ word.romaji }}</strong>
-            <AudioPlayerTaigi v-if="word.audioid" :audioID="word.audioid" />
+            <strong>{{ entry.word.romaji }}</strong>
+            <AudioPlayerTaigi
+              v-if="entry.word.audioid"
+              :audioID="entry.word.audioid"
+            />
           </div>
+
+          <ol v-if="entry.english_definitions">
+            <li v-for="(engdef, index) in entry.english_definitions">
+              {{ engdef }}  <IconPlayAudio
+              @click="speakEnglish(engdef)"
+            ></IconPlayAudio>
+            </li>
+           
+          </ol>
+          <ol v-if="entry.chinese_definitions">
+            <li v-for="(chdef, index) in entry.chinese_definitions">
+              {{ chdef }} <IconPlayAudio
+              @click="speakChinese(chdef)"
+            ></IconPlayAudio>
+            </li>
+
+            
+          </ol>
+
+          <!-- <div>{{ results }}</div> -->
+          <!-- <div v-for="()"></div> -->
         </div>
       </li>
     </ul>
@@ -79,12 +73,13 @@ import IconPlayAudio from "./icons/IconPlayAudio.vue";
 export default {
   components: {
     AudioPlayerTaigi,
-    IconPlayAudio
+    IconPlayAudio,
   },
   data() {
     return {
       searchTerm: "",
       results: [],
+      defs: [],
     };
   },
   methods: {
@@ -95,7 +90,15 @@ export default {
         this.results = [];
       }
     },
-
+    async searchDefs(word) {
+      if (this.results) {
+        const defs = await db.definitions
+          .where("wordid")
+          .equals(word)
+          .toArray();
+        return defs;
+      }
+    },
     voices() {
       let voices = [];
 
