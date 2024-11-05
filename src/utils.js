@@ -11,13 +11,34 @@ export async function insertWord(word, definition) {
 // insertWord('banana', 'A yellow fruit');
 
 // src/utils.js
-export async function searchWord(term) {
+export async function searchWord(term, exact) {
   // Query words where the 'word' field starts with the search term
-  const wordResults = await db.words
-    .where("english")
-    .startsWithIgnoreCase(term)
-    .toArray();
+  let engResults;
+  let chResults;
+
+  if (!exact) {
+    const allWords = await db.words.toArray();
+
+    // Filter entries where the chinese field contains the specified term
+    chResults = allWords.filter((word) => word.chinese.includes(term));
+    engResults = allWords.filter((word) => word.english.includes(term));
+  } else {
+    engResults = await db.words.where("english").equals(term).toArray();
+    chResults = await db.words.where("chinese").equals(term).toArray();
+  }
+
+  console.log(chResults);
+  console.log(engResults);
+
+  const wordResults = [...engResults, ...chResults].reduce((acc, current) => {
+    const x = acc.find((item) => item.id === current.id);
+    if (!x) {
+      acc.push(current);
+    }
+    return acc;
+  }, []);
   console.log(wordResults);
+
   // Get all IDs from wordResults
   const wordIds = wordResults.map((word) => word.id);
 
@@ -38,8 +59,12 @@ export async function searchWord(term) {
 
     return {
       word: word,
-      english_definitions: english_definitions.length ? english_definitions : [],
-      chinese_definitions: chinese_definitions.length ? chinese_definitions : [],
+      english_definitions: english_definitions.length
+        ? english_definitions
+        : [],
+      chinese_definitions: chinese_definitions.length
+        ? chinese_definitions
+        : [],
     };
   });
   console.log(groupedResults);

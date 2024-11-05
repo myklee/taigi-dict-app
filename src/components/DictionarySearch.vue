@@ -6,14 +6,16 @@
         id="main-search"
         v-model="searchTerm"
         placeholder="Search for a word"
-        @keyup.enter="searchWords"
+        @keyup.enter="searchWords(searchTerm, exactSearch)"
         type="search"
       />
-      <button @click="searchWords(searchTerm)">Search</button>
+      <label for="exactSearch"><input id="exactSearch" type="checkbox" v-model="exactSearch" />Exact search</label>
+      <button @click="searchWords(searchTerm, exactSearch)">Search</button>
       <!-- <div>Choose a voice <button @click="voices()">Show me voices</button></div> -->
     </div>
 
     <ul class="results" v-if="results.length">
+      <li>{{ results.length }}</li>
       <li class="entry" v-for="(entry, index) in results" :key="index">
         <div class="index">{{ index + 1 }}</div>
 
@@ -41,20 +43,15 @@
 
           <ol v-if="entry.english_definitions">
             <li v-for="(engdef, index) in entry.english_definitions">
-              {{ engdef }}  <IconPlayAudio
-              @click="speakEnglish(engdef)"
-            ></IconPlayAudio>
+              {{ engdef }}
+              <IconPlayAudio @click="speakEnglish(engdef)"></IconPlayAudio>
             </li>
-           
           </ol>
           <ol v-if="entry.chinese_definitions">
             <li v-for="(chdef, index) in entry.chinese_definitions">
-              {{ chdef }} <IconPlayAudio
-              @click="speakChinese(chdef)"
-            ></IconPlayAudio>
+              {{ chdef }}
+              <IconPlayAudio @click="speakChinese(chdef)"></IconPlayAudio>
             </li>
-
-            
           </ol>
 
           <!-- <div>{{ results }}</div> -->
@@ -83,20 +80,11 @@ export default {
     };
   },
   methods: {
-    async searchWords() {
+    async searchWords(term, exact) {
       if (this.searchTerm) {
-        this.results = await searchWord(this.searchTerm);
+        this.results = await searchWord(term, exact);
       } else {
         this.results = [];
-      }
-    },
-    async searchDefs(word) {
-      if (this.results) {
-        const defs = await db.definitions
-          .where("wordid")
-          .equals(word)
-          .toArray();
-        return defs;
       }
     },
     voices() {
