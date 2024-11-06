@@ -26,8 +26,8 @@ export async function searchWord(term, exact) {
     });
     // console.log(engResults);
   } else {
-    engResults = await db.words.where("english").equals(term).toArray();
-    chResults = await db.words.where("chinese").equals(term).toArray();
+    engResults = await db.words.where("english").equalsIgnoreCase(term).toArray();
+    chResults = await db.words.where("chinese").equalsIgnoreCase(term).toArray();
   }
 
   const wordResults = [...engResults, ...chResults].reduce((acc, current) => {
