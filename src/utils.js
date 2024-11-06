@@ -15,6 +15,7 @@ export async function searchWord(term, exact) {
   //different types of search
   let engResults = [];
   let chResults = [];
+  let romajiResults = [];
 
   if (!exact) {
     const allWords = await db.words.toArray();
@@ -22,21 +23,37 @@ export async function searchWord(term, exact) {
     // Filter entries where the chinese field contains the specified term
     chResults = allWords.filter((word) => word.chinese.includes(term));
     engResults = allWords.filter((word) => {
-      return typeof word.english === 'string' && word.english.indexOf(term) !== -1;
+      return typeof word.english === "string" && word.english.includes(term);
+    });
+    romajiResults = allWords.filter((word) => {
+      return typeof word.romaji === "string" && word.romaji.includes(term);
     });
     // console.log(engResults);
   } else {
-    engResults = await db.words.where("english").equalsIgnoreCase(term).toArray();
-    chResults = await db.words.where("chinese").equalsIgnoreCase(term).toArray();
+    engResults = await db.words
+      .where("english")
+      .equalsIgnoreCase(term)
+      .toArray();
+    chResults = await db.words
+      .where("chinese")
+      .equalsIgnoreCase(term)
+      .toArray();
+    romajiResults = await db.words
+      .where("romaji")
+      .equalsIgnoreCase(term)
+      .toArray();
   }
 
-  const wordResults = [...engResults, ...chResults].reduce((acc, current) => {
-    const x = acc.find((item) => item.id === current.id);
-    if (!x) {
-      acc.push(current);
-    }
-    return acc;
-  }, []);
+  const wordResults = [...romajiResults, ...engResults, ...chResults].reduce(
+    (acc, current) => {
+      const x = acc.find((item) => item.id === current.id);
+      if (!x) {
+        acc.push(current);
+      }
+      return acc;
+    },
+    []
+  );
 
   // Get all IDs from wordResults
   const wordIds = wordResults.map((word) => word.id);
