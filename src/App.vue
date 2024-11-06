@@ -1,6 +1,24 @@
 <script setup>
 import DictionarySearch from "./components/DictionarySearch.vue";
 import CVSUploader from "./components/CVSUploader.vue";
+import { uploadEntries } from "./utils";
+import { ref, onMounted } from "vue";
+import db from "./db.js";
+
+// Reactive variable to track if data exists
+const hasData = ref(false);
+
+onMounted(async () => {
+  // Check if there is any data in the 'words' table
+  hasData.value = (await db.words.count()) > 0 && (await db.definitions.count()) > 0;
+  console.log(db);
+  if (hasData.value) {
+    console.log("Data is available in IndexedDB.");
+  } else {
+    console.log("No data in IndexedDB.");
+    uploadEntries();
+  }
+});
 </script>
 
 <template>
