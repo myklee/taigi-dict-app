@@ -12,7 +12,7 @@ export async function insertWord(word, definition) {
 
 // src/utils.js
 export async function searchWord(term, exact) {
-  // Query words where the 'word' field starts with the search term
+  //different types of search
   let engResults = [];
   let chResults = [];
 
@@ -109,7 +109,7 @@ export async function hasDataInDatabase() {
   return entriesCount > 0 || definitionsCount > 0; // True if either table has data
 }
 
-// function to upload entries
+// function to upload entries automatically upload entries
 export async function uploadEntries() {
   try {
     // Step 1: Fetch the CSV file from the assets folder
