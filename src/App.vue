@@ -1,5 +1,6 @@
 <script setup>
 import DictionarySearch from "./components/DictionarySearch.vue";
+import SupabaseSearch from "./components/SupabaseSearch.vue";
 import CVSUploader from "./components/CVSUploader.vue";
 import { uploadEntries } from "./utils";
 import { ref, onMounted } from "vue";
@@ -10,7 +11,8 @@ const hasData = ref(false);
 
 onMounted(async () => {
   // Check if there is any data in the 'words' table
-  hasData.value = (await db.words.count()) > 0 && (await db.definitions.count()) > 0;
+  hasData.value =
+    (await db.words.count()) > 0 && (await db.definitions.count()) > 0;
   console.log(db);
   if (hasData.value) {
     console.log("Data is available in IndexedDB.");
@@ -34,6 +36,7 @@ onMounted(async () => {
 
   <main>
     <DictionarySearch />
+    <SupabaseSearch />
     <!-- <CVSUploader /> -->
   </main>
   <footer>

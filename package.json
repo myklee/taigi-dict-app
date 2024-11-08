@@ -10,6 +10,7 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.46.1",
     "dexie": "^4.0.8",
     "papaparse": "^5.4.1",
     "vue": "^3.4.29"
