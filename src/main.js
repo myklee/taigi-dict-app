@@ -4,3 +4,6 @@ import { createApp } from 'vue'
 import App from './App.vue'
 
 createApp(App).mount('#app')
+
+
+// Supabase postgres password VaJzmCmC2uIWw6UI

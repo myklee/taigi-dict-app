@@ -1,84 +1,75 @@
 @import "./base.css";
 
+
 header {
   display: flex;
   gap: 1rem;
+  justify-content: center;
 }
 
-input,
-textarea {
-  font-size: 1rem; /* Set font size to 16px or larger */
-}
-button {
-  padding: 1rem;
-  font-size: 1rem;
-  border-radius: 2px;
-  border: none;
-}
-/* main search */
+/* 
+
+main search 
+
+*/
 #main-search-container {
-  width: 100vw;
-  padding: 0 2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+
 }
 #main-search {
-  /* width: 100%; */
-  flex-grow: 100;
-  height: 48px;
-  padding: 0 1rem;
-  border: 1px solid white;
-  border-radius: 2px;
+
 }
 #exact_search {
   display: block;
-  padding:1rem 2rem;
+  padding: 1rem 2rem;
   input {
-    margin-right:1rem;
+    margin-right: 1rem;
   }
 }
+
+/* 
+
+results
+
+*/
 .result-count {
-  padding: 0 2rem;
+  /* padding: 0 2rem; */
+  list-style-type: none;
 }
 .results {
   padding: 2rem;
 }
+
+/* 
+
+entries 
+
+*/
+
 .entry {
-  background: rgba(255, 255, 255, 0.05);
   border-radius: 2px;
   margin: 1rem 0;
   list-style-type: none;
   padding: 1rem;
 }
-.uploader {
-  padding: 2rem;
+.entry-items {
+  display: flex;
 }
-
-.index {
-  font-size:1.5rem;
-  font-weight: 600;
-  margin-right: 20px;
-  float:left;
-}
-.english-entry,
-.chinese-entry,
-.taigi-entry {
+.entry-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem;
-  font-size: 1.5rem;
-
 }
 .english-entry {
-  border-left: 5px solid blue;
+  border-left: 5px solid rgb(55, 114, 216);
 }
 .chinese-entry {
-  border-left: 5px solid red;
+  border-left: 5px solid rgb(216, 100, 58);
+  font-family: "Heiti TC";
+  font-weight: medium;
 }
 .taigi-entry {
-  border-left: 5px solid green;
+  border-left: 5px solid rgb(46, 150, 25);
 }
 .entry-definition {
   display: flex;
@@ -88,4 +79,20 @@ button {
 .play-audio {
   cursor: pointer;
   flex-shrink: 0;
+}
+
+/* definitions */
+.definitions {
+  /* background: var(--content-bg); */
+  margin: 1rem 0 0 0;
+  ol {
+    list-style-position: inside;
+    padding: .5rem;
+  }
+}
+
+/* uploader (hidden) */
+
+.uploader {
+  padding: 2rem;
 }

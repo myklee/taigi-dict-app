@@ -23,19 +23,18 @@ onMounted(async () => {
 
 <template>
   <header>
-    <div>
+    <!-- <div>
       <h1>台語</h1>
       <h1>辭典</h1>
-    </div>
+    </div> -->
     <div>
-      <h1>Taigi</h1>
-      <h1>Dict</h1>
+      <h1>Taigi Dictionary</h1>
     </div>
   </header>
 
   <main>
     <DictionarySearch />
-    <CVSUploader />
+    <!-- <CVSUploader /> -->
   </main>
   <footer>
     <!-- Data provided by 2024 Ministry of Education, R.O.C.  -->
@@ -46,12 +45,6 @@ onMounted(async () => {
 header {
   line-height: 1.5;
 }
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
 @media (min-width: 1024px) {
   header {
     display: flex;
