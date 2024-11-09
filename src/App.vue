@@ -35,7 +35,7 @@ onMounted(async () => {
   </header>
 
   <main>
-    <DictionarySearch />
+    <!-- <DictionarySearch /> -->
     <SupabaseSearch />
     <!-- <CVSUploader /> -->
   </main>

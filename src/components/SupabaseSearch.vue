@@ -1,10 +1,6 @@
 <template>
   <div>
-    <h1>Dictionary</h1>
-
-    Search
     <!-- Search Field -->
-
     <input
       v-model="searchQuery"
       @keyup.enter="searchWords(searchQuery)"
@@ -14,7 +10,7 @@
     <button @click="searchWords">Search</button>
     <!-- Trigger search on click -->
     {{ words.length }}
-    <ul class="entry">
+    <ul class="results">
       <li v-for="word in words" :key="word.id">
         <div class="">{{ word.english }}</div>
         <div class="">{{ word.chinese }}</div>
@@ -258,12 +254,12 @@ export default {
       if (wordError) console.error(wordError);
     },
     async searchWords() {
-      if (this.searchQuery.trim() === "") {
-        // If the search query is empty, fetch all words
-        this.searchResults = [];
-        await this.fetchWords();
-        return;
-      }
+      // if (this.searchQuery.trim() === "") {
+      //   // If the search query is empty, fetch all words
+      //   this.searchResults = [];
+      //   await this.fetchWords();
+      //   return;
+      // }
 
       const { data, error } = await supabase
         .from("words")
