@@ -30,7 +30,7 @@ onMounted(async () => {
       <h1>辭典</h1>
     </div> -->
     <div>
-      <h1>Taigi Dictionary</h1>
+      <!-- <h1>Taiwanese·English·Chinese</h1> -->
     </div>
   </header>
 
@@ -43,26 +43,3 @@ onMounted(async () => {
     <!-- Data provided by 2024 Ministry of Education, R.O.C.  -->
   </footer>
 </template>
-
-<style scoped>
-header {
-  line-height: 1.5;
-}
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-}
-</style>

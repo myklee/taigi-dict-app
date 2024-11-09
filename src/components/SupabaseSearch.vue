@@ -1,24 +1,27 @@
 <template>
-  <div>
+  <div id="supasearch">
     <!-- Search Field -->
     <input
+      type="text"
       v-model="searchQuery"
       @keyup.enter="searchWords(searchQuery)"
       placeholder="Search for a word..."
+      class="text-field search-words"
     />
 
     <button @click="searchWords">Search</button>
+    <button @click="clearInput">Clear</button>
     <!-- Trigger search on click -->
     {{ words.length }}
     <ul class="results">
-      <li v-for="word in words" :key="word.id">
-        <div class="">{{ word.english }}</div>
-        <div class="">{{ word.chinese }}</div>
-        <div class="">
+      <li v-for="word in words" :key="word.id" class="word">
+        <div class="word-item word-english">{{ word.english }}</div>
+        <div class="word-item word-english">{{ word.chinese }}</div>
+        <div class="word-item word-english">
           {{ word.romaji }}
-          {{ word.id }}
           <AudioPlayerTaigi v-if="word.audioid" :audioID="word.audioid" />
         </div>
+        <small>{{ word.id }}</small>
         <button @click="openDialog(word.id)">Edit</button>
         <ul>
           <li v-for="def in word.definitions" :key="def.id">
@@ -27,12 +30,6 @@
               <li>{{ def.def_english }}</li>
               <li>{{ def.def_chinese }}</li>
             </ol>
-            <!-- <button
-              @click="updateDefinition(def.id, prompt('New Definition:'))"
-            >
-              Edit
-            </button>
-            <button @click="deleteWord(word.id)">Delete</button> -->
           </li>
         </ul>
       </li>
@@ -43,21 +40,22 @@
     Edit Word and Definitions Form Dialog 
      
     -->
+
     <div v-if="showDialog" class="edit-dialog">
       <!-- <h2>Edit Word: {{ this.word.english }}</h2> -->
       <button @click="this.showDialog = false">Close</button>
       <!-- Word Edit Form -->
       <form @submit.prevent="updateWord">
         <div>
-          <label for="chinese">Chinese:</label>
+          <label for="chinese">Chinese</label>
           <input v-model="word.chinese" type="text" id="chinese" />
         </div>
+        <!-- <div>
+            <label for="romaji">Romaji</label>
+            <input v-model="word.romaji" type="text" id="romaji" />
+          </div> -->
         <div>
-          <label for="romaji">Romaji:</label>
-          <input v-model="word.romaji" type="text" id="romaji" />
-        </div>
-        <div>
-          <label for="english">English:</label>
+          <label for="english">English</label>
           <input v-model="word.english" type="text" id="english" />
         </div>
         <div>
@@ -75,18 +73,18 @@
 
       <!-- Definitions Edit Form -->
       <h3>Definitions</h3>
-      <!-- <div
+      <div
         v-for="(definition, index) in word.definitions"
         :key="definition.defid"
       >
         <form @submit.prevent="updateDefinition(definition.defid, index)">
           <div>
             <label for="def_english">English Definition:</label>
-            <input
+            <textarea
               v-model="definition.def_english"
-              type="text"
+              type="textarea"
               id="def_english"
-            />
+            ></textarea>
           </div>
           <div>
             <label for="def_chinese">Chinese Definition:</label>
@@ -107,7 +105,7 @@
           <button type="submit">Save Definition</button>
         </form>
         <hr />
-      </div> -->
+      </div>
     </div>
   </div>
 </template>
@@ -133,17 +131,21 @@ export default {
     IconPlayAudio,
   },
   async created() {
-    await this.fetchWords();
+    // await this.fetchWords();
   },
   methods: {
     async fetchWords() {
       const { data, error } = await supabase.from("words").select(`
           id,
-          word,
-          definitions (id, english)
+          english,
+          definitions (defid, def_english)
         `);
       if (error) console.error(error);
       else this.words = data;
+    },
+    clearInput() {
+      this.searchQuery = "";
+      // this.words = [];
     },
     // async addWord(word, definition) {
     //   const { data: wordData, error: wordError } = await supabase
@@ -171,13 +173,16 @@ export default {
       this.selectedWordId = id;
       const { data, error } = await supabase
         .from("words")
-        .select("id, chinese, romaji, classification, english")
+        .select(
+          "id, chinese, romaji, classification, english, definitions (defid, def_english, def_chinese)"
+        )
         .eq("id", id)
         .single();
       if (error) {
         console.error("Error fetching word:", error.message);
       } else {
         this.word = data;
+        console.log(this.word);
       }
     },
 
@@ -254,13 +259,6 @@ export default {
       if (wordError) console.error(wordError);
     },
     async searchWords() {
-      // if (this.searchQuery.trim() === "") {
-      //   // If the search query is empty, fetch all words
-      //   this.searchResults = [];
-      //   await this.fetchWords();
-      //   return;
-      // }
-
       const { data, error } = await supabase
         .from("words")
         .select(
@@ -273,7 +271,7 @@ export default {
         console.error(error);
       } else {
         this.words = data;
-        // console.log(data);
+        console.log(this.words);
       }
     },
   },

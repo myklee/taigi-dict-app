@@ -1,22 +1,9 @@
 @import "./base.css";
 
-
 header {
   display: flex;
   gap: 1rem;
   justify-content: center;
-}
-
-/* 
-
-main search 
-
-*/
-#main-search-container {
-
-}
-#main-search {
-
 }
 #exact_search {
   display: block;
@@ -24,6 +11,17 @@ main search
   input {
     margin-right: 1rem;
   }
+}
+
+#supasearch {
+  padding: 4vw;
+}
+input[type="text"] {
+  width: 100%;
+}
+.text-field {
+}
+.search-words {
 }
 
 /* 
@@ -88,20 +86,19 @@ entries
   margin: 1rem 0 0 0;
   ol {
     list-style-position: inside;
-    padding: .5rem;
+    padding: 0.5rem;
   }
 }
 /* Edit dialog  */
 
 .edit-dialog {
-position: fixed;
-top:0;
-height: 100vh;
-width:100vw;
-background-color: black;
-transition: 1s all ease-in-out;
+  position: fixed;
+  top: 0;
+  height: 100vh;
+  width: 100vw;
+  background-color: black;
+  transition: 1s all ease-in-out;
 }
-
 
 /* uploader (hidden) */
 
