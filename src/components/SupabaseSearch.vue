@@ -20,9 +20,10 @@
         <div class="">{{ word.chinese }}</div>
         <div class="">
           {{ word.romaji }}
+          {{ word.id }}
           <AudioPlayerTaigi v-if="word.audioid" :audioID="word.audioid" />
         </div>
-        <button @click="editWord(word.id)">Edit</button>
+        <button @click="openDialog(word.id)">Edit</button>
         <ul>
           <li v-for="def in word.definitions" :key="def.id">
             {{ def.defid }}
@@ -38,75 +39,80 @@
             <button @click="deleteWord(word.id)">Delete</button> -->
           </li>
         </ul>
-        <!-- Edit Word and Definitions Form -->
-        <div v-if="word">
-          <h2>Edit Word: {{ word.chinese }}</h2>
-
-          <!-- Word Edit Form -->
-          <form @submit.prevent="updateWord">
-            <div>
-              <label for="chinese">Chinese:</label>
-              <input v-model="word.chinese" type="text" id="chinese" />
-            </div>
-            <div>
-              <label for="romaji">Romaji:</label>
-              <input v-model="word.romaji" type="text" id="romaji" />
-            </div>
-            <div>
-              <label for="english">English:</label>
-              <input v-model="word.english" type="text" id="english" />
-            </div>
-            <div>
-              <label for="classification">Classification:</label>
-              <input
-                v-model="word.classification"
-                type="text"
-                id="classification"
-              />
-            </div>
-            <button type="submit">Save Word</button>
-          </form>
-
-          <hr />
-
-          <!-- Definitions Edit Form -->
-          <h3>Definitions</h3>
-          <div
-            v-for="(definition, index) in word.definitions"
-            :key="definition.defid"
-          >
-            <form @submit.prevent="updateDefinition(definition.defid, index)">
-              <div>
-                <label for="def_english">English Definition:</label>
-                <input
-                  v-model="definition.def_english"
-                  type="text"
-                  id="def_english"
-                />
-              </div>
-              <div>
-                <label for="def_chinese">Chinese Definition:</label>
-                <input
-                  v-model="definition.def_chinese"
-                  type="text"
-                  id="def_chinese"
-                />
-              </div>
-              <div>
-                <label for="partofspeech">Part of Speech:</label>
-                <input
-                  v-model="definition.partofspeech"
-                  type="text"
-                  id="partofspeech"
-                />
-              </div>
-              <button type="submit">Save Definition</button>
-            </form>
-            <hr />
-          </div>
-        </div>
       </li>
     </ul>
+
+    <!-- 
+    
+    Edit Word and Definitions Form Dialog 
+     
+    -->
+    <div v-if="showDialog" class="edit-dialog">
+      <!-- <h2>Edit Word: {{ this.word.english }}</h2> -->
+      <button @click="this.showDialog = false">Close</button>
+      <!-- Word Edit Form -->
+      <form @submit.prevent="updateWord">
+        <div>
+          <label for="chinese">Chinese:</label>
+          <input v-model="word.chinese" type="text" id="chinese" />
+        </div>
+        <div>
+          <label for="romaji">Romaji:</label>
+          <input v-model="word.romaji" type="text" id="romaji" />
+        </div>
+        <div>
+          <label for="english">English:</label>
+          <input v-model="word.english" type="text" id="english" />
+        </div>
+        <div>
+          <label for="classification">Classification:</label>
+          <input
+            v-model="word.classification"
+            type="text"
+            id="classification"
+          />
+        </div>
+        <button type="submit">Save Word</button>
+      </form>
+
+      <hr />
+
+      <!-- Definitions Edit Form -->
+      <h3>Definitions</h3>
+      <!-- <div
+        v-for="(definition, index) in word.definitions"
+        :key="definition.defid"
+      >
+        <form @submit.prevent="updateDefinition(definition.defid, index)">
+          <div>
+            <label for="def_english">English Definition:</label>
+            <input
+              v-model="definition.def_english"
+              type="text"
+              id="def_english"
+            />
+          </div>
+          <div>
+            <label for="def_chinese">Chinese Definition:</label>
+            <input
+              v-model="definition.def_chinese"
+              type="text"
+              id="def_chinese"
+            />
+          </div>
+          <div>
+            <label for="partofspeech">Part of Speech:</label>
+            <input
+              v-model="definition.partofspeech"
+              type="text"
+              id="partofspeech"
+            />
+          </div>
+          <button type="submit">Save Definition</button>
+        </form>
+        <hr />
+      </div> -->
+    </div>
   </div>
 </template>
 
@@ -121,6 +127,9 @@ export default {
       words: [],
       searchQuery: "", // To store the user's search input
       searchResults: [],
+      word: null,
+      showDialog: false,
+      selectedWordId: null,
     };
   },
   components: {
@@ -140,24 +149,40 @@ export default {
       if (error) console.error(error);
       else this.words = data;
     },
-    async addWord(word, definition) {
-      const { data: wordData, error: wordError } = await supabase
+    // async addWord(word, definition) {
+    //   const { data: wordData, error: wordError } = await supabase
+    //     .from("words")
+    //     .insert([{ word }])
+    //     .select();
+
+    //   if (wordError) {
+    //     console.error(wordError);
+    //     return;
+    //   }
+
+    //   const wordId = wordData[0].id;
+
+    //   const { error: definitionError } = await supabase
+    //     .from("definitions")
+    //     .insert([{ word_id: wordId, definition }]);
+
+    //   if (definitionError) console.error(definitionError);
+    // },
+
+    //open dialog
+    async openDialog(id) {
+      this.showDialog = true;
+      this.selectedWordId = id;
+      const { data, error } = await supabase
         .from("words")
-        .insert([{ word }])
-        .select();
-
-      if (wordError) {
-        console.error(wordError);
-        return;
+        .select("id, chinese, romaji, classification, english")
+        .eq("id", id)
+        .single();
+      if (error) {
+        console.error("Error fetching word:", error.message);
+      } else {
+        this.word = data;
       }
-
-      const wordId = wordData[0].id;
-
-      const { error: definitionError } = await supabase
-        .from("definitions")
-        .insert([{ word_id: wordId, definition }]);
-
-      if (definitionError) console.error(definitionError);
     },
 
     // Fetch the word and its definitions when clicking on a word
@@ -243,7 +268,7 @@ export default {
       const { data, error } = await supabase
         .from("words")
         .select(
-          `english, chinese, romaji, audioid, definitions (defid, def_english, def_chinese)`
+          `id, english, chinese, romaji, audioid, definitions (defid, def_english, def_chinese)`
         )
         // .ilike('english', this.searchQuery)
         .ilike("english", `%${this.searchQuery}%`); // Case-insensitive partial match
