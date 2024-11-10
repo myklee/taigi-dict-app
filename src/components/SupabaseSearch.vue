@@ -1,37 +1,44 @@
 <template>
   <div id="supasearch">
-    <!-- Search Field -->
-    <input
-      type="text"
-      v-model="searchQuery"
-      @keyup.enter="searchWords(searchQuery)"
-      placeholder="Search for a word..."
-      class="text-field search-words"
-    />
+    <div class="search-words">
+      <!-- Search Field -->
+      <input
+        type="text"
+        v-model="searchQuery"
+        @keyup.enter="searchWords(searchQuery)"
+        placeholder="Search for a word..."
+        class="text-field search-words-text-field"
+      />
 
-    <button @click="searchWords">Search</button>
-    <button @click="clearInput">Clear</button>
+      <button @click="searchWords">Search</button>
+      <button @click="clearInput">Clear</button>
+      <div class="results-count">{{ words.length }}</div>
+    </div>
     <!-- Trigger search on click -->
-    {{ words.length }}
+
     <ul class="results">
-      <li v-for="word in words" :key="word.id" class="word">
-        <div class="word-item word-english">{{ word.english }}</div>
-        <div class="word-item word-english">{{ word.chinese }}</div>
-        <div class="word-item word-english">
-          {{ word.romaji }}
-          <AudioPlayerTaigi v-if="word.audioid" :audioID="word.audioid" />
+      <li v-for="word in words" :key="word.id" class="entry">
+        <div class="word">
+          <div class="word-item word-taigi">
+            {{ word.romaji }}
+            <AudioPlayerTaigi v-if="word.audioid" :audioID="word.audioid" />
+          </div>
+          <div class="word-item word-english">{{ word.english }}</div>
+          <div class="word-item word-chinese">{{ word.chinese }}</div>
+
+          <!-- <small>{{ word.id }}</small> -->
         </div>
-        <small>{{ word.id }}</small>
-        <button @click="openDialog(word.id)">Edit</button>
+
         <ul>
           <li v-for="def in word.definitions" :key="def.id">
-            {{ def.defid }}
-            <ol>
+            <!-- <small>{{ def.defid }}</small> -->
+            <ul>
               <li>{{ def.def_english }}</li>
               <li>{{ def.def_chinese }}</li>
-            </ol>
+            </ul>
           </li>
         </ul>
+        <button @click="openDialog(word.id)">Edit</button>
       </li>
     </ul>
 
@@ -47,17 +54,18 @@
       <!-- Word Edit Form -->
       <form @submit.prevent="updateWord">
         <div>
-          <label for="chinese">Chinese</label>
-          <input v-model="word.chinese" type="text" id="chinese" />
+          <label for="romaji">Romaji</label>
+          <input v-model="word.romaji" type="text" id="romaji" />
         </div>
-        <!-- <div>
-            <label for="romaji">Romaji</label>
-            <input v-model="word.romaji" type="text" id="romaji" />
-          </div> -->
         <div>
           <label for="english">English</label>
           <input v-model="word.english" type="text" id="english" />
         </div>
+        <div>
+          <label for="chinese">Chinese</label>
+          <input v-model="word.chinese" type="text" id="chinese" />
+        </div>
+
         <div>
           <label for="classification">Classification:</label>
           <input
@@ -69,42 +77,40 @@
         <button type="submit">Save Word</button>
       </form>
 
-      <hr />
-
       <!-- Definitions Edit Form -->
-      <h3>Definitions</h3>
-      <div
-        v-for="(definition, index) in word.definitions"
-        :key="definition.defid"
-      >
-        <form @submit.prevent="updateDefinition(definition.defid, index)">
-          <div>
-            <label for="def_english">English Definition:</label>
-            <textarea
-              v-model="definition.def_english"
-              type="textarea"
-              id="def_english"
-            ></textarea>
-          </div>
-          <div>
-            <label for="def_chinese">Chinese Definition:</label>
-            <input
-              v-model="definition.def_chinese"
-              type="text"
-              id="def_chinese"
-            />
-          </div>
-          <div>
-            <label for="partofspeech">Part of Speech:</label>
-            <input
-              v-model="definition.partofspeech"
-              type="text"
-              id="partofspeech"
-            />
-          </div>
-          <button type="submit">Save Definition</button>
-        </form>
-        <hr />
+      <div v-if="word.definitions.length > 0">
+        <div
+          v-for="(definition, index) in word.definitions"
+          :key="definition.defid"
+        >
+          <form @submit.prevent="updateDefinition(definition.defid, index)">
+            <div>
+              <label for="def_english">English Definition:</label>
+              <textarea
+                v-model="definition.def_english"
+                type="textarea"
+                id="def_english"
+              ></textarea>
+            </div>
+            <div>
+              <label for="def_chinese">Chinese Definition:</label>
+              <input
+                v-model="definition.def_chinese"
+                type="text"
+                id="def_chinese"
+              />
+            </div>
+            <div>
+              <label for="partofspeech">Part of Speech:</label>
+              <input
+                v-model="definition.partofspeech"
+                type="text"
+                id="partofspeech"
+              />
+            </div>
+            <button type="submit">Save Definition</button>
+          </form>
+        </div>
       </div>
     </div>
   </div>
@@ -265,7 +271,9 @@ export default {
           `id, english, chinese, romaji, audioid, definitions (defid, def_english, def_chinese)`
         )
         // .ilike('english', this.searchQuery)
-        .ilike("english", `%${this.searchQuery}%`); // Case-insensitive partial match
+        .or(
+          `chinese.ilike.%${this.searchQuery}%,english.ilike.%${this.searchQuery}%`
+        ); // Case-insensitive partial match
 
       if (error) {
         console.error(error);
@@ -277,3 +285,66 @@ export default {
   },
 };
 </script>
+<style scoped>
+/* 
+
+search
+
+*/
+.search-words {
+  padding: 0 5vw;
+}
+.search-words-text-field {
+  font-size: 16px;
+  width: 100%;
+}
+
+/* 
+
+results
+
+*/
+.results {
+  margin: 0 5vw;
+}
+.entry {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.word,
+.word-item {
+  display: flex;
+  align-items: center;
+}
+.word {
+  gap: 1rem;
+}
+.word-item {
+  font-size: 1.5rem;
+  padding: 0.5rem;
+
+  gap: 0.5rem;
+  border: 1px solid;
+}
+.word-taigi {
+}
+
+/* 
+
+Edit dialog  
+
+*/
+
+.edit-dialog {
+  position: fixed;
+  top: 0;
+  height: 100vh;
+  width: 100vw;
+  background-color: white;
+  transition: 1s all ease-in-out;
+}
+</style>

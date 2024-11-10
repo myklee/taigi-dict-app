@@ -66,10 +66,16 @@ body {
     Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif; */
   /* font-size: 16px; */
-  /* text-rendering: optimizeLegibility;
+  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale; */
+  -moz-osx-font-smoothing: grayscale;
 }
 header {
   padding: 2rem;
+}
+
+ul, ol, li {
+  list-style-type: none;
+  margin:0;
+  padding:0;
 }
