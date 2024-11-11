@@ -27,7 +27,7 @@
           <div class="word-item word-english">{{ word.english }}</div>
           <div class="word-item word-chinese">
             {{ word.chinese }}
-            <IconPlayAudio @click="speakChinese(word.chinese)"></IconPlayAudio>
+            <IconPlayAudio @click="readChinese(word.chinese)"></IconPlayAudio>
           </div>
 
           <!-- <small>{{ word.id }}</small> -->
@@ -42,7 +42,7 @@
             </ul>
           </li>
         </ul>
-        <button @click="openDialog(word.id)">Edit</button>
+        <button @click="openEditDialog(word.id)">Edit</button>
       </li>
     </ul>
 
@@ -68,7 +68,6 @@
         <div>
           <label for="chinese">Chinese</label>
           <input v-model="word.chinese" type="text" id="chinese" />
-          <IconPlayAudio @click="speakChinese(word.chinese)"></IconPlayAudio>
         </div>
 
         <div>
@@ -125,6 +124,7 @@
 import { supabase } from "/src/supabase";
 import AudioPlayerTaigi from "./AudioPlayerTaigi.vue";
 import IconPlayAudio from "./icons/IconPlayAudio.vue";
+import { speakChinese } from "@/utils";
 
 export default {
   data() {
@@ -156,30 +156,11 @@ export default {
     },
     clearInput() {
       this.searchQuery = "";
-      // this.words = [];
+      this.words = [];
     },
-    // async addWord(word, definition) {
-    //   const { data: wordData, error: wordError } = await supabase
-    //     .from("words")
-    //     .insert([{ word }])
-    //     .select();
 
-    //   if (wordError) {
-    //     console.error(wordError);
-    //     return;
-    //   }
-
-    //   const wordId = wordData[0].id;
-
-    //   const { error: definitionError } = await supabase
-    //     .from("definitions")
-    //     .insert([{ word_id: wordId, definition }]);
-
-    //   if (definitionError) console.error(definitionError);
-    // },
-
-    //open dialog
-    async openDialog(id) {
+    //open edit dialog
+    async openEditDialog(id) {
       this.showDialog = true;
       this.selectedWordId = id;
       const { data, error } = await supabase
@@ -194,23 +175,6 @@ export default {
       } else {
         this.word = data;
         console.log(this.word);
-      }
-    },
-
-    // Fetch the word and its definitions when clicking on a word
-    async editWord(id) {
-      const { data, error } = await supabase
-        .from("words")
-        .select(
-          "id, chinese, romaji, classification, english, definitions (defid, def_english, def_chinese, partofspeech)"
-        )
-        .eq("id", id)
-        .single();
-
-      if (error) {
-        console.error("Error fetching word:", error.message);
-      } else {
-        this.word = data; // Set the word and its definitions
       }
     },
 
@@ -287,26 +251,32 @@ export default {
         console.log(this.words);
       }
     },
-    async speakChinese(text) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      const voices = window.speechSynthesis.getVoices();
-      const zhTWVoices = voices.filter((voice) => voice.lang === "zh-TW");
-
-      utterance.lang = "zh-TW";
-
-      // Filter for Taiwanese Mandarin voices
-
-      // Log available zh-TW voices
-      zhTWVoices.forEach((voice) => {
-        console.log(`Name: ${voice.name}, Language: ${voice.lang}`);
-      });
-      console.log(zhTWVoices);
-
-      utterance.voice = zhTWVoices[4];
-      window.speechSynthesis.speak(utterance);
+    async readChinese(text) {
+      speakChinese(text);
     },
     async resetVoice() {
       window.speechSynthesis.cancel();
+    },
+    async randomWord() {
+      // Step 1: Get the total count of words
+      const { count } = await supabase
+        .from("words")
+        .select("*", { count: "exact", head: true });
+
+      // Step 2: Generate a random offset
+      const randomOffset = Math.floor(Math.random() * count);
+
+      // Step 3: Fetch a random word using the offset
+      const { data, error } = await supabase
+        .from("words")
+        .select("*")
+        .range(randomOffset, randomOffset);
+
+      if (error) {
+        console.error("Error fetching random word:", error.message);
+      } else {
+        console.log("Random Word:", data[0]);
+      }
     },
   },
 };
@@ -321,9 +291,10 @@ search
   padding: 0 5vw;
 }
 .search-words-text-field {
-  font-size: 16px;
+  color: var(--greenPrimaryDark);
   width: 100%;
-  border-bottom: 3px solid var(--greenPrimary);
+  /* border: none; */
+  border-bottom: 3px solid var(--greenPrimaryDark);
   margin-bottom: 0.5rem;
   padding: 1rem;
   &:focus {

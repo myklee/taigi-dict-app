@@ -99,16 +99,16 @@ export default {
         this.results = [];
       }
     },
-    async speakChinese(text) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "zh-TW";
-      window.speechSynthesis.speak(utterance);
-    },
-    async speakEnglish(text) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "en-GB";
-      window.speechSynthesis.speak(utterance);
-    },
+    // async speakChinese(text) {
+    //   const utterance = new SpeechSynthesisUtterance(text);
+    //   utterance.lang = "zh-TW";
+    //   window.speechSynthesis.speak(utterance);
+    // },
+    // async speakEnglish(text) {
+    //   const utterance = new SpeechSynthesisUtterance(text);
+    //   utterance.lang = "en-GB";
+    //   window.speechSynthesis.speak(utterance);
+    // },
   },
 };
 </script>

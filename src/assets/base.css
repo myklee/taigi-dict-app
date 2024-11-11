@@ -28,6 +28,7 @@ body {
   --greenPrimary: rgb(0, 128, 0);
   --greenPrimaryDark: rgb(0, 76, 0);
   --greenPrimaryLight: rgb(218, 235, 218);
+  --serif: "Corda", serif;
   color-scheme: light;
 }
 
@@ -85,10 +86,12 @@ li {
   padding: 0;
 }
 input[type="text"] {
-  border: none;
+  font-family: var(--serif);
+  font-weight: 900;
+  border: 3px solid var(--greenPrimaryDark);
   font-size: 22px;
   &::placeholder {
-    font-family: "Corda", serif;
+    font-family: var(--serif);
     font-size: 22px;
   }
 }

@@ -3,6 +3,7 @@ import DictionarySearch from "./components/DictionarySearch.vue";
 import SupabaseSearch from "./components/SupabaseSearch.vue";
 import CVSUploader from "./components/CVSUploader.vue";
 import { uploadEntries } from "./utils";
+import WordOfTheDay from "./components/WordOfTheDay.vue";
 import { ref, onMounted } from "vue";
 import db from "./db.js";
 
@@ -37,7 +38,7 @@ onMounted(async () => {
   <main>
     <!-- <DictionarySearch /> -->
     <SupabaseSearch />
-    <!-- <CVSUploader /> -->
+    <WordOfTheDay />
   </main>
   <footer>
     <!-- Data provided by 2024 Ministry of Education, R.O.C.  -->
