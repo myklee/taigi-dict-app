@@ -1,16 +1,18 @@
 <template>
-  <div>
-    <div v-if="randomWord">
-      <h2>Word of the day</h2>
-      <div class="wod">
-        <div>{{ randomWord.english }}</div>
-        <div>
-          {{ randomWord.chinese }}<IconPlayAudio @click="readChinese(randomWord.chinese)" />
-        </div>
-        <div>
-          {{ randomWord.romaji
-          }}<AudioPlayerTaigi :audioID="randomWord.audioid" />
-        </div>
+  <div class="wod" v-if="randomWord">
+    <h4>Word of the day</h4>
+    <div class="wod">
+      <div>
+        {{ randomWord.english }}
+        <IconPlayAudio v-if="randomWord.english" @click="readEnglish(randomWord.english)" />
+      </div>
+      <div>
+        {{ randomWord.chinese }}
+        <IconPlayAudio v-if="randomWord.chinese" @click="readChinese(randomWord.chinese)" />
+      </div>
+      <div>
+        {{ randomWord.romaji }}
+        <AudioPlayerTaigi v-if="randomWord.audioid" :audioID="randomWord.audioid" />
       </div>
     </div>
     <button @click="fetchRandomWord">Get a different word</button>
@@ -22,6 +24,7 @@ import { onMounted, ref } from "vue";
 import { supabase } from "/src/supabase";
 import AudioPlayerTaigi from "./AudioPlayerTaigi.vue";
 import { speakChinese } from "@/utils";
+import { speakEnglish } from "@/utils";
 import IconPlayAudio from "./icons/IconPlayAudio.vue";
 
 // Reactive variable to hold the random word result
@@ -59,6 +62,12 @@ onMounted(fetchRandomWord);
 const readChinese = async (text) => {
   speakChinese(text);
 };
+const readEnglish = async (text) => {
+  speakEnglish(text);
+};
 </script>
 
-<style scoped></style>
+<style scoped>
+.wod {
+}
+</style>

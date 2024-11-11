@@ -178,19 +178,60 @@ export async function uploadEntries() {
   }
 }
 
-export async function speakChinese(text) {
-  const voices = window.speechSynthesis.getVoices();
-  const zhTWVoices = voices.filter((voice) => voice.lang === "zh-TW");
+// export async function speakChinese(text) {
+//   const voices = window.speechSynthesis.getVoices();
 
+//   const zhTWVoices = voices.filter((voice) => voice.lang === "zh-TW");
+
+//   const utterance = new SpeechSynthesisUtterance(text);
+//   utterance.lang = "zh-TW";
+
+//   // Log available zh-TW voices
+//   zhTWVoices.forEach((voice) => {
+//     console.log(`Name: ${voice.name}, Language: ${voice.lang}`);
+//   });
+//   console.log(zhTWVoices);
+
+//   utterance.voice = zhTWVoices[4];
+//   window.speechSynthesis.speak(utterance);
+// }
+
+export async function speakChinese(text) {
+  // Wait for voices to load if they haven't yet
+  let voices = window.speechSynthesis.getVoices();
+  if (voices.length === 0) {
+    await new Promise((resolve) =>
+      window.speechSynthesis.addEventListener("voiceschanged", resolve, {
+        once: true,
+      })
+    );
+    voices = window.speechSynthesis.getVoices();
+  }
+
+  // Set up and speak the utterance
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "zh-TW";
-
-  // Log available zh-TW voices
-  zhTWVoices.forEach((voice) => {
-    console.log(`Name: ${voice.name}, Language: ${voice.lang}`);
-  });
-  console.log(zhTWVoices);
-
-  utterance.voice = zhTWVoices[4];
+  utterance.voice = voices.find((voice) => voice.name === "Meijia");
+  window.speechSynthesis.speak(utterance);
+}
+export async function speakEnglish(text) {
+  // Wait for voices to load if they haven't yet
+  let voices = window.speechSynthesis.getVoices();
+  if (voices.length === 0) {
+    await new Promise((resolve) =>
+      window.speechSynthesis.addEventListener("voiceschanged", resolve, {
+        once: true,
+      })
+    );
+    voices = window.speechSynthesis.getVoices();
+  }
+  //find voices
+  const enUSVoices = voices.filter((voice) => voice.lang === "en-US");
+  console.log(enUSVoices);
+  // Set up and speak the utterance
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "en-US";
+  utterance.voice = voices.find((voice) => voice.name === "Samantha");
+  // utterance.voice = voices.find((voice) => voice.name === "Meijia");
   window.speechSynthesis.speak(utterance);
 }

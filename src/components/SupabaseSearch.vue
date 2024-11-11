@@ -24,7 +24,10 @@
             {{ word.romaji }}
             <AudioPlayerTaigi v-if="word.audioid" :audioID="word.audioid" />
           </div>
-          <div class="word-item word-english">{{ word.english }}</div>
+          <div class="word-item word-english">
+            {{ word.english }}
+            <IconPlayAudio @click="readEnglish(word.english)" />
+          </div>
           <div class="word-item word-chinese">
             {{ word.chinese }}
             <IconPlayAudio @click="readChinese(word.chinese)"></IconPlayAudio>
@@ -125,6 +128,7 @@ import { supabase } from "/src/supabase";
 import AudioPlayerTaigi from "./AudioPlayerTaigi.vue";
 import IconPlayAudio from "./icons/IconPlayAudio.vue";
 import { speakChinese } from "@/utils";
+import { speakEnglish } from "@/utils";
 
 export default {
   data() {
@@ -254,6 +258,9 @@ export default {
     async readChinese(text) {
       speakChinese(text);
     },
+    async readEnglish(text) {
+      speakEnglish(text);
+    },
     async resetVoice() {
       window.speechSynthesis.cancel();
     },
@@ -304,7 +311,7 @@ search
     outline: none;
   }
   &::placeholder {
-    color: var(--greenPrimary);
+    color: var(--greenPrimaryDark);
   }
 }
 
@@ -340,9 +347,6 @@ results
   gap: 0.5rem;
   border: 1px solid;
 }
-.word-taigi {
-}
-
 /* 
 
 Edit dialog  
