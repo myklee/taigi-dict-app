@@ -25,6 +25,9 @@ body {
 :root {
   --black: rgb(29, 27, 27);
   --white: rgb(218, 218, 218);
+  --greenPrimary: rgb(0, 128, 0);
+  --greenPrimaryDark: rgb(0, 76, 0);
+  --greenPrimaryLight: rgb(218, 235, 218);
   color-scheme: light;
 }
 
@@ -74,8 +77,21 @@ header {
   padding: 2rem;
 }
 
-ul, ol, li {
+ul,
+ol,
+li {
   list-style-type: none;
-  margin:0;
-  padding:0;
+  margin: 0;
+  padding: 0;
+}
+input[type="text"] {
+  border: none;
+  font-size: 22px;
+  &::placeholder {
+    font-family: "Corda", serif;
+    font-size: 22px;
+  }
+}
+button {
+  padding: 0.5rem 1rem;
 }

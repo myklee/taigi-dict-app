@@ -12,6 +12,7 @@
 
       <button @click="searchWords">Search</button>
       <button @click="clearInput">Clear</button>
+      <button @click="resetVoice">Reset Voice</button>
       <div class="results-count">{{ words.length }}</div>
     </div>
     <!-- Trigger search on click -->
@@ -24,7 +25,10 @@
             <AudioPlayerTaigi v-if="word.audioid" :audioID="word.audioid" />
           </div>
           <div class="word-item word-english">{{ word.english }}</div>
-          <div class="word-item word-chinese">{{ word.chinese }}</div>
+          <div class="word-item word-chinese">
+            {{ word.chinese }}
+            <IconPlayAudio @click="speakChinese(word.chinese)"></IconPlayAudio>
+          </div>
 
           <!-- <small>{{ word.id }}</small> -->
         </div>
@@ -64,6 +68,7 @@
         <div>
           <label for="chinese">Chinese</label>
           <input v-model="word.chinese" type="text" id="chinese" />
+          <IconPlayAudio @click="speakChinese(word.chinese)"></IconPlayAudio>
         </div>
 
         <div>
@@ -282,6 +287,27 @@ export default {
         console.log(this.words);
       }
     },
+    async speakChinese(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      const voices = window.speechSynthesis.getVoices();
+      const zhTWVoices = voices.filter((voice) => voice.lang === "zh-TW");
+
+      utterance.lang = "zh-TW";
+
+      // Filter for Taiwanese Mandarin voices
+
+      // Log available zh-TW voices
+      zhTWVoices.forEach((voice) => {
+        console.log(`Name: ${voice.name}, Language: ${voice.lang}`);
+      });
+      console.log(zhTWVoices);
+
+      utterance.voice = zhTWVoices[4];
+      window.speechSynthesis.speak(utterance);
+    },
+    async resetVoice() {
+      window.speechSynthesis.cancel();
+    },
   },
 };
 </script>
@@ -297,6 +323,18 @@ search
 .search-words-text-field {
   font-size: 16px;
   width: 100%;
+  border-bottom: 3px solid var(--greenPrimary);
+  margin-bottom: 0.5rem;
+  padding: 1rem;
+  &:focus {
+    background-color: #daebda;
+    border-color: var(--greenPrimaryDark);
+    outline: 1px solid rgb(159, 204, 159);
+    outline: none;
+  }
+  &::placeholder {
+    color: var(--greenPrimary);
+  }
 }
 
 /* 
@@ -307,6 +345,7 @@ results
 .results {
   margin: 0 5vw;
 }
+
 .entry {
   margin: 1rem 0;
   padding: 1rem;
