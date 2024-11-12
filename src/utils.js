@@ -178,24 +178,6 @@ export async function uploadEntries() {
   }
 }
 
-// export async function speakChinese(text) {
-//   const voices = window.speechSynthesis.getVoices();
-
-//   const zhTWVoices = voices.filter((voice) => voice.lang === "zh-TW");
-
-//   const utterance = new SpeechSynthesisUtterance(text);
-//   utterance.lang = "zh-TW";
-
-//   // Log available zh-TW voices
-//   zhTWVoices.forEach((voice) => {
-//     console.log(`Name: ${voice.name}, Language: ${voice.lang}`);
-//   });
-//   console.log(zhTWVoices);
-
-//   utterance.voice = zhTWVoices[4];
-//   window.speechSynthesis.speak(utterance);
-// }
-
 export async function speakChinese(text) {
   // Wait for voices to load if they haven't yet
   let voices = window.speechSynthesis.getVoices();

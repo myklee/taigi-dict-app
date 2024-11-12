@@ -1,21 +1,38 @@
 <template>
-  <div class="wod" v-if="randomWord">
-    <h4>Word of the day</h4>
-    <div class="wod">
-      <div>
-        {{ randomWord.english }}
-        <IconPlayAudio v-if="randomWord.english" @click="readEnglish(randomWord.english)" />
+  <div class="wod" v-if="randomWordData">
+    <h4>Random word</h4>
+    <div class="wod-words">
+      <div class="wod-word-item">
+        {{ randomWordData.english }}
+        <IconPlayAudio
+          v-if="randomWordData.english"
+          @click="readEnglish(randomWordData.english)"
+        />
       </div>
-      <div>
-        {{ randomWord.chinese }}
-        <IconPlayAudio v-if="randomWord.chinese" @click="readChinese(randomWord.chinese)" />
+      <div class="wod-word-item">
+        {{ randomWordData.chinese }}
+        <IconPlayAudio
+          v-if="randomWordData.chinese"
+          @click="readChinese(randomWordData.chinese)"
+        />
       </div>
-      <div>
-        {{ randomWord.romaji }}
-        <AudioPlayerTaigi v-if="randomWord.audioid" :audioID="randomWord.audioid" />
+      <div class="wod-word-item">
+        {{ randomWordData.romaji }}
+        <AudioPlayerTaigi
+          v-if="randomWordData.audioid"
+          :audioID="randomWordData.audioid"
+        />
       </div>
     </div>
-    <button @click="fetchRandomWord">Get a different word</button>
+    <div
+        v-for="(definition, index) in randomWordData.definitions"
+        :key="definition.defid"
+        class="wod-definitions"
+      >
+        {{ definition.def_chinese }}
+        {{ definition.def_english }}
+      </div>
+    <button @click="fetchRandomWordAndDefinitions">Get a different word</button>
   </div>
 </template>
 
@@ -27,37 +44,59 @@ import { speakChinese } from "@/utils";
 import { speakEnglish } from "@/utils";
 import IconPlayAudio from "./icons/IconPlayAudio.vue";
 
-// Reactive variable to hold the random word result
-const randomWord = ref(null);
+const randomWordData = ref(null);
 
-// Function to fetch a random word from Supabase
-const fetchRandomWord = async () => {
+const fetchRandomWordAndDefinitions = async () => {
   try {
     // Step 1: Get the total count of words
     const { count } = await supabase
       .from("words")
       .select("*", { count: "exact", head: true });
 
-    // Step 2: Generate a random offset based on the count
     const randomOffset = Math.floor(Math.random() * count);
 
-    // Step 3: Fetch a random word using the random offset
-    const { data, error } = await supabase
+    // Step 2: Fetch a random word using the random offset
+    const { data: wordData, error: wordError } = await supabase
       .from("words")
       .select("*")
-      .range(randomOffset, randomOffset); // range uses inclusive start and end
+      .range(randomOffset, randomOffset)
+      .limit(1);
 
-    // Check for errors
-    if (error) throw new Error(error.message);
+    if (wordError) throw new Error(wordError.message);
 
-    // Set the random word
-    randomWord.value = data[0];
-    console.log(randomWord);
+    const randomWord = wordData[0];
+
+    // Step 3: Fetch definitions associated with the random word
+    const { data: definitionsData, error: definitionsError } = await supabase
+      .from("definitions")
+      .select("*")
+      .eq("wordid", randomWord.id);
+
+    if (definitionsError) throw new Error(definitionsError.message);
+
+    // Combine word and definitions in one object
+    randomWord.definitions = definitionsData;
+    randomWordData.value = randomWord;
   } catch (error) {
-    console.error("Error fetching random word:", error.message);
+    console.error("Error fetching random word and definitions:", error.message);
   }
 };
-onMounted(fetchRandomWord);
+
+onMounted(fetchRandomWordAndDefinitions);
+
+async function getDefinitionsForWord(wordId) {
+  const { data, error } = await supabase
+    .from("definitions")
+    .select("*")
+    .eq("wordid", wordId); // Match definitions with the random word's ID
+
+  if (error) {
+    console.error("Error fetching definitions:", error);
+    return [];
+  }
+
+  return data; // Return the list of definitions
+}
 
 const readChinese = async (text) => {
   speakChinese(text);
@@ -69,5 +108,15 @@ const readEnglish = async (text) => {
 
 <style scoped>
 .wod {
+  border: px solid;
+  margin: 2rem;
+}
+.wod-words,
+.wod-word-item {
+  display: flex;
+  align-items: center;
+}
+.wod-words {
+  gap: 1rem;
 }
 </style>

@@ -27,3 +27,4 @@
     />
   </svg>
 </template>
+<style scoped></style>
