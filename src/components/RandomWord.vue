@@ -1,38 +1,42 @@
 <template>
-  <div class="wod" v-if="randomWordData">
+  <div class="rw" v-if="randomWordData">
     <h4>Random word</h4>
-    <div class="wod-words">
-      <div class="wod-word-item">
+    <div class="rw-words">
+      <div class="rw-words-main">
+        <div v-if="randomWordData.romaji" class="rw-word-item rw-taigi">
+          {{ randomWordData.romaji }}
+          <AudioPlayerTaigi
+            v-if="randomWordData.audioid"
+            :audioID="randomWordData.audioid"
+          />
+        </div>
+        <div v-if="randomWordData.chinese" class="rw-word-item rw-chinese">
+          {{ randomWordData.chinese }}
+          <IconPlayAudio
+            v-if="randomWordData.chinese"
+            @click="readChinese(randomWordData.chinese)"
+          />
+        </div>
+      </div>
+      <div v-if="randomWordData.english" class="rw-word-item rw-english">
         {{ randomWordData.english }}
         <IconPlayAudio
           v-if="randomWordData.english"
           @click="readEnglish(randomWordData.english)"
         />
       </div>
-      <div class="wod-word-item">
-        {{ randomWordData.chinese }}
-        <IconPlayAudio
-          v-if="randomWordData.chinese"
-          @click="readChinese(randomWordData.chinese)"
-        />
-      </div>
-      <div class="wod-word-item">
-        {{ randomWordData.romaji }}
-        <AudioPlayerTaigi
-          v-if="randomWordData.audioid"
-          :audioID="randomWordData.audioid"
-        />
-      </div>
     </div>
     <div
-        v-for="(definition, index) in randomWordData.definitions"
-        :key="definition.defid"
-        class="wod-definitions"
-      >
-        {{ definition.def_chinese }}
-        {{ definition.def_english }}
-      </div>
-    <button @click="fetchRandomWordAndDefinitions">Get a different word</button>
+      v-for="(definition, index) in randomWordData.definitions"
+      :key="definition.defid"
+      class="rw-definitions"
+    >
+      <ul>
+        <li>{{ definition.def_chinese }}</li>
+        <li>{{ definition.def_english }}</li>
+      </ul>
+    </div>
+    <button @click="fetchRandomWordAndDefinitions">Next word</button>
   </div>
 </template>
 
@@ -107,16 +111,44 @@ const readEnglish = async (text) => {
 </script>
 
 <style scoped>
-.wod {
-  border: px solid;
-  margin: 2rem;
+h4 {
+  padding: 0.25rem 0.5rem;
+  color: white;
+  background-color: rgb(100, 100, 100);
+  display: inline;
 }
-.wod-words,
-.wod-word-item {
+.rw {
+  border: px solid;
+  margin: 5vw;
+  padding:1rem;
+  color: white;
+  background-color: black;
+}
+.rw-words-main,
+.rw-word-item {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
 }
-.wod-words {
-  gap: 1rem;
+.rw-words {
+  margin: 1rem 0;
+}
+.rw-words-main {
+  gap:2rem;
+  row-gap: 0;
+}
+.rw-word-item {
+  gap: 0.5rem;
+}
+.rw-taigi,
+.rw-chinese {
+  font-size: 3rem;
+}
+.rw-english {
+  font-size: 1.5rem;
+  margin-top:1rem;
+}
+.rw-definitions {
+  margin-bottom: 1rem;
 }
 </style>

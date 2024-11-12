@@ -129,7 +129,11 @@ export default {
 
 <style scoped>
 .audio-player {
-  height: 24px;
+  display: flex;
+  align-items: center;
+}
+svg {
+  flex-shrink: 0;
 }
 .play-taigi {
   cursor: pointer;

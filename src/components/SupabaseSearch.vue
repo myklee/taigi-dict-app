@@ -10,30 +10,34 @@
         class="text-field search-words-text-field"
       />
 
-      <button @click="searchWords">Search</button>
-      <button @click="clearInput">Clear</button>
-      <button @click="resetVoice">Reset Voice</button>
-      <div class="results-count">{{ words.length }}</div>
+      <div class="search-actions">
+        <button @click="searchWords">Search</button>
+        <button @click="clearInput">Clear</button>
+        <button @click="resetVoice">Reset Voice</button>
+      </div>
+      <div v-if="this.words.length" class="results-count">
+        {{ words.length }} results found
+      </div>
     </div>
     <!-- Trigger search on click -->
 
     <ul class="results">
       <li v-for="word in words" :key="word.id" class="entry">
+        <!-- <span>{{ word.id }}</span> -->
         <div class="word">
           <div class="word-item word-taigi">
             {{ word.romaji }}
             <AudioPlayerTaigi v-if="word.audioid" :audioID="word.audioid" />
           </div>
-          <div class="word-item word-english">
-            {{ word.english }}
-            <IconPlayAudio @click="readEnglish(word.english)" />
-          </div>
           <div class="word-item word-chinese">
             {{ word.chinese }}
             <IconPlayAudio @click="readChinese(word.chinese)"></IconPlayAudio>
           </div>
-
           <!-- <small>{{ word.id }}</small> -->
+        </div>
+        <div class="word-item word-english">
+          {{ word.english }}
+          <IconPlayAudio @click="readEnglish(word.english)" />
         </div>
 
         <ul>
@@ -45,7 +49,9 @@
             </ul>
           </li>
         </ul>
-        <button @click="openEditDialog(word.id)">Edit</button>
+        <button class="edit-word" @click="openEditDialog(word.id)">
+          Edit word
+        </button>
       </li>
     </ul>
 
@@ -298,21 +304,15 @@ search
   padding: 0 5vw;
 }
 .search-words-text-field {
-  color: var(--greenPrimaryDark);
   width: 100%;
-  /* border: none; */
-  border-bottom: 3px solid var(--greenPrimaryDark);
+  border: none;
+  border-bottom: 3px solid;
   margin-bottom: 0.5rem;
   padding: 1rem;
-  &:focus {
-    background-color: #daebda;
-    border-color: var(--greenPrimaryDark);
-    outline: 1px solid rgb(159, 204, 159);
-    outline: none;
-  }
-  &::placeholder {
-    color: var(--greenPrimaryDark);
-  }
+}
+.search-actions {
+  display: flex;
+  gap: 0.5rem;
 }
 
 /* 
@@ -322,15 +322,26 @@ results
 */
 .results {
   margin: 0 5vw;
+  color:black;
 }
+.results-count {
+  padding: 0.5rem 0;
+}
+
+/* 
+
+entry
+
+*/
 
 .entry {
   margin: 1rem 0;
-  padding: 1rem;
-  border: 1px solid;
+  padding: 1rem 0;
+  border-top: 1px solid;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  position: relative;
 }
 .word,
 .word-item {
@@ -338,14 +349,29 @@ results
   align-items: center;
 }
 .word {
-  gap: 1rem;
+  gap: 2rem;
+  row-gap: 0;
+  flex-wrap: wrap;
 }
 .word-item {
-  font-size: 1.5rem;
-  padding: 0.5rem;
-
+  padding: 0.5rem 0;
   gap: 0.5rem;
-  border: 1px solid;
+  /* border: 1px solid; */
+}
+.word-taigi,
+.word-chinese {
+  font-size: 3rem;
+}
+.word-english {
+  font-size: 1.5rem;
+}
+
+.edit-word {
+  cursor: pointer;
+  border: none;
+  display: block;
+  width: 100px;
+  margin-top: 1rem;
 }
 /* 
 

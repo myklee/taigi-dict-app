@@ -86,15 +86,17 @@ li {
   padding: 0;
 }
 input[type="text"] {
-  font-family: var(--serif);
-  font-weight: 900;
-  border: 3px solid var(--greenPrimaryDark);
+  /* font-family: var(--serif); */
+  /* font-weight: 900; */
+  /* border: 3px solid var(--greenPrimaryDark); */
   font-size: 22px;
   &::placeholder {
-    font-family: var(--serif);
+    /* font-family: var(--serif); */
     font-size: 22px;
   }
 }
 button {
   padding: 0.5rem 1rem;
+  color:rgb(106, 106, 106);
+  cursor: pointer;
 }
