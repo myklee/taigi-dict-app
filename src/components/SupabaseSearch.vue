@@ -125,6 +125,31 @@
           </form>
         </div>
       </div>
+
+      <!-- Add definitions -->
+      <div v-else>
+        <form @submit.prevent="addDefinition(word.id)">
+          <div>
+            <label for="partofspeech">Part of Speech:</label>
+            <input v-model="newDefinition.partofspeech" id="partofspeech" />
+          </div>
+          <div>
+            <label for="def_english">English Definition:</label>
+            <textarea
+              v-model="newDefinition.def_english"
+              id="def_english"
+            ></textarea>
+          </div>
+          <div>
+            <label for="def_chinese">Chinese Definition:</label>
+            <textarea
+              v-model="newDefinition.def_chinese"
+              id="def_chinese"
+            ></textarea>
+          </div>
+          <button type="submit">Add Definition</button>
+        </form>
+      </div>
     </div>
   </div>
 </template>
@@ -145,6 +170,11 @@ export default {
       word: null,
       showDialog: false,
       selectedWordId: null,
+      newDefinition: {
+        partofspeech: "",
+        def_english: "",
+        def_chinese: "",
+      },
     };
   },
   components: {
@@ -221,6 +251,39 @@ export default {
         console.error("Error updating definition:", error.message);
       } else {
         console.log("Definition updated successfully:", data);
+      }
+    },
+    async addDefinition(wordid) {
+      try {
+        // if (
+        //   !newDefinition.value.def_english.trim() ||
+        //   !newDefinition.value.partofspeech.trim()
+        // ) {
+        //   console.error("Please fill out all required fields.");
+        //   return;
+        // }
+
+        // Insert new definition into the definitions table
+        const { data, error } = await supabase.from("definitions").insert([
+          {
+            wordid: this.word.id, // Associated word id
+            partofspeech: this.newDefinition.partofspeech,
+            def_english: this.newDefinition.def_english,
+            def_chinese: this.newDefinition.def_chinese,
+          },
+        ]);
+        console.log(this.word);
+        if (error) throw new Error(error.message);
+
+        // Update the definitions array with the new definition   
+        this.word.definitions.value.push(data[0]);
+
+        // Reset form
+        this.newDefinition.value.partofspeech = "";
+        this.newDefinition.value.def_english = "";
+        this.newDefinition.value.def_chinese = "";
+      } catch (error) {
+        console.error("Error adding definition:", error.message);
       }
     },
     async deleteWord(wordId) {
@@ -322,7 +385,7 @@ results
 */
 .results {
   margin: 0 5vw;
-  color:black;
+  color: black;
 }
 .results-count {
   padding: 0.5rem 0;
