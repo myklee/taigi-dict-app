@@ -11,16 +11,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200..900&display=swap");
 
 body {
-  /* font-family: "Cormorant Garamond", serif;
-  font-family: "Cardo", serif;
-  font-family: "EB Garamond", serif;
-  font-family: "Cormorant", serif;
-  font-family: "STIX Two Text", serif;
-  font-family: "Judson", serif;*/
-  /* font-family: "Noto Sans";  */
-  /* color: var(--color-text); */
-  /* background-color: var(--color-background); */
-  color: rgb(119, 114, 114);
+ font-family: "Cormorant Garamond", serif;
+  color: rgb(75, 74, 74);
 }
 :root {
   --black: rgb(29, 27, 27);
@@ -86,12 +78,8 @@ li {
   padding: 0;
 }
 input[type="text"] {
-  /* font-family: var(--serif); */
-  /* font-weight: 900; */
-  /* border: 3px solid var(--greenPrimaryDark); */
   font-size: 22px;
   &::placeholder {
-    /* font-family: var(--serif); */
     font-size: 22px;
   }
 }

@@ -49,7 +49,7 @@
             </ul>
           </li>
         </ul>
-        <button class="edit-word" @click="openEditDialog(word.id)">
+        <button class="edit-word" @click="openEditDialog(word, word.id)">
           Edit word
         </button>
       </li>
@@ -199,23 +199,12 @@ export default {
       this.words = [];
     },
 
-    //open edit dialog
-    async openEditDialog(id) {
+    //open edit dialog 
+    async openEditDialog(word, id) {
       this.showDialog = true;
-      this.selectedWordId = id;
-      const { data, error } = await supabase
-        .from("words")
-        .select(
-          "id, chinese, romaji, classification, english, definitions (defid, def_english, def_chinese)"
-        )
-        .eq("id", id)
-        .single();
-      if (error) {
-        console.error("Error fetching word:", error.message);
-      } else {
-        this.word = data;
-        console.log(this.word);
-      }
+      this.selectedWordId = id; // what does this do for me?
+      this.word = word;
+      console.log(word);
     },
 
     // Update the word in the 'words' table
@@ -255,14 +244,6 @@ export default {
     },
     async addDefinition(wordid) {
       try {
-        // if (
-        //   !newDefinition.value.def_english.trim() ||
-        //   !newDefinition.value.partofspeech.trim()
-        // ) {
-        //   console.error("Please fill out all required fields.");
-        //   return;
-        // }
-
         // Insert new definition into the definitions table
         const { data, error } = await supabase.from("definitions").insert([
           {
@@ -275,7 +256,7 @@ export default {
         console.log(this.word);
         if (error) throw new Error(error.message);
 
-        // Update the definitions array with the new definition   
+        // Update the definitions array with the new definition //  does this do anything?
         this.word.definitions.value.push(data[0]);
 
         // Reset form
