@@ -3,6 +3,9 @@
     <h4>Random word</h4>
     <div class="rw-words">
       <div class="rw-words-main">
+        <div v-if="randomWordData.taiwanese" class="rw-word-item rw-taigi">
+          {{ randomWordData.taiwanese }}
+        </div>
         <div v-if="randomWordData.romaji" class="rw-word-item rw-taigi">
           {{ randomWordData.romaji }}
           <AudioPlayerTaigi
@@ -23,6 +26,13 @@
         <IconPlayAudio
           v-if="randomWordData.english"
           @click="readEnglish(randomWordData.english)"
+        />
+      </div>
+      <div v-if="randomWordData.english_mknoll" class="rw-word-item rw-english">
+        {{ randomWordData.english_mknoll }}
+        <IconPlayAudio
+          v-if="randomWordData.english_mknoll"
+          @click="readEnglish(randomWordData.english_mknoll)"
         />
       </div>
     </div>
@@ -81,6 +91,7 @@ const fetchRandomWordAndDefinitions = async () => {
     // Combine word and definitions in one object
     randomWord.definitions = definitionsData;
     randomWordData.value = randomWord;
+    console.log(randomWordData);
   } catch (error) {
     console.error("Error fetching random word and definitions:", error.message);
   }
@@ -120,7 +131,7 @@ h4 {
 .rw {
   border: px solid;
   margin: 5vw;
-  padding:1rem;
+  padding: 1rem;
   color: white;
   background-color: black;
 }
@@ -134,7 +145,7 @@ h4 {
   margin: 1rem 0;
 }
 .rw-words-main {
-  gap:2rem;
+  gap: 2rem;
   row-gap: 0;
 }
 .rw-word-item {
@@ -146,7 +157,7 @@ h4 {
 }
 .rw-english {
   font-size: 1.5rem;
-  margin-top:1rem;
+  margin-top: 1rem;
 }
 .rw-definitions {
   margin-bottom: 1rem;

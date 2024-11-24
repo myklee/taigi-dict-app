@@ -20,19 +20,27 @@
 
     <ul class="results">
       <li v-for="word in words" :key="word.id" class="entry">
+        {{ word }}
         <div class="word">
-          <div class="word-item word-taigi">
+          <div v-if="word.romaji != null" class="word-item word-taigi">
             {{ word.romaji }}
             <AudioPlayerTaigi v-if="word.audioid" :audioID="word.audioid" />
           </div>
-          <div class="word-item word-chinese">
+          <div v-if="word.taiwanese != null" class="word-item word-taigi">
+            {{ word.taiwanese }}
+          </div>
+          <div v-if="word.chinese != null" class="word-item word-chinese">
             {{ word.chinese }}
             <IconPlayAudio @click="readChinese(word.chinese)"></IconPlayAudio>
           </div>
         </div>
-        <div class="word-item word-english">
+        <div v-if="word.english != null" class="word-item word-english">
           {{ word.english }}
           <IconPlayAudio @click="readEnglish(word.english)" />
+        </div>
+        <div v-if="word.english_mknoll != null" class="word-item word-english">
+          {{ word.english_mknoll }}
+          <IconPlayAudio @click="readEnglish(word.english_mknoll)" />
         </div>
         <ul>
           <li v-for="def in word.definitions" :key="def.id">
@@ -42,7 +50,9 @@
             </ul>
           </li>
         </ul>
-        <button class="edit-word" @click="openEditDialog(word)">Edit word</button>
+        <button class="edit-word" @click="openEditDialog(word)">
+          Edit word
+        </button>
       </li>
     </ul>
 
@@ -63,24 +73,42 @@
         </div>
         <div>
           <label for="classification">Classification:</label>
-          <input v-model="word.classification" type="text" id="classification" />
+          <input
+            v-model="word.classification"
+            type="text"
+            id="classification"
+          />
         </div>
         <button type="submit">Save Word</button>
       </form>
       <div v-if="word.definitions.length > 0">
-        <div v-for="(definition, index) in word.definitions" :key="definition.defid">
+        <div
+          v-for="(definition, index) in word.definitions"
+          :key="definition.defid"
+        >
           <form @submit.prevent="updateDefinition(definition.defid, index)">
             <div>
               <label for="def_english">English Definition:</label>
-              <textarea v-model="definition.def_english" id="def_english"></textarea>
+              <textarea
+                v-model="definition.def_english"
+                id="def_english"
+              ></textarea>
             </div>
             <div>
               <label for="def_chinese">Chinese Definition:</label>
-              <input v-model="definition.def_chinese" type="text" id="def_chinese" />
+              <input
+                v-model="definition.def_chinese"
+                type="text"
+                id="def_chinese"
+              />
             </div>
             <div>
               <label for="partofspeech">Part of Speech:</label>
-              <input v-model="definition.partofspeech" type="text" id="partofspeech" />
+              <input
+                v-model="definition.partofspeech"
+                type="text"
+                id="partofspeech"
+              />
             </div>
             <button type="submit">Save Definition</button>
           </form>
@@ -165,8 +193,12 @@ export default {
     const searchWords = async () => {
       const { data, error } = await supabase
         .from("words")
-        .select(`id, english, chinese, romaji, audioid, definitions (defid, def_english, def_chinese)`)
-        .or(`chinese.ilike.%${searchQuery.value}%,english.ilike.%${searchQuery.value}%`);
+        .select(
+          `id, english, chinese, romaji, audioid, taiwanese, english_mknoll, definitions (defid, def_english, def_chinese)`
+        )
+        .or(
+          `chinese.ilike.%${searchQuery.value}%,english.ilike.%${searchQuery.value}%, english_mknoll.ilike.%${searchQuery.value}%`
+        );
       if (error) console.error(error);
       else words.value = data;
     };
