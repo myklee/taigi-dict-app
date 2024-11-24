@@ -20,7 +20,6 @@
 
     <ul class="results">
       <li v-for="word in words" :key="word.id" class="entry">
-        {{ word }}
         <div class="word">
           <div v-if="word.romaji != null" class="word-item word-taigi">
             {{ word.romaji }}
