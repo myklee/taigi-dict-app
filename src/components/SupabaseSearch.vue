@@ -63,8 +63,16 @@
           <input v-model="word.romaji" type="text" id="romaji" />
         </div>
         <div>
+          <label for="romaji">Taiwanese</label>
+          <input v-model="word.taiwanese" type="text" id="taiwanese" />
+        </div>
+        <div>
           <label for="english">English</label>
           <input v-model="word.english" type="text" id="english" />
+        </div>
+        <div>
+          <label for="english_mknoll">English Mary Knoll</label>
+          <input v-model="word.english_mknoll" type="text" id="english_mknoll" />
         </div>
         <div>
           <label for="chinese">Chinese</label>
@@ -110,8 +118,39 @@
               />
             </div>
             <button type="submit">Save Definition</button>
+            <!-- Delete button -->
+            <button
+              type="button"
+              @click="deleteDefinition(definition.defid, index)"
+            >
+              Delete Definition
+            </button>
           </form>
         </div>
+      </div>
+      <div>
+        add a new definition
+        <form @submit.prevent="addDefinition(word.id)">
+          <div>
+            <label for="partofspeech">Part of Speech:</label>
+            <input v-model="newDefinition.partofspeech" id="partofspeech" />
+          </div>
+          <div>
+            <label for="def_english">English Definition:</label>
+            <textarea
+              v-model="newDefinition.def_english"
+              id="def_english"
+            ></textarea>
+          </div>
+          <div>
+            <label for="def_chinese">Chinese Definition:</label>
+            <textarea
+              v-model="newDefinition.def_chinese"
+              id="def_chinese"
+            ></textarea>
+          </div>
+          <button type="submit">Add Definition</button>
+        </form>
       </div>
     </div>
   </div>
@@ -140,13 +179,13 @@ export default {
       def_chinese: "",
     });
 
-    const fetchWords = async () => {
-      const { data, error } = await supabase
-        .from("words")
-        .select(`id, english, definitions (defid, def_english)`);
-      if (error) console.error(error);
-      else words.value = data;
-    };
+    // const fetchWords = async () => {
+    //   const { data, error } = await supabase
+    //     .from("words")
+    //     .select(`id, english, definitions (defid, def_english)`);
+    //   if (error) console.error(error);
+    //   else words.value = data;
+    // };
 
     const clearInput = () => {
       searchQuery.value = "";
@@ -155,7 +194,10 @@ export default {
 
     const openEditDialog = (selectedWord) => {
       showDialog.value = true;
-      word.value = selectedWord;
+      word.value = {
+        ...selectedWord,
+        definitions: selectedWord.definitions || [], // Initialize as an empty array if undefined
+      };
     };
 
     const closeDialog = () => {
@@ -189,6 +231,77 @@ export default {
       else console.log("Definition updated successfully:", data);
     };
 
+    const addDefinition = async (wordId) => {
+      try {
+        // Validate input
+        if (!wordId) {
+          throw new Error("No word ID provided.");
+        }
+
+        // Prepare the new definition object
+        const newDef = {
+          wordid: wordId, // Associate with the correct word
+          partofspeech: newDefinition.value.partofspeech,
+          def_english: newDefinition.value.def_english,
+          def_chinese: newDefinition.value.def_chinese,
+        };
+
+        // Insert the new definition into the 'definitions' table
+        const { data, error } = await supabase
+          .from("definitions")
+          .insert([newDef])
+          .select(); // Use `.select()` to fetch the inserted data
+
+        if (error) {
+          console.error("Error adding definition:", error.message);
+          return;
+        }
+
+        // Update the UI with the new definition
+        if (data && data.length > 0) {
+          const addedDefinition = data[0]; // Get the newly added definition
+
+          // Ensure word.definitions is reactive and update it
+          if (!word.value.definitions) {
+            word.value.definitions = [];
+          }
+          word.value.definitions.push(addedDefinition); // Add the new definition to the UI
+
+          // Reset the new definition form
+          newDefinition.value = {
+            partofspeech: "",
+            def_english: "",
+            def_chinese: "",
+          };
+
+          console.log("Definition added successfully:", addedDefinition);
+        }
+      } catch (err) {
+        console.error("Error in addDefinition:", err.message);
+      }
+    };
+
+    const deleteDefinition = async (defid, index) => {
+      try {
+        // Remove the definition from the database
+        const { data, error } = await supabase
+          .from("definitions")
+          .delete()
+          .eq("defid", defid);
+
+        if (error) {
+          console.error("Error deleting definition:", error.message);
+          return;
+        }
+
+        // Update the local definitions array
+        word.value.definitions.splice(index, 1);
+        console.log("Definition deleted successfully:", data);
+      } catch (err) {
+        console.error("Error in deleteDefinition:", err.message);
+      }
+    };
+
     const searchWords = async () => {
       const { data, error } = await supabase
         .from("words")
@@ -212,12 +325,13 @@ export default {
       word,
       showDialog,
       newDefinition,
-      fetchWords,
       clearInput,
       openEditDialog,
       closeDialog,
       updateWord,
       updateDefinition,
+      deleteDefinition,
+      addDefinition,
       searchWords,
       readChinese,
       readEnglish,
