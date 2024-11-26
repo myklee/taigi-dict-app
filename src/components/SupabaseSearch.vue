@@ -9,6 +9,7 @@
         class="text-field search-words-text-field"
       />
       <div class="search-actions">
+        <input id="exact-search" type="checkbox" v-model="exactSearch" /> <label for="exact-search">Exact Search</label>
         <button @click="searchWords">Search</button>
         <button @click="clearInput">Clear</button>
         <button @click="resetVoice">Reset Voice</button>
@@ -72,7 +73,11 @@
         </div>
         <div>
           <label for="english_mknoll">English Mary Knoll</label>
-          <input v-model="word.english_mknoll" type="text" id="english_mknoll" />
+          <input
+            v-model="word.english_mknoll"
+            type="text"
+            id="english_mknoll"
+          />
         </div>
         <div>
           <label for="chinese">Chinese</label>
@@ -171,6 +176,7 @@ export default {
   setup() {
     const words = ref([]);
     const searchQuery = ref("");
+    const exactSearch = ref(true);
     const word = ref(null);
     const showDialog = ref(false);
     const newDefinition = ref({
@@ -303,16 +309,34 @@ export default {
     };
 
     const searchWords = async () => {
-      const { data, error } = await supabase
-        .from("words")
-        .select(
-          `id, english, chinese, romaji, audioid, taiwanese, english_mknoll, definitions (defid, def_english, def_chinese)`
-        )
-        .or(
-          `chinese.ilike.%${searchQuery.value}%,english.ilike.%${searchQuery.value}%, english_mknoll.ilike.%${searchQuery.value}%`
-        );
-      if (error) console.error(error);
-      else words.value = data;
+      try {
+        let query = supabase
+          .from("words")
+          .select(
+            `id, english, chinese, romaji, audioid, taiwanese, english_mknoll, definitions (defid, def_english, def_chinese)`
+          );
+
+        if (exactSearch.value) {
+          // Perform exact match search
+          query = query.or(
+            `chinese.eq.${searchQuery.value},english.eq.${searchQuery.value},english_mknoll.eq.${searchQuery.value}`
+          );
+        } else {
+          // Perform partial match search
+          query = query.or(
+            `chinese.ilike.%${searchQuery.value}%,english.ilike.%${searchQuery.value}%,english_mknoll.ilike.%${searchQuery.value}%`
+          );
+        }
+
+        const { data, error } = await query;
+        if (error) {
+          console.error("Error fetching words:", error.message);
+        } else {
+          words.value = data;
+        }
+      } catch (err) {
+        console.error("Error in searchWords:", err.message);
+      }
     };
 
     const readChinese = (text) => speakChinese(text);
@@ -322,6 +346,7 @@ export default {
     return {
       words,
       searchQuery,
+      exactSearch,
       word,
       showDialog,
       newDefinition,
