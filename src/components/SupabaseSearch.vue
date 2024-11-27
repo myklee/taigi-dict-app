@@ -7,9 +7,13 @@
         @keyup.enter="searchWords"
         placeholder="Search for a word..."
         class="text-field search-words-text-field"
+        autocapitalize="off"
       />
       <div class="search-actions">
-        <input id="exact-search" type="checkbox" v-model="exactSearch" /> <label for="exact-search">Exact Search</label>
+        <div class="exacxt-search-container">
+          <input id="exact-search" type="checkbox" v-model="exactSearch" />
+          <label for="exact-search">Exact Search</label>
+        </div>
         <button @click="searchWords">Search</button>
         <button @click="clearInput">Clear</button>
         <button @click="resetVoice">Reset Voice</button>
@@ -22,31 +26,31 @@
     <ul class="results">
       <li v-for="word in words" :key="word.id" class="entry">
         <div class="word">
-          <div v-if="word.romaji != null" class="word-item word-taigi">
+          <div v-if="word.romaji != null" class="word-item word-taigi alphabetic">
             {{ word.romaji }}
             <AudioPlayerTaigi v-if="word.audioid" :audioID="word.audioid" />
           </div>
-          <div v-if="word.taiwanese != null" class="word-item word-taigi">
+          <div v-if="word.taiwanese != null" class="word-item word-taigi alphabetic">
             {{ word.taiwanese }}
           </div>
-          <div v-if="word.chinese != null" class="word-item word-chinese">
+          <div v-if="word.chinese != null" class="word-item word-chinese logographic" >
             {{ word.chinese }}
             <IconPlayAudio @click="readChinese(word.chinese)"></IconPlayAudio>
           </div>
         </div>
-        <div v-if="word.english != null" class="word-item word-english">
+        <div v-if="word.english != null" class="word-item word-english alphabetic">
           {{ word.english }}
           <IconPlayAudio @click="readEnglish(word.english)" />
         </div>
-        <div v-if="word.english_mknoll != null" class="word-item word-english">
+        <div v-if="word.english_mknoll != null" class="word-item word-english alphabetic">
           {{ word.english_mknoll }}
           <IconPlayAudio @click="readEnglish(word.english_mknoll)" />
         </div>
         <ul>
           <li v-for="def in word.definitions" :key="def.id">
             <ul>
-              <li>{{ def.def_english }}</li>
-              <li>{{ def.def_chinese }}</li>
+              <li class="alphabetic">{{ def.def_english }}</li>
+              <li class="logographic">{{ def.def_chinese }}</li>
             </ul>
           </li>
         </ul>
@@ -319,12 +323,12 @@ export default {
         if (exactSearch.value) {
           // Perform exact match search
           query = query.or(
-            `chinese.eq.${searchQuery.value},english.eq.${searchQuery.value},english_mknoll.eq.${searchQuery.value}`
+            `chinese.eq.${searchQuery.value},english.eq.${searchQuery.value},english_mknoll.eq.${searchQuery.value},romaji.eq.${searchQuery.value},taiwanese.eq.${searchQuery.value}`
           );
         } else {
           // Perform partial match search
           query = query.or(
-            `chinese.ilike.%${searchQuery.value}%,english.ilike.%${searchQuery.value}%,english_mknoll.ilike.%${searchQuery.value}%`
+            `chinese.ilike.%${searchQuery.value}%,english.ilike.%${searchQuery.value}%,english_mknoll.ilike.%${searchQuery.value}%,romaji.ilike.%${searchQuery.value}%,taiwanese.ilike.%${searchQuery.value}%`
           );
         }
 
@@ -394,7 +398,6 @@ results
 */
 .results {
   margin: 0 5vw;
-  color: black;
 }
 .results-count {
   padding: 0.5rem 0;
@@ -456,7 +459,7 @@ Edit dialog
   top: 0;
   height: 100vh;
   width: 100vw;
-  background-color: white;
+  background-color: var(--greenPrimaryLight);
   transition: 1s all ease-in-out;
 }
 </style>

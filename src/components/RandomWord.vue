@@ -3,17 +3,17 @@
     <h4>Random word</h4>
     <div class="rw-words">
       <div class="rw-words-main">
-        <div v-if="randomWordData.taiwanese" class="rw-word-item rw-taigi">
-          {{ randomWordData.taiwanese }}
-        </div>
-        <div v-if="randomWordData.romaji" class="rw-word-item rw-taigi">
+        <div v-if="randomWordData.romaji" class="rw-word-item rw-taigi alphabetic">
           {{ randomWordData.romaji }}
           <AudioPlayerTaigi
             v-if="randomWordData.audioid"
             :audioID="randomWordData.audioid"
           />
         </div>
-        <div v-if="randomWordData.chinese" class="rw-word-item rw-chinese">
+        <div v-if="randomWordData.taiwanese" class="rw-word-item rw-taigi alphabetic">
+          {{ randomWordData.taiwanese }}
+        </div>
+        <div v-if="randomWordData.chinese" class="rw-word-item rw-chinese logographic">
           {{ randomWordData.chinese }}
           <IconPlayAudio
             v-if="randomWordData.chinese"
@@ -21,14 +21,14 @@
           />
         </div>
       </div>
-      <div v-if="randomWordData.english" class="rw-word-item rw-english">
+      <div v-if="randomWordData.english" class="rw-word-item rw-english alphabetic">
         {{ randomWordData.english }}
         <IconPlayAudio
           v-if="randomWordData.english"
           @click="readEnglish(randomWordData.english)"
         />
       </div>
-      <div v-if="randomWordData.english_mknoll" class="rw-word-item rw-english">
+      <div v-if="randomWordData.english_mknoll" class="rw-word-item rw-english alphabetic">
         {{ randomWordData.english_mknoll }}
         <IconPlayAudio
           v-if="randomWordData.english_mknoll"
@@ -42,8 +42,8 @@
       class="rw-definitions"
     >
       <ul>
-        <li>{{ definition.def_chinese }}</li>
-        <li>{{ definition.def_english }}</li>
+        <li class="logographic">{{ definition.def_chinese }}</li>
+        <li class="alphabetic">{{ definition.def_english }}</li>
       </ul>
     </div>
     <button @click="fetchRandomWordAndDefinitions">Next word</button>
@@ -124,16 +124,15 @@ const readEnglish = async (text) => {
 <style scoped>
 h4 {
   padding: 0.25rem 0.5rem;
-  color: white;
-  background-color: rgb(100, 100, 100);
+  background-color: var(--rw-header-background);
   display: inline;
 }
 .rw {
   border: px solid;
   margin: 5vw;
   padding: 1rem;
-  color: white;
-  background-color: black;
+  /* color: white; */
+  background-color: var(--rw-background);
 }
 .rw-words-main,
 .rw-word-item {

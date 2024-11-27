@@ -9,63 +9,93 @@
 @import url("https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New&display=swap");
 
-body {
- font-family: "Cormorant Garamond", serif;
-  color: rgb(75, 74, 74);
-}
+/* color palette */
+
 :root {
-  --black: rgb(29, 27, 27);
+  --black: rgb(0, 32, 0);
   --white: rgb(218, 218, 218);
-  --greenPrimary: rgb(0, 128, 0);
-  --greenPrimaryDark: rgb(0, 76, 0);
-  --greenPrimaryLight: rgb(218, 235, 218);
+  --green: rgb(0, 128, 0);
+  --greenLight: #dbebdb;
+  --greenDark: #004000;
   --serif: "Corda", serif;
-  color-scheme: light;
+  --sansSerif: sans-serif;
+  color-scheme: light dark;
+
+  /* CSS HEX */
+  --lavender-web: #eae8ffff;
+  --platinum: #d8d5dbff;
+  --french-gray: #adacb5ff;
+  --gunmetal: #2d3142ff;
+  --slate-gray: #6f84a1ff;
+  --uranian-blue: #b0d7ffff;
+
+  /* CSS HSL */
+  --lavender-web: hsla(245, 100%, 95%, 1);
+  --platinum: hsla(270, 8%, 85%, 1);
+  --french-gray: hsla(247, 6%, 69%, 1);
+  --gunmetal: hsla(229, 19%, 22%, 1);
+  --slate-gray: hsla(215, 21%, 53%, 1);
+  --uranian-blue: hsla(210, 100%, 85%, 1);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    color: rgb(42, 38, 38);
-    --color-background: var(--black);
-    /* --color-background-soft: var(--vt-c-black-soft);
-    --color-background-mute: var(--vt-c-black-mute);
-
-    --color-border: var(--vt-c-divider-dark-2);
-    --color-border-hover: var(--vt-c-divider-dark-1);
-
-    --color-heading: var(--vt-c-text-dark-1); */
-    --color-text: var(--white);
+    --color-text: var(--slate-gray);
+    --app-background: var(--gunmetal);
+    --button-background: var(--platinum);
+    --button-text-color: var(--black);
+    --rw-background: var(--greenLight);
+  }
+  body {
+    background: var(--app-background);
+    color: var(--color-text);
+  }
+  input[type="text"] {
+    background-color: var(--french-gray);
+  }
+  button {
+    background-color: var(--button-background);
+    color: var(--button-text-color);
   }
 }
 
+@media (prefers-color-scheme: light) {
+  :root {
+    --color-text: var(--greenDark);
+    --app-background: var(--white);
+    --button-background: var(--greenDark);
+    --button-text-color: var(--greenLight);
+    --rw-background: var(--greenDark);
+    color-scheme: light;
+  }
+  body {
+    background: var(--app-background);
+  }
+}
 *,
 *::before,
 *::after {
   box-sizing: border-box;
   margin: 0;
-  /* font-weight: normal; */
 }
 
 body {
   min-height: 100vh;
-  /* color: var(--color-text);
-  background: var(--color-background);
-  transition: color 0.5s, background-color 0.5s;
-  line-height: 1.6;*/
-  /* */
-  font-family: "Cardo", "Cormorant Garamond", sans-serif;
+  color: var(--color-text);
+  background: var(--app-background);
+  /*transition: color 0.5s, background-color 0.5s;*/
+  line-height: 1.6;
+  font-family: sans-serif;
   font-variant-ligatures: common-ligatures;
   font-feature-settings: "liga" 1;
-
-  /* font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif; */
-  /* font-size: 16px; */
+  font-size: 16px;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
 header {
   padding: 2rem;
 }
@@ -76,6 +106,7 @@ li {
   list-style-type: none;
   margin: 0;
   padding: 0;
+  /* font-family: "Cardo", "Cormorant Garamond", "Zen Kaku Gothic", sans-serif; */
 }
 input[type="text"] {
   font-size: 22px;
@@ -85,6 +116,15 @@ input[type="text"] {
 }
 button {
   padding: 0.5rem 1rem;
-  color:rgb(106, 106, 106);
   cursor: pointer;
+  font-size: 1rem;
+  border: none;
+}
+
+/* different language fonts */
+.alphabetic {
+  font-family: "Cardo", "Cormorant Garamond", "Zen Kaku Gothic", sans-serif;
+}
+.logographic {
+  font-family: "Zen Kaku Gothic", sans-serif;
 }
