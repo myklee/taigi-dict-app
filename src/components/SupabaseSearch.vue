@@ -459,7 +459,6 @@ Edit dialog
   top: 0;
   height: 100vh;
   width: 100vw;
-  background-color: var(--greenPrimaryLight);
   transition: 1s all ease-in-out;
 }
 </style>

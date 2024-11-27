@@ -10,6 +10,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@200..900&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Yuji+Syuku&display=swap");
 
 /* color palette */
 
@@ -28,6 +29,7 @@
   --platinum: #d8d5dbff;
   --french-gray: #adacb5ff;
   --gunmetal: #2d3142ff;
+  --raisinblack: #191c28;
   --slate-gray: #6f84a1ff;
   --uranian-blue: #b0d7ffff;
 
@@ -36,6 +38,7 @@
   --platinum: hsla(270, 8%, 85%, 1);
   --french-gray: hsla(247, 6%, 69%, 1);
   --gunmetal: hsla(229, 19%, 22%, 1);
+  --raisinblack: hsl(228, 23%, 13%);
   --slate-gray: hsla(215, 21%, 53%, 1);
   --uranian-blue: hsla(210, 100%, 85%, 1);
 }
@@ -43,21 +46,27 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --color-text: var(--slate-gray);
-    --app-background: var(--gunmetal);
-    --button-background: var(--platinum);
+    --app-background: var(--raisinblack);
+    --button-background: var(--slate-gray);
     --button-text-color: var(--black);
-    --rw-background: var(--greenLight);
+    --rw-background: var(--gunmetal);
+    --rw-header-background: var(--raisinblack);
+    --playAudioIcon: var(--slate-gray);
   }
   body {
     background: var(--app-background);
     color: var(--color-text);
   }
-  input[type="text"] {
-    background-color: var(--french-gray);
+  input[type="text"], textarea {
+    background-color: var(--gunmetal);
+    color: var(--slate-gray);
   }
   button {
     background-color: var(--button-background);
     color: var(--button-text-color);
+  }
+  .edit-dialog {
+    background-color: var(--raisinblack);
   }
 }
 
@@ -123,8 +132,8 @@ button {
 
 /* different language fonts */
 .alphabetic {
-  font-family: "Cardo", "Cormorant Garamond", "Zen Kaku Gothic", sans-serif;
+  font-family: "Cardo", "Cormorant Garamond", sans-serif;
 }
 .logographic {
-  font-family: "Zen Kaku Gothic", sans-serif;
+  font-family: "Yuji Syuku", "Noto Serif TC", "Zen Kaku Gothic", sans-serif;
 }
