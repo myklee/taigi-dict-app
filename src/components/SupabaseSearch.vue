@@ -9,11 +9,11 @@
         class="text-field search-words-text-field"
         autocapitalize="off"
       />
+      <div class="exact-search-container">
+        <input id="exact-search" type="checkbox" v-model="exactSearch" />
+        <label for="exact-search">Exact Search</label>
+      </div>
       <div class="search-actions">
-        <div class="exacxt-search-container">
-          <input id="exact-search" type="checkbox" v-model="exactSearch" />
-          <label for="exact-search">Exact Search</label>
-        </div>
         <button @click="searchWords">Search</button>
         <button @click="clearInput">Clear</button>
         <button @click="resetVoice">Reset Voice</button>
@@ -26,23 +26,38 @@
     <ul class="results">
       <li v-for="word in words" :key="word.id" class="entry">
         <div class="word">
-          <div v-if="word.romaji != null" class="word-item word-taigi alphabetic">
+          <div
+            v-if="word.romaji != null"
+            class="word-item word-taigi alphabetic"
+          >
             {{ word.romaji }}
             <AudioPlayerTaigi v-if="word.audioid" :audioID="word.audioid" />
           </div>
-          <div v-if="word.taiwanese != null" class="word-item word-taigi alphabetic">
+          <div
+            v-if="word.taiwanese != null"
+            class="word-item word-taigi alphabetic"
+          >
             {{ word.taiwanese }}
           </div>
-          <div v-if="word.chinese != null" class="word-item word-chinese logographic" >
+          <div
+            v-if="word.chinese != null"
+            class="word-item word-chinese logographic"
+          >
             {{ word.chinese }}
             <IconPlayAudio @click="readChinese(word.chinese)"></IconPlayAudio>
           </div>
         </div>
-        <div v-if="word.english != null" class="word-item word-english alphabetic">
+        <div
+          v-if="word.english != null"
+          class="word-item word-english alphabetic"
+        >
           {{ word.english }}
           <IconPlayAudio @click="readEnglish(word.english)" />
         </div>
-        <div v-if="word.english_mknoll != null" class="word-item word-english alphabetic">
+        <div
+          v-if="word.english_mknoll != null"
+          class="word-item word-english alphabetic"
+        >
           {{ word.english_mknoll }}
           <IconPlayAudio @click="readEnglish(word.english_mknoll)" />
         </div>
@@ -376,6 +391,9 @@ export default {
 search
 
 */
+#supasearch {
+  padding-bottom:2rem;
+}
 .search-words {
   padding: 0 5vw;
 }
@@ -385,10 +403,29 @@ search
   border-bottom: 3px solid;
   margin-bottom: 0.5rem;
   padding: 1rem;
+  background-color: transparent;
 }
 .search-actions {
   display: flex;
   gap: 0.5rem;
+}
+
+/* 
+
+exact search checkbox 
+
+*/
+
+.exact-search-container {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-right: 1rem;
+  padding: 1rem;
+  padding-left: 0;
+  label {
+    white-space: nowrap;
+  }
 }
 
 /* 
