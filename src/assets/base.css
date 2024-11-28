@@ -24,34 +24,24 @@
   --sansSerif: sans-serif;
   color-scheme: light dark;
 
-  /* CSS HEX */
-  --lavender-web: #eae8ffff;
-  --platinum: #d8d5dbff;
-  --french-gray: #adacb5ff;
-  --gunmetal: #2d3142ff;
-  --raisinblack: #191c28;
-  --slate-gray: #6f84a1ff;
-  --uranian-blue: #b0d7ffff;
-
   /* CSS HSL */
-  --lavender-web: hsla(245, 100%, 95%, 1);
   --platinum: hsla(270, 8%, 85%, 1);
-  --french-gray: hsla(247, 6%, 69%, 1);
+  --frenchGray: hsla(247, 6%, 69%, 1);
   --gunmetal: hsla(229, 19%, 22%, 1);
-  --raisinblack: hsl(228, 23%, 13%);
-  --slate-gray: hsla(215, 21%, 53%, 1);
+  --raisinBlack: hsl(228, 23%, 13%);
+  --slateGray: hsla(215, 21%, 53%, 1);
   --uranian-blue: hsla(210, 100%, 85%, 1);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-text: var(--slate-gray);
-    --app-background: var(--raisinblack);
-    --button-background: var(--slate-gray);
+    --color-text: var(--frenchGray);
+    --app-background: var(--raisinBlack);
+    --button-background: var(--slateGray);
     --button-text-color: var(--black);
     --rw-background: var(--gunmetal);
-    --rw-header-background: var(--raisinblack);
-    --playAudioIcon: var(--slate-gray);
+    --rw-header-background: var(--raisinBlack);
+    --playAudioIcon: var(--slateGray);
   }
   body {
     background: var(--app-background);
@@ -59,30 +49,17 @@
   }
   input[type="text"], textarea {
     background-color: var(--gunmetal);
-    color: var(--slate-gray);
+    color: var(--white);
   }
   button {
     background-color: var(--button-background);
     color: var(--button-text-color);
   }
   .edit-dialog {
-    background-color: var(--raisinblack);
+    background-color: var(--raisinBlack);
   }
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    --color-text: var(--greenDark);
-    --app-background: var(--white);
-    --button-background: var(--greenDark);
-    --button-text-color: var(--greenLight);
-    --rw-background: var(--greenDark);
-    color-scheme: light;
-  }
-  body {
-    background: var(--app-background);
-  }
-}
 *,
 *::before,
 *::after {
@@ -94,7 +71,6 @@ body {
   min-height: 100vh;
   color: var(--color-text);
   background: var(--app-background);
-  /*transition: color 0.5s, background-color 0.5s;*/
   line-height: 1.6;
   font-family: sans-serif;
   font-variant-ligatures: common-ligatures;
@@ -135,5 +111,5 @@ button {
   font-family: "Cardo", "Cormorant Garamond", sans-serif;
 }
 .logographic {
-  font-family: "Yuji Syuku", "Noto Serif TC", "Zen Kaku Gothic", sans-serif;
+  font-family: "Noto Serif TC", "Zen Kaku Gothic", sans-serif;
 }

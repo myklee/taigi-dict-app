@@ -33,14 +33,13 @@
 .icon-play-container {
   width: 32px;
   height: 32px;
-  border: 1px solid;
-  border-radius: 50%;
+  /* border: 1px solid;
+  border-radius: 50%; */
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  /* background-color: rgb(235, 235, 235); */
 }
 .play-audio {
   fill: var(--playAudioIcon);
