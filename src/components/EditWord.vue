@@ -230,3 +230,20 @@ export default {
   },
 };
 </script>
+<style scoped>
+/* 
+
+Edit dialog  
+
+*/
+
+.edit-dialog {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  height: 100vh;
+  width: 100vw;
+  transition: 1s all ease-in-out;
+  overflow: scroll;
+}
+</style>

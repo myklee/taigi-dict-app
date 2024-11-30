@@ -1,41 +1,43 @@
 <template>
   <div id="supasearch">
-    <div class="search-words">
-      <input
-        type="text"
-        v-model="searchQuery"
-        @keyup.enter="searchWords"
-        placeholder="Search for a word..."
-        class="text-field search-words-text-field"
-        autocapitalize="off"
-      />
-      <button
-        v-if="searchQuery.length > 0"
-        class="clear-search"
-        @click="clearInput"
-      >
-        <span class="visually-hidden">Clear</span>
-      </button>
-    </div>
-    <div class="search-options">
-      <div class="exact-search-container">
+    <div class="search-header">
+      <div class="search-words">
         <input
-          id="exact-search"
-          type="checkbox"
-          v-model="exactSearch"
-          @change="searchWords"
+          type="text"
+          v-model="searchQuery"
+          @keyup.enter="searchWords"
+          placeholder="Search for a word..."
+          class="text-field search-words-text-field"
+          autocapitalize="off"
         />
-        <label for="exact-search">Exact Search</label>
+        <button
+          v-if="searchQuery.length > 0"
+          class="clear-search"
+          @click="clearInput"
+        >
+          <span class="visually-hidden">Clear</span>
+        </button>
       </div>
-      <div class="search-actions">
-        <button class="search-button" @click="searchWords">Search</button>
+      <div class="search-options">
+        <div class="exact-search-container">
+          <input
+            id="exact-search"
+            type="checkbox"
+            v-model="exactSearch"
+            @change="searchWords"
+          />
+          <label for="exact-search">Exact Search</label>
+        </div>
+        <div class="search-actions">
+          <button class="search-button" @click="searchWords">Search</button>
+        </div>
       </div>
-    </div>
-    <div class="search-results-header">
-      <div v-if="searchExecuted" class="results-count">
-        {{ words.length }} result<span v-if="words.length != 1">s</span> found
+      <div class="search-results-header">
+        <div v-if="searchExecuted" class="results-count">
+          {{ words.length }} result<span v-if="words.length != 1">s</span> found
+        </div>
+        <!-- <button class="reset-voice" @click="resetVoice">Reset Voice</button> -->
       </div>
-      <!-- <button class="reset-voice" @click="resetVoice">Reset Voice</button> -->
     </div>
     <ul class="results">
       <li v-for="word in words" :key="word.id" class="entry">
@@ -89,7 +91,7 @@
       </li>
     </ul>
 
-    <EditWord :visible="showDialog" :word="word" @close="showDialog = false" />
+    <EditWord :visible="showDialog" :word="word" @close="closeDialog()" />
   </div>
 </template>
 
@@ -128,6 +130,7 @@ export default {
 
     const openEditDialog = (selectedWord) => {
       showDialog.value = true;
+      document.body.style.overflow = "hidden";
       word.value = {
         ...selectedWord,
         definitions: selectedWord.definitions || [], // Initialize as an empty array if undefined
@@ -136,6 +139,7 @@ export default {
 
     const closeDialog = () => {
       showDialog.value = false;
+      document.body.style.overflow = "scroll";
     };
 
     const searchWords = async () => {
@@ -206,9 +210,11 @@ search
 #supasearch {
   padding-bottom: 2rem;
 }
+
 .search-words {
   position: relative;
   padding: 0 5vw;
+  
 }
 .search-words-text-field {
   width: 100%;
@@ -322,18 +328,5 @@ entry
   display: block;
   width: 100px;
   margin-top: 1rem;
-}
-/* 
-
-Edit dialog  
-
-*/
-
-.edit-dialog {
-  position: fixed;
-  top: 0;
-  height: 100vh;
-  width: 100vw;
-  transition: 1s all ease-in-out;
 }
 </style>
