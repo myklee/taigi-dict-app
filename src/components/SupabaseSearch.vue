@@ -19,16 +19,21 @@
     </div>
     <div class="search-options">
       <div class="exact-search-container">
-        <input id="exact-search" type="checkbox" v-model="exactSearch" />
+        <input
+          id="exact-search"
+          type="checkbox"
+          v-model="exactSearch"
+          @change="searchWords"
+        />
         <label for="exact-search">Exact Search</label>
       </div>
       <div class="search-actions">
         <button class="search-button" @click="searchWords">Search</button>
       </div>
     </div>
-    <div v-if="words.length" class="search-results-header">
-      <div class="results-count">
-        {{ words.length }} result<span v-if="words.length > 1">s</span> found
+    <div class="search-results-header">
+      <div v-if="searchExecuted" class="results-count">
+        {{ words.length }} result<span v-if="words.length != 1">s</span> found
       </div>
       <!-- <button class="reset-voice" @click="resetVoice">Reset Voice</button> -->
     </div>
@@ -84,108 +89,7 @@
       </li>
     </ul>
 
-    <div v-if="showDialog" class="edit-dialog">
-      <button @click="closeDialog">Close</button>
-      <form @submit.prevent="updateWord">
-        <div>
-          <label for="romaji">Romaji</label>
-          <input v-model="word.romaji" type="text" id="romaji" />
-        </div>
-        <div>
-          <label for="romaji">Taiwanese</label>
-          <input v-model="word.taiwanese" type="text" id="taiwanese" />
-        </div>
-        <div>
-          <label for="english">English</label>
-          <input v-model="word.english" type="text" id="english" />
-        </div>
-        <div>
-          <label for="english_mknoll">English Mary Knoll</label>
-          <input
-            v-model="word.english_mknoll"
-            type="text"
-            id="english_mknoll"
-          />
-        </div>
-        <div>
-          <label for="chinese">Chinese</label>
-          <input v-model="word.chinese" type="text" id="chinese" />
-        </div>
-        <div>
-          <label for="classification">Classification:</label>
-          <input
-            v-model="word.classification"
-            type="text"
-            id="classification"
-          />
-        </div>
-        <button type="submit">Save Word</button>
-      </form>
-      <div v-if="word.definitions.length > 0">
-        <div
-          v-for="(definition, index) in word.definitions"
-          :key="definition.defid"
-        >
-          <form @submit.prevent="updateDefinition(definition.defid, index)">
-            <div>
-              <label for="def_english">English Definition:</label>
-              <textarea
-                v-model="definition.def_english"
-                id="def_english"
-              ></textarea>
-            </div>
-            <div>
-              <label for="def_chinese">Chinese Definition:</label>
-              <input
-                v-model="definition.def_chinese"
-                type="text"
-                id="def_chinese"
-              />
-            </div>
-            <div>
-              <label for="partofspeech">Part of Speech:</label>
-              <input
-                v-model="definition.partofspeech"
-                type="text"
-                id="partofspeech"
-              />
-            </div>
-            <button type="submit">Save Definition</button>
-            <!-- Delete button -->
-            <button
-              type="button"
-              @click="deleteDefinition(definition.defid, index)"
-            >
-              Delete Definition
-            </button>
-          </form>
-        </div>
-      </div>
-      <div class="add-definition">
-        <h4>Add a new definition</h4>
-        <form @submit.prevent="addDefinition(word.id)">
-          <div>
-            <label for="partofspeech">Part of Speech:</label>
-            <input v-model="newDefinition.partofspeech" id="partofspeech" />
-          </div>
-          <div>
-            <label for="def_english">English Definition:</label>
-            <textarea
-              v-model="newDefinition.def_english"
-              id="def_english"
-            ></textarea>
-          </div>
-          <div>
-            <label for="def_chinese">Chinese Definition:</label>
-            <textarea
-              v-model="newDefinition.def_chinese"
-              id="def_chinese"
-            ></textarea>
-          </div>
-          <button type="submit">Add Definition</button>
-        </form>
-      </div>
-    </div>
+    <EditWord :visible="showDialog" :word="word" @close="showDialog = false" />
   </div>
 </template>
 
@@ -195,11 +99,13 @@ import { supabase } from "/src/supabase";
 import AudioPlayerTaigi from "./AudioPlayerTaigi.vue";
 import IconPlayAudio from "./icons/IconPlayAudio.vue";
 import { speakChinese, speakEnglish } from "@/utils";
+import EditWord from "./EditWord.vue";
 
 export default {
   components: {
     AudioPlayerTaigi,
     IconPlayAudio,
+    EditWord,
   },
   setup() {
     const words = ref([]);
@@ -212,10 +118,12 @@ export default {
       def_english: "",
       def_chinese: "",
     });
+    const searchExecuted = ref(false);
 
     const clearInput = () => {
       searchQuery.value = "";
       words.value = [];
+      searchExecuted.value = false;
     };
 
     const openEditDialog = (selectedWord) => {
@@ -230,105 +138,8 @@ export default {
       showDialog.value = false;
     };
 
-    const updateWord = async () => {
-      const { data, error } = await supabase.from("words").upsert({
-        id: word.value.id,
-        chinese: word.value.chinese,
-        romaji: word.value.romaji,
-        classification: word.value.classification,
-        english: word.value.english,
-      });
-
-      if (error) console.error("Error updating word:", error.message);
-      else console.log("Word updated successfully:", data);
-    };
-
-    const updateDefinition = async (defid, index) => {
-      const definition = word.value.definitions[index];
-      const { data, error } = await supabase.from("definitions").upsert({
-        defid: defid,
-        wordid: word.value.id,
-        partofspeech: definition.partofspeech,
-        def_english: definition.def_english,
-        def_chinese: definition.def_chinese,
-      });
-
-      if (error) console.error("Error updating definition:", error.message);
-      else console.log("Definition updated successfully:", data);
-    };
-
-    const addDefinition = async (wordId) => {
-      try {
-        // Validate input
-        if (!wordId) {
-          throw new Error("No word ID provided.");
-        }
-
-        // Prepare the new definition object
-        const newDef = {
-          wordid: wordId, // Associate with the correct word
-          partofspeech: newDefinition.value.partofspeech,
-          def_english: newDefinition.value.def_english,
-          def_chinese: newDefinition.value.def_chinese,
-        };
-
-        // Insert the new definition into the 'definitions' table
-        const { data, error } = await supabase
-          .from("definitions")
-          .insert([newDef])
-          .select(); // Use `.select()` to fetch the inserted data
-
-        if (error) {
-          console.error("Error adding definition:", error.message);
-          return;
-        }
-
-        // Update the UI with the new definition
-        if (data && data.length > 0) {
-          const addedDefinition = data[0]; // Get the newly added definition
-
-          // Ensure word.definitions is reactive and update it
-          if (!word.value.definitions) {
-            word.value.definitions = [];
-          }
-          word.value.definitions.push(addedDefinition); // Add the new definition to the UI
-
-          // Reset the new definition form
-          newDefinition.value = {
-            partofspeech: "",
-            def_english: "",
-            def_chinese: "",
-          };
-
-          console.log("Definition added successfully:", addedDefinition);
-        }
-      } catch (err) {
-        console.error("Error in addDefinition:", err.message);
-      }
-    };
-
-    const deleteDefinition = async (defid, index) => {
-      try {
-        // Remove the definition from the database
-        const { data, error } = await supabase
-          .from("definitions")
-          .delete()
-          .eq("defid", defid);
-
-        if (error) {
-          console.error("Error deleting definition:", error.message);
-          return;
-        }
-
-        // Update the local definitions array
-        word.value.definitions.splice(index, 1);
-        console.log("Definition deleted successfully:", data);
-      } catch (err) {
-        console.error("Error in deleteDefinition:", err.message);
-      }
-    };
-
     const searchWords = async () => {
+      searchExecuted.value = true;
       try {
         let query = supabase
           .from("words")
@@ -349,6 +160,8 @@ export default {
         }
 
         const { data, error } = await query;
+
+        console.log(data);
         if (error) {
           console.error("Error fetching words:", error.message);
         } else {
@@ -372,12 +185,10 @@ export default {
       newDefinition,
       clearInput,
       openEditDialog,
+      EditWord,
       closeDialog,
-      updateWord,
-      updateDefinition,
-      deleteDefinition,
-      addDefinition,
       searchWords,
+      searchExecuted,
       readChinese,
       readEnglish,
       resetVoice,

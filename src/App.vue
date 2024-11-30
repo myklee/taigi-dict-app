@@ -39,6 +39,13 @@ onMounted(async () => {
     <!-- <DictionarySearch /> -->
     <SupabaseSearch />
     <RandomWord />
+    <!-- <div id="auth">
+      <input type="email" id="email" placeholder="Email" />
+      <input type="password" id="password" placeholder="Password" />
+      <button onclick="login()">Login</button>
+      <button onclick="signUp()">Sign Up</button>
+      <button onclick="logout()">Logout</button>
+    </div> -->
   </main>
   <footer>
     <!-- Data provided by 2024 Ministry of Education, R.O.C.  -->
