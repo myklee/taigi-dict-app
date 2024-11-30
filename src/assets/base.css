@@ -37,17 +37,18 @@
   :root {
     --color-text: var(--frenchGray);
     --app-background: var(--raisinBlack);
-    --button-background: var(--slateGray);
+    --button-background: var(--frenchGray);
     --button-text-color: var(--black);
     --rw-background: var(--gunmetal);
     --rw-header-background: var(--raisinBlack);
-    --playAudioIcon: var(--slateGray);
+    --playAudioIcon: var(--frenchGray);
   }
   body {
     background: var(--app-background);
     color: var(--color-text);
   }
-  input[type="text"], textarea {
+  input[type="text"],
+  textarea {
     background-color: var(--gunmetal);
     color: var(--white);
   }
@@ -94,9 +95,13 @@ li {
   /* font-family: "Cardo", "Cormorant Garamond", "Zen Kaku Gothic", sans-serif; */
 }
 input[type="text"] {
-  font-size: 22px;
+  font-size: 1.5rem;
   &::placeholder {
-    font-size: 22px;
+    color: var(--slateGray);
+  }
+  &:focus {
+    outline: none;
+    background-color: var(--gunmetal);
   }
 }
 button {
@@ -112,4 +117,16 @@ button {
 }
 .logographic {
   font-family: "Noto Serif TC", "Zen Kaku Gothic", sans-serif;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap; /* Prevent the text from wrapping */
+  border: 0;
 }

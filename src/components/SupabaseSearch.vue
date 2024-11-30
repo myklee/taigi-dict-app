@@ -9,20 +9,29 @@
         class="text-field search-words-text-field"
         autocapitalize="off"
       />
+      <button
+        v-if="searchQuery.length > 0"
+        class="clear-search"
+        @click="clearInput"
+      >
+        <span class="visually-hidden">Clear</span>
+      </button>
+    </div>
+    <div class="search-options">
       <div class="exact-search-container">
         <input id="exact-search" type="checkbox" v-model="exactSearch" />
         <label for="exact-search">Exact Search</label>
       </div>
       <div class="search-actions">
-        <button @click="searchWords">Search</button>
-        <button @click="clearInput">Clear</button>
-        <button @click="resetVoice">Reset Voice</button>
-      </div>
-      <div v-if="words.length" class="results-count">
-        {{ words.length }} results found
+        <button class="search-button" @click="searchWords">Search</button>
       </div>
     </div>
-
+    <div v-if="words.length" class="search-results-header">
+      <div class="results-count">
+        {{ words.length }} result<span v-if="words.length > 1">s</span> found
+      </div>
+      <!-- <button class="reset-voice" @click="resetVoice">Reset Voice</button> -->
+    </div>
     <ul class="results">
       <li v-for="word in words" :key="word.id" class="entry">
         <div class="word">
@@ -152,8 +161,8 @@
           </form>
         </div>
       </div>
-      <div>
-        add a new definition
+      <div class="add-definition">
+        <h4>Add a new definition</h4>
         <form @submit.prevent="addDefinition(word.id)">
           <div>
             <label for="partofspeech">Part of Speech:</label>
@@ -203,14 +212,6 @@ export default {
       def_english: "",
       def_chinese: "",
     });
-
-    // const fetchWords = async () => {
-    //   const { data, error } = await supabase
-    //     .from("words")
-    //     .select(`id, english, definitions (defid, def_english)`);
-    //   if (error) console.error(error);
-    //   else words.value = data;
-    // };
 
     const clearInput = () => {
       searchQuery.value = "";
@@ -392,22 +393,42 @@ search
 
 */
 #supasearch {
-  padding-bottom:2rem;
+  padding-bottom: 2rem;
 }
 .search-words {
+  position: relative;
   padding: 0 5vw;
 }
 .search-words-text-field {
   width: 100%;
   border: none;
   border-bottom: 3px solid;
-  margin-bottom: 0.5rem;
   padding: 1rem;
   background-color: transparent;
 }
-.search-actions {
+.clear-search {
+  position: absolute;
+  right: calc(5vw);
+  background-color: transparent;
+  color: var(--frenchGray);
+  &:hover {
+    color: white;
+  }
+  &::after {
+    display: block;
+    content: "+";
+    font-size: 2.5rem;
+    transform: rotate(45deg);
+  }
+}
+.search-options {
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 5vw;
+}
+.reset-voice {
+  justify-self: end;
 }
 
 /* 
@@ -433,6 +454,12 @@ exact search checkbox
 results
 
 */
+.search-results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 5vw;
+}
 .results {
   margin: 0 5vw;
 }
@@ -449,7 +476,7 @@ entry
 .entry {
   margin: 1rem 0;
   padding: 1rem 0;
-  border-top: 1px solid;
+  border-top: 1px solid var(--gunmetal);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
