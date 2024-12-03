@@ -32,13 +32,19 @@
           <button class="search-button" @click="searchWords">Search</button>
         </div>
       </div>
+
       <div class="search-results-header">
-        <div v-if="searchExecuted" class="results-count">
-          {{ words.length }} result<span v-if="words.length != 1">s</span> found
+        <Loader v-if="loading" />
+        <div v-else>
+          <div v-if="searchExecuted" class="results-count">
+            {{ words.length }} result<span v-if="words.length != 1">s</span>
+            found
+          </div>
         </div>
         <!-- <button class="reset-voice" @click="resetVoice">Reset Voice</button> -->
       </div>
     </div>
+
     <ul class="results">
       <li v-for="word in words" :key="word.id" class="entry">
         <div class="word">
@@ -102,12 +108,14 @@ import AudioPlayerTaigi from "./AudioPlayerTaigi.vue";
 import IconPlayAudio from "./icons/IconPlayAudio.vue";
 import { speakChinese, speakEnglish } from "@/utils";
 import EditWord from "./EditWord.vue";
+import Loader from "./utility/Loader.vue";
 
 export default {
   components: {
     AudioPlayerTaigi,
     IconPlayAudio,
     EditWord,
+    Loader,
   },
   setup() {
     const words = ref([]);
@@ -120,6 +128,7 @@ export default {
       def_english: "",
       def_chinese: "",
     });
+    const loading = ref(false);
     const searchExecuted = ref(false);
 
     const clearInput = () => {
@@ -143,8 +152,9 @@ export default {
     };
 
     const searchWords = async () => {
-      searchExecuted.value = true;
       try {
+        loading.value = true; // Start loading
+        searchExecuted.value = true;
         let query = supabase
           .from("words")
           .select(
@@ -165,7 +175,7 @@ export default {
 
         const { data, error } = await query;
 
-        console.log(data);
+        // console.log(data);
         if (error) {
           console.error("Error fetching words:", error.message);
         } else {
@@ -173,6 +183,8 @@ export default {
         }
       } catch (err) {
         console.error("Error in searchWords:", err.message);
+      } finally {
+        loading.value = false; // stop loading
       }
     };
 
@@ -190,6 +202,8 @@ export default {
       clearInput,
       openEditDialog,
       EditWord,
+      Loader,
+      loading,
       closeDialog,
       searchWords,
       searchExecuted,
@@ -214,7 +228,6 @@ search
 .search-words {
   position: relative;
   padding: 0 5vw;
-  
 }
 .search-words-text-field {
   width: 100%;

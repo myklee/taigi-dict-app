@@ -1,37 +1,48 @@
 <template>
   <div class="edit-dialog" v-if="visible">
-    <button @click="close">Close</button>
-    <form @submit.prevent="updateWord">
-      <div>
-        <label for="romaji">Romaji</label>
-        <input v-model="word.romaji" type="text" id="romaji" />
-      </div>
-      <div>
-        <label for="taiwanese">Taiwanese</label>
-        <input v-model="word.taiwanese" type="text" id="taiwanese" />
-      </div>
-      <div>
-        <label for="english">English</label>
-        <input v-model="word.english" type="text" id="english" />
-      </div>
-      <div>
-        <label for="english_mknoll">English Mary Knoll</label>
-        <input v-model="word.english_mknoll" type="text" id="english_mknoll" />
-      </div>
-      <div>
-        <label for="chinese">Chinese</label>
-        <input v-model="word.chinese" type="text" id="chinese" />
-      </div>
-      <div>
-        <label for="classification">Classification:</label>
-        <input v-model="word.classification" type="text" id="classification" />
-      </div>
-      <button type="submit">Save Word</button>
-    </form>
-    <div v-if="word.definitions.length > 0">
+    <button class="close-dialog" @click="close">Close</button>
+    <div class="edit-word">
+      <form @submit.prevent="updateWord">
+        <div>
+          <label for="romaji">Romaji</label>
+          <input v-model="word.romaji" type="text" id="romaji" />
+        </div>
+        <div>
+          <label for="taiwanese">Taiwanese</label>
+          <input v-model="word.taiwanese" type="text" id="taiwanese" />
+        </div>
+        <div>
+          <label for="english">English</label>
+          <input v-model="word.english" type="text" id="english" />
+        </div>
+        <div>
+          <label for="english_mknoll">English Mary Knoll</label>
+          <input
+            v-model="word.english_mknoll"
+            type="text"
+            id="english_mknoll"
+          />
+        </div>
+        <div>
+          <label for="chinese">Chinese</label>
+          <input v-model="word.chinese" type="text" id="chinese" />
+        </div>
+        <div>
+          <label for="classification">Classification:</label>
+          <input
+            v-model="word.classification"
+            type="text"
+            id="classification"
+          />
+        </div>
+        <button type="submit">Save Word</button>
+      </form>
+    </div>
+    <div class="definitions" v-if="word.definitions.length > 0">
       <div
         v-for="(definition, index) in word.definitions"
         :key="definition.defid"
+        class="definition-container"
       >
         <form @submit.prevent="updateDefinition(definition.defid, index)">
           <div>
@@ -231,9 +242,9 @@ export default {
 };
 </script>
 <style scoped>
-/* 
+/*
 
-Edit dialog  
+Edit dialog
 
 */
 
@@ -245,5 +256,24 @@ Edit dialog
   width: 100vw;
   transition: 1s all ease-in-out;
   overflow: scroll;
+}
+.definition-container {
+    padding: 5vw;
+}
+.close-dialog {
+  position: fixed;
+  top:0;
+  right: 0;
+  background-color: var(--app-background);
+  color: var(--frenchGray);
+  &:hover {
+    color: white;
+  }
+  &::after {
+    display: block;
+    content: "+";
+    font-size: 2.5rem;
+    transform: rotate(45deg);
+  }
 }
 </style>

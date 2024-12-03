@@ -1,19 +1,32 @@
 <template>
+  <Loader v-if="loading && !randomWordData" />
+
   <div class="rw" v-if="randomWordData">
+    <Loader v-if="loading" />
+
     <h4>Random word</h4>
     <div class="rw-words">
       <div class="rw-words-main">
-        <div v-if="randomWordData.romaji" class="rw-word-item rw-taigi alphabetic">
+        <div
+          v-if="randomWordData.romaji"
+          class="rw-word-item rw-taigi alphabetic"
+        >
           {{ randomWordData.romaji }}
           <AudioPlayerTaigi
             v-if="randomWordData.audioid"
             :audioID="randomWordData.audioid"
           />
         </div>
-        <div v-if="randomWordData.taiwanese" class="rw-word-item rw-taigi alphabetic">
+        <div
+          v-if="randomWordData.taiwanese"
+          class="rw-word-item rw-taigi alphabetic"
+        >
           {{ randomWordData.taiwanese }}
         </div>
-        <div v-if="randomWordData.chinese" class="rw-word-item rw-chinese logographic">
+        <div
+          v-if="randomWordData.chinese"
+          class="rw-word-item rw-chinese logographic"
+        >
           {{ randomWordData.chinese }}
           <IconPlayAudio
             v-if="randomWordData.chinese"
@@ -21,14 +34,20 @@
           />
         </div>
       </div>
-      <div v-if="randomWordData.english" class="rw-word-item rw-english alphabetic">
+      <div
+        v-if="randomWordData.english"
+        class="rw-word-item rw-english alphabetic"
+      >
         {{ randomWordData.english }}
         <IconPlayAudio
           v-if="randomWordData.english"
           @click="readEnglish(randomWordData.english)"
         />
       </div>
-      <div v-if="randomWordData.english_mknoll" class="rw-word-item rw-english alphabetic">
+      <div
+        v-if="randomWordData.english_mknoll"
+        class="rw-word-item rw-english alphabetic"
+      >
         {{ randomWordData.english_mknoll }}
         <IconPlayAudio
           v-if="randomWordData.english_mknoll"
@@ -47,6 +66,7 @@
       </ul>
     </div>
     <button @click="fetchRandomWordAndDefinitions">Next word</button>
+    <EditWord :visible="showDialog" :word="word" @close="closeDialog()" />
   </div>
 </template>
 
@@ -57,11 +77,16 @@ import AudioPlayerTaigi from "./AudioPlayerTaigi.vue";
 import { speakChinese } from "@/utils";
 import { speakEnglish } from "@/utils";
 import IconPlayAudio from "./icons/IconPlayAudio.vue";
+import Loader from "./utility/Loader.vue";
+import EditWord from "./EditWord.vue";
 
 const randomWordData = ref(null);
 
+const loading = ref(true);
+
 const fetchRandomWordAndDefinitions = async () => {
   try {
+    loading.value = true; // Start loading
     // Step 1: Get the total count of words
     const { count } = await supabase
       .from("words")
@@ -94,6 +119,8 @@ const fetchRandomWordAndDefinitions = async () => {
     console.log(randomWordData);
   } catch (error) {
     console.error("Error fetching random word and definitions:", error.message);
+  } finally {
+    loading.value = false; // End loading
   }
 };
 
