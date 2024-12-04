@@ -1,71 +1,73 @@
 <template>
-  <Loader v-if="loading && !randomWordData" />
+  <div class="rw">
+    <Loader v-if="loading && !randomWordData" />
 
-  <div class="rw" v-if="randomWordData">
-    <Loader v-if="loading" />
+    <div v-if="randomWordData">
+      <Loader v-if="loading" />
 
-    <h4>Random word</h4>
-    <div class="rw-words">
-      <div class="rw-words-main">
-        <div
-          v-if="randomWordData.romaji"
-          class="rw-word-item rw-taigi alphabetic"
-        >
-          {{ randomWordData.romaji }}
-          <AudioPlayerTaigi
-            v-if="randomWordData.audioid"
-            :audioID="randomWordData.audioid"
-          />
-        </div>
-        <div
-          v-if="randomWordData.taiwanese"
-          class="rw-word-item rw-taigi alphabetic"
-        >
-          {{ randomWordData.taiwanese }}
-        </div>
-        <div
-          v-if="randomWordData.chinese"
-          class="rw-word-item rw-chinese logographic"
-        >
-          {{ randomWordData.chinese }}
-          <IconPlayAudio
+      <h4>Random word</h4>
+      <div class="rw-words">
+        <div class="rw-words-main">
+          <div
+            v-if="randomWordData.romaji"
+            class="rw-word-item rw-taigi alphabetic"
+          >
+            {{ randomWordData.romaji }}
+            <AudioPlayerTaigi
+              v-if="randomWordData.audioid"
+              :audioID="randomWordData.audioid"
+            />
+          </div>
+          <div
+            v-if="randomWordData.taiwanese"
+            class="rw-word-item rw-taigi alphabetic"
+          >
+            {{ randomWordData.taiwanese }}
+          </div>
+          <div
             v-if="randomWordData.chinese"
-            @click="readChinese(randomWordData.chinese)"
+            class="rw-word-item rw-chinese logographic"
+          >
+            {{ randomWordData.chinese }}
+            <IconPlayAudio
+              v-if="randomWordData.chinese"
+              @click="readChinese(randomWordData.chinese)"
+            />
+          </div>
+        </div>
+        <div
+          v-if="randomWordData.english"
+          class="rw-word-item rw-english alphabetic"
+        >
+          {{ randomWordData.english }}
+          <IconPlayAudio
+            v-if="randomWordData.english"
+            @click="readEnglish(randomWordData.english)"
+          />
+        </div>
+        <div
+          v-if="randomWordData.english_mknoll"
+          class="rw-word-item rw-english alphabetic"
+        >
+          {{ randomWordData.english_mknoll }}
+          <IconPlayAudio
+            v-if="randomWordData.english_mknoll"
+            @click="readEnglish(randomWordData.english_mknoll)"
           />
         </div>
       </div>
       <div
-        v-if="randomWordData.english"
-        class="rw-word-item rw-english alphabetic"
+        v-for="(definition, index) in randomWordData.definitions"
+        :key="definition.defid"
+        class="rw-definitions"
       >
-        {{ randomWordData.english }}
-        <IconPlayAudio
-          v-if="randomWordData.english"
-          @click="readEnglish(randomWordData.english)"
-        />
+        <ul>
+          <li class="logographic">{{ definition.def_chinese }}</li>
+          <li class="alphabetic">{{ definition.def_english }}</li>
+        </ul>
       </div>
-      <div
-        v-if="randomWordData.english_mknoll"
-        class="rw-word-item rw-english alphabetic"
-      >
-        {{ randomWordData.english_mknoll }}
-        <IconPlayAudio
-          v-if="randomWordData.english_mknoll"
-          @click="readEnglish(randomWordData.english_mknoll)"
-        />
-      </div>
+      <button @click="fetchRandomWordAndDefinitions">Next word</button>
     </div>
-    <div
-      v-for="(definition, index) in randomWordData.definitions"
-      :key="definition.defid"
-      class="rw-definitions"
-    >
-      <ul>
-        <li class="logographic">{{ definition.def_chinese }}</li>
-        <li class="alphabetic">{{ definition.def_english }}</li>
-      </ul>
-    </div>
-    <button @click="fetchRandomWordAndDefinitions">Next word</button>
     <EditWord :visible="showDialog" :word="word" @close="closeDialog()" />
   </div>
 </template>
