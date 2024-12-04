@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- <div class="steam-ball"></div> -->
     <svg xmlns="http://www.w3.org/2000/svg" width="77" height="57" fill="none">
       <g id="lid">
         <path
