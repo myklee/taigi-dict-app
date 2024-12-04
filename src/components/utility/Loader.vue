@@ -1,5 +1,6 @@
 <template>
   <div>
+    <IconCooker />
     Loading
     <span class="loading-dot-1">.</span>
     <span class="loading-dot-2">.</span>
@@ -10,7 +11,9 @@
     <div class="page2"></div>
   </div> -->
 </template>
-<script setup></script>
+<script setup>
+import IconCooker from "../icons/IconCooker.vue";
+</script>
 <style scoped>
 .loading-dot-1,
 .loading-dot-2,

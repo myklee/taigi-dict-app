@@ -34,7 +34,7 @@
       </div>
 
       <div class="search-results-header">
-        <Loader v-if="loading" />
+        <Loader v-if="true" />
         <div v-else>
           <div v-if="searchExecuted" class="results-count">
             {{ words.length }} result<span v-if="words.length != 1">s</span>
