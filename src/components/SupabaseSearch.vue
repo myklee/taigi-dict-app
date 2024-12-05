@@ -1,6 +1,7 @@
 <template>
+  <Loader :loading="loading" />
+
   <div id="supasearch">
-   <Loader :loading="loading"/>
     <div class="search-header">
       <div class="search-words">
         <input
@@ -214,7 +215,6 @@ export default {
 </script>
 
 <style scoped>
-
 /* 
 
 search
