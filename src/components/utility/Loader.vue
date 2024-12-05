@@ -1,20 +1,40 @@
 <template>
-  <div>
-    <IconCooker />
-    Loading
-    <span class="loading-dot-1">.</span>
-    <span class="loading-dot-2">.</span>
-    <span class="loading-dot-3">.</span>
-  </div>
-  <!-- <div class="book">
+  <transition name="fade" mode="out-in">
+    <div v-show="loading">
+      <IconCooker />
+      <!-- <div v-if="type === 'loading'">
+      Loading
+      <span class="loading-dot-1">.</span>
+      <span class="loading-dot-2">.</span>
+      <span class="loading-dot-3">.</span>
+    </div> -->
+
+      <!-- <div class="book">
     <div class="page"></div>
     <div class="page2"></div>
   </div> -->
+    </div>
+  </transition>
 </template>
 <script setup>
+const props = defineProps({
+  type: String,
+  loading: Boolean,
+});
+
 import IconCooker from "../icons/IconCooker.vue";
 </script>
 <style scoped>
+/* Transition classes for 'fade' */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
 .loading-dot-1,
 .loading-dot-2,
 .loading-dot-3 {

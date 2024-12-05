@@ -1,9 +1,9 @@
 <template>
   <div class="rw">
-    <Loader v-if="loading && !randomWordData" />
+    <Loader :loading="loading && !randomWordData" />
 
     <div v-if="randomWordData">
-      <Loader v-if="loading" />
+      <Loader :loading="loading" />
 
       <h4>Random word</h4>
       <div class="rw-words">

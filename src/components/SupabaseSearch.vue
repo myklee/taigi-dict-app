@@ -1,5 +1,6 @@
 <template>
   <div id="supasearch">
+   <Loader :loading="loading"/>
     <div class="search-header">
       <div class="search-words">
         <input
@@ -34,12 +35,9 @@
       </div>
 
       <div class="search-results-header">
-        <Loader v-if="loading" />
-        <div v-else>
-          <div v-if="searchExecuted" class="results-count">
-            {{ words.length }} result<span v-if="words.length != 1">s</span>
-            found
-          </div>
+        <div v-if="searchExecuted" class="results-count">
+          {{ words.length }} result<span v-if="words.length != 1">s</span>
+          found
         </div>
         <!-- <button class="reset-voice" @click="resetVoice">Reset Voice</button> -->
       </div>
@@ -216,13 +214,14 @@ export default {
 </script>
 
 <style scoped>
+
 /* 
 
 search
 
 */
 #supasearch {
-  padding-bottom: 2rem;
+  padding: 2rem 0;
 }
 
 .search-words {
