@@ -137,6 +137,7 @@ export default {
     };
 
     const openEditDialog = (selectedWord) => {
+      console.log(selectedWord);
       showDialog.value = true;
       document.body.style.overflow = "hidden";
       word.value = {
@@ -151,39 +152,43 @@ export default {
     };
 
     const searchWords = async () => {
-      try {
-        loading.value = true; // Start loading
-        searchExecuted.value = true;
-        let query = supabase
-          .from("words")
-          .select(
-            `id, english, chinese, romaji, audioid, taiwanese, english_mknoll, definitions (defid, def_english, def_chinese)`
-          );
+      if (searchQuery.value.length != 0) {
+        try {
+          loading.value = true; // Start loading
+          searchExecuted.value = true;
+          let query = supabase
+            .from("words")
+            .select(
+              `id, english, chinese, romaji, audioid, taiwanese, english_mknoll, definitions (defid, def_english, def_chinese)`
+            );
 
-        if (exactSearch.value) {
-          // Perform exact match search
-          query = query.or(
-            `chinese.eq.${searchQuery.value},english.eq.${searchQuery.value},english_mknoll.eq.${searchQuery.value},romaji.eq.${searchQuery.value},taiwanese.eq.${searchQuery.value}`
-          );
-        } else {
-          // Perform partial match search
-          query = query.or(
-            `chinese.ilike.%${searchQuery.value}%,english.ilike.%${searchQuery.value}%,english_mknoll.ilike.%${searchQuery.value}%,romaji.ilike.%${searchQuery.value}%,taiwanese.ilike.%${searchQuery.value}%`
-          );
+          if (exactSearch.value) {
+            // Perform exact match search
+            query = query.or(
+              `chinese.eq.${searchQuery.value},english.eq.${searchQuery.value},english_mknoll.eq.${searchQuery.value},romaji.eq.${searchQuery.value},taiwanese.eq.${searchQuery.value}`
+            );
+          } else {
+            // Perform partial match search
+            query = query.or(
+              `chinese.ilike.%${searchQuery.value}%,english.ilike.%${searchQuery.value}%,english_mknoll.ilike.%${searchQuery.value}%,romaji.ilike.%${searchQuery.value}%,taiwanese.ilike.%${searchQuery.value}%`
+            );
+          }
+
+          const { data, error } = await query;
+
+          console.log(data);
+          if (error) {
+            console.error("Error fetching words:", error.message);
+          } else {
+            words.value = data;
+          }
+        } catch (err) {
+          console.error("Error in searchWords:", err.message);
+        } finally {
+          loading.value = false; // stop loading
         }
-
-        const { data, error } = await query;
-
-        // console.log(data);
-        if (error) {
-          console.error("Error fetching words:", error.message);
-        } else {
-          words.value = data;
-        }
-      } catch (err) {
-        console.error("Error in searchWords:", err.message);
-      } finally {
-        loading.value = false; // stop loading
+      } else {
+        console.log("empty search field!");
       }
     };
 

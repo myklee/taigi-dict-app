@@ -39,14 +39,6 @@
       <circle r="2" fill="#D9D9D9" class="steam-ball-right delay-1" />
       <circle r="2" fill="#D9D9D9" class="steam-ball delay-2" />
       <circle r="2" fill="#D9D9D9" class="steam-ball-right delay-2" />
-      <!-- <circle r="2" fill="#D9D9D9" class="steam-ball delay-1" />
-      <circle r="2" fill="#D9D9D9" class="steam-ball delay-2" />
-      <circle r="2" fill="#D9D9D9" class="steam-ball delay-3" />
-
-      <circle r="2" fill="#D9D9D9" class="steam-ball right" />
-      <circle r="2" fill="#D9D9D9" class="steam-ball right delay-1" />
-      <circle r="2" fill="#D9D9D9" class="steam-ball right delay-2" />
-      <circle r="2" fill="#D9D9D9" class="steam-ball right delay-3" /> -->
     </svg>
   </div>
 </template>

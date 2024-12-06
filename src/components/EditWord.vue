@@ -2,7 +2,7 @@
   <div class="edit-dialog" v-if="visible">
     <button class="close-dialog" @click="close">Close</button>
     <div class="edit-word">
-      <form @submit.prevent="updateWord">
+      <form @submit.prevent="updateWord(word)">
         <div>
           <label for="romaji">Romaji</label>
           <input v-model="word.romaji" type="text" id="romaji" />
@@ -132,13 +132,14 @@ export default {
 
     const close = () => emit("close");
 
-    const updateWord = async () => {
+    const updateWord = async (word, index) => {
+      console.log(word);
       const { data, error } = await supabase.from("words").upsert({
-        id: word.value.id,
-        chinese: word.value.chinese,
-        romaji: word.value.romaji,
-        classification: word.value.classification,
-        english: word.value.english,
+        id: word.id,
+        chinese: word.chinese,
+        romaji: word.romaji,
+        classification: word.classification,
+        english: word.english,
       });
 
       if (error) console.error("Error updating word:", error.message);
