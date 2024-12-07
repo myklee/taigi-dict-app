@@ -96,7 +96,12 @@
       </li>
     </ul>
 
-    <EditWord :visible="showDialog" :word="word" @close="closeDialog()" />
+    <EditWord
+      :visible="showDialog"
+      :word="word"
+      @close="closeDialog()"
+      @word-updated="refreshSearchResults"
+    />
   </div>
 </template>
 
@@ -149,6 +154,9 @@ export default {
     const closeDialog = () => {
       showDialog.value = false;
       document.body.style.overflow = "scroll";
+    };
+    const refreshSearchResults = async () => {
+      searchWords();
     };
 
     const searchWords = async () => {
@@ -211,6 +219,7 @@ export default {
       closeDialog,
       searchWords,
       searchExecuted,
+      refreshSearchResults,
       readChinese,
       readEnglish,
       resetVoice,

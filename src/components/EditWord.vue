@@ -2,7 +2,7 @@
   <div class="edit-dialog" v-if="visible">
     <button class="close-dialog" @click="close">Close</button>
     <div class="edit-word">
-      <form @submit.prevent="updateWord(word)">
+      <form @submit.prevent="updateWord(word, index)">
         <div>
           <label for="romaji">Romaji</label>
           <input v-model="word.romaji" type="text" id="romaji" />
@@ -134,6 +134,7 @@ export default {
 
     const updateWord = async (word, index) => {
       console.log(word);
+
       const { data, error } = await supabase.from("words").upsert({
         id: word.id,
         chinese: word.chinese,
@@ -144,6 +145,9 @@ export default {
 
       if (error) console.error("Error updating word:", error.message);
       else console.log("Word updated successfully:", data);
+
+      // Emit event to notify the parent about the update
+      emit("word-updated", word);
     };
 
     const updateDefinition = async (defid, index) => {
@@ -201,7 +205,7 @@ export default {
           .insert([newDef])
           .select(); // Use `.select()` to fetch the inserted data
 
-        console.log(data);
+        // console.log(data);
         if (error) {
           console.error("Error adding definition:", error.message);
           return;
@@ -259,11 +263,11 @@ Edit dialog
   overflow: scroll;
 }
 .definition-container {
-    padding: 5vw;
+  padding: 5vw;
 }
 .close-dialog {
   position: fixed;
-  top:0;
+  top: 0;
   right: 0;
   background-color: var(--app-background);
   color: var(--frenchGray);
