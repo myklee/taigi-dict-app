@@ -1,11 +1,11 @@
 <template>
   <div class="rw">
+    <h4>Random word</h4>
     <Loader :loading="loading && !randomWordData" />
 
     <div v-if="randomWordData">
       <Loader :loading="loading" />
 
-      <h4>Random word</h4>
       <div class="rw-words">
         <div class="rw-words-main">
           <div
@@ -159,8 +159,6 @@ h4 {
 .rw {
   border: px solid;
   margin: 5vw;
-  padding: 1rem;
-  /* color: white; */
   background-color: var(--rw-background);
 }
 .rw-words-main,

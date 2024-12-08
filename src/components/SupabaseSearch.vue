@@ -95,6 +95,13 @@
         </button>
       </li>
     </ul>
+    <ul class="results-cedict">
+      <li v-for="(wordcedit, index) in wordsCedict" :key="index">
+        <p>{{ wordcedit.traditional }}</p>
+        <p>{{ wordcedit.pinyin }}</p>
+        <p>{{ wordcedit.english_cedict }}</p>
+      </li>
+    </ul>
 
     <EditWord
       :visible="showDialog"
@@ -123,6 +130,7 @@ export default {
   },
   setup() {
     const words = ref([]);
+    const wordsCedict = ref([]);
     const searchQuery = ref("");
     const exactSearch = ref(true);
     const word = ref(null);
@@ -184,6 +192,10 @@ export default {
 
           const { data, error } = await query;
 
+          // cross reference cedict
+
+          searchWordsAndCedict(searchQuery.value);
+
           console.log(data);
           if (error) {
             console.error("Error fetching words:", error.message);
@@ -200,15 +212,35 @@ export default {
       }
     };
 
+    async function searchWordsAndCedict(searchTerm) {
+      try {
+        const { data, error } = await supabase.rpc("search_words_cedict", {
+          search_term: searchTerm,
+        });
+
+        if (error) {
+          console.error("Error fetching search results:", error.message);
+          return [];
+        }
+        wordsCedict.value = data;
+        console.log("Search results:", data);
+        return data;
+      } catch (err) {
+        console.error("Unexpected error:", err);
+        return [];
+      }
+    }
+
     const readChinese = (text) => speakChinese(text);
     const readEnglish = (text) => speakEnglish(text);
     const resetVoice = () => window.speechSynthesis.cancel();
 
     return {
       words,
+      wordsCedict,
+      word,
       searchQuery,
       exactSearch,
-      word,
       showDialog,
       newDefinition,
       clearInput,
@@ -219,6 +251,7 @@ export default {
       closeDialog,
       searchWords,
       searchExecuted,
+      searchWordsAndCedict,
       refreshSearchResults,
       readChinese,
       readEnglish,
