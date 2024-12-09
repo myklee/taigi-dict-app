@@ -15,6 +15,7 @@
   --platinum: hsla(270, 8%, 85%, 1);
   --frenchGray: hsla(247, 6%, 69%, 1);
   --gunmetal: hsla(229, 19%, 22%, 1);
+  --eerieBlack: ##191716;
   --raisinBlack: hsl(228, 23%, 13%);
   --slateGray: hsla(215, 21%, 53%, 1);
   --uranian-blue: hsla(210, 100%, 85%, 1);
@@ -29,6 +30,7 @@
     --rw-background: var(--gunmetal);
     --rw-header-background: var(--raisinBlack);
     --playAudioIcon: var(--frenchGray);
+    --moeItemBg: var(--eerieBlack);
   }
   body {
     background: var(--app-background);
@@ -103,7 +105,7 @@ button {
 /* global pinyin and zhuyin font styles */
 .pinyin,
 .zhuyin {
-  font-size: 1.5rem;
+  white-space: nowrap;
 }
 .pinyin-zhuyin {
   display: flex;

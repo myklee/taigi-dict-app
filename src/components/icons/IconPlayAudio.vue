@@ -33,8 +33,8 @@
 .icon-play-container {
   width: 32px;
   height: 32px;
-  /* border: 1px solid;
-  border-radius: 50%; */
+  border: 1px solid;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -43,5 +43,7 @@
 }
 .play-audio {
   fill: var(--playAudioIcon);
+  width: 20px;
+  height: 20px;
 }
 </style>

@@ -1,8 +1,8 @@
 <template>
-  <div class="rw">
-    <h4>Random word</h4>
-    <Loader :loading="loading && !randomWordData" />
+  <Loader :loading="loading && !randomWordData" />
 
+  <div v-if="randomWordData" class="rw">
+    <h4>Random word</h4>
     <div class="rw-content" v-if="randomWordData">
       <Loader :loading="loading" />
 
@@ -29,16 +29,17 @@
             class="rw-word-item rw-chinese logographic"
           >
             {{ randomWordData.chinese }}
-            <IconPlayAudio
-              v-if="randomWordData.chinese"
-              @click="readChinese(randomWordData.chinese)"
-            />
+
             <div class="pinyin-zhuyin">
               <span class="pinyin">{{
                 pinyin(randomWordData.chinese).join(" ")
               }}</span>
               <span class="zhuyin">{{ randomWordData.zhuyin }}</span>
             </div>
+            <IconPlayAudio
+              v-if="randomWordData.chinese"
+              @click="readChinese(randomWordData.chinese)"
+            />
           </div>
         </div>
         <div
@@ -73,7 +74,9 @@
         </ul>
       </div>
     </div>
-    <button @click="fetchRandomWordAndDefinitions">Get random word</button>
+    <button class="button-get-random" @click="fetchRandomWordAndDefinitions">
+      Get random word
+    </button>
     <EditWord :visible="showDialog" :word="word" @close="closeDialog()" />
   </div>
 </template>
@@ -171,15 +174,14 @@ const readEnglish = async (text) => {
 h4 {
   padding: 0.25rem 0.5rem;
   background-color: var(--rw-header-background);
-  display: inline;
 }
 .rw {
-  border: px solid;
+  border: 4px solid;
   margin: 5vw;
   background-color: var(--rw-background);
 }
 .rw-content {
-  padding: 1rem;
+  padding: 0rem 1rem 1rem;
 }
 .rw-words-main,
 .rw-word-item {
@@ -196,6 +198,9 @@ h4 {
 }
 .rw-word-item {
   gap: 0.5rem;
+  .pinyin-zhuyin {
+    font-size: 1rem;
+  }
 }
 .rw-taigi,
 .rw-chinese {
@@ -207,5 +212,8 @@ h4 {
 }
 .rw-definitions {
   margin-bottom: 1rem;
+}
+.button-get-random {
+  margin: 0 1rem 1rem;
 }
 </style>

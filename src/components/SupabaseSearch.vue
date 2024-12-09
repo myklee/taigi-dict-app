@@ -9,7 +9,7 @@
           type="text"
           v-model="searchQuery"
           @keyup.enter="searchWords"
-          placeholder="Search for a word..."
+          placeholder="Search/查找/tshuē"
           class="text-field search-words-text-field"
           autocapitalize="off"
         />
@@ -36,7 +36,7 @@
         </div>
       </div>
 
-      <div class="search-results-header">
+      <div class="moe-search-results-header search-results-header">
         <div v-if="searchExecuted" class="results-count">
           {{ words.length }} result<span v-if="words.length != 1">s</span>
           found
@@ -45,47 +45,42 @@
       </div>
     </div>
 
-    <ul class="results moe-results">
-      <li v-for="word in words" :key="word.id" class="entry">
-        <div class="word">
-          <div
-            v-if="word.romaji != null"
-            class="word-item word-taigi alphabetic"
-          >
-            {{ word.romaji }}
-            <AudioPlayerTaigi v-if="word.audioid" :audioID="word.audioid" />
-          </div>
-          <div
-            v-if="word.taiwanese != null"
-            class="word-item word-taigi alphabetic"
-          >
-            {{ word.taiwanese }}
-          </div>
+    <ul v-if="words.length != 0" class="results moe-results">
+      <li>
+        <div class="moe-title" v-if="words.length">
+          <div>Ministry of Education Taiwanese Dictionary of Common Words</div>
+          <div>教育部臺灣台語常用詞辭典</div>
+        </div>
+      </li>
+      <li v-for="word in words" :key="word.id" class="entry moe-result-item">
+        <div
+          v-if="word.romaji != null"
+          class="word-item moe-word-taigi alphabetic"
+        >
+          <!-- <header>Taiwanese Taigi</header> -->
+          <p>{{ word.romaji }}</p>
+          <AudioPlayerTaigi v-if="word.audioid" :audioID="word.audioid" />
+        </div>
+
+        <div class="moe-english-chinese">
           <div
             v-if="word.chinese != null"
-            class="word-item word-chinese logographic"
+            class="word-item moe-word-chinese logographic"
           >
-            {{ word.chinese }}
-            <IconPlayAudio @click="readChinese(word.chinese)"></IconPlayAudio>
+            <span class="">{{ word.chinese }}</span>
             <div class="pinyin-zhuyin">
               <span class="pinyin">{{ pinyin(word.chinese).join(" ") }}</span>
               <span class="zhuyin">{{ word.zhuyin }}</span>
             </div>
+            <IconPlayAudio @click="readChinese(word.chinese)"></IconPlayAudio>
           </div>
-        </div>
-        <div
-          v-if="word.english != null"
-          class="word-item word-english alphabetic"
-        >
-          {{ word.english }}
-          <IconPlayAudio @click="readEnglish(word.english)" />
-        </div>
-        <div
-          v-if="word.english_mknoll != null"
-          class="word-item word-english alphabetic"
-        >
-          {{ word.english_mknoll }}
-          <IconPlayAudio @click="readEnglish(word.english_mknoll)" />
+          <div
+            v-if="word.english != null"
+            class="word-item moe-word-english alphabetic"
+          >
+            {{ word.english }}
+            <IconPlayAudio @click="readEnglish(word.english)" />
+          </div>
         </div>
         <ul>
           <li v-for="def in word.definitions" :key="def.id">
@@ -103,25 +98,35 @@
     <!-- CC - CEDICDT -->
 
     <ul v-if="wordsCedict.length" class="results-cedict">
-      <h2>CC-CEDICT (Creative Commons Chinese English Dictionary)</h2>
+      <h2 class="section-header cedict-header">
+        CC-CEDICT (Creative Commons Chinese English Dictionary)
+      </h2>
       <li
-        class="cedit-item"
+        class="cedict-item"
         v-for="(wordcedict, index) in wordsCedict"
         :key="index"
       >
-        <p class="cedict-traditional">
+        <p v-if="wordcedict.traditional != null" class="cedict-traditional">
           {{ wordcedict.traditional }}
         </p>
-        <div>
-          <IconPlayAudio
-            @click="readChinese(wordcedict.traditional)"
-          ></IconPlayAudio>
-        </div>
+        <p class="cedict-traditional" v-if="wordcedict.traditional === null">
+          {{ wordcedict.chinese }}
+        </p>
+
+        <IconPlayAudio
+          v-if="wordcedict.traditional"
+          @click="readChinese(wordcedict.traditional)"
+        ></IconPlayAudio>
+        <IconPlayAudio
+          v-if="wordcedict.traditional === null && wordcedict.chinese != null"
+          @click="readChinese(wordcedict.chinese)"
+        ></IconPlayAudio>
+
         <div class="pinyin-zhuyin cedict-pinyin-zhuyin">
-          <p class="cedict-pinyin">
+          <p class="cedict-pinyin pinyin">
             {{ pinyin(wordcedict.traditional).join(" ") }}
           </p>
-          <p class="cedict-zhuyin">
+          <p class="cedict-zhuyin zhuyin">
             {{ fromPinyin(pinyin(wordcedict.traditional).join(" ")).join(" ") }}
           </p>
         </div>
@@ -251,8 +256,6 @@ export default {
           return [];
         }
 
-        console.log(data);
-
         wordsCedict.value = data;
 
         console.log("Search results:", data);
@@ -295,7 +298,7 @@ export default {
 </script>
 
 <style scoped>
-/* 
+/*
 
 search
 
@@ -340,9 +343,9 @@ search
   justify-self: end;
 }
 
-/* 
+/*
 
-exact search checkbox 
+exact search checkbox
 
 */
 
@@ -358,9 +361,9 @@ exact search checkbox
   }
 }
 
-/* 
+/*
 
-results
+MOE results header
 
 */
 .search-results-header {
@@ -371,72 +374,90 @@ results
 }
 .results {
   margin: 0 5vw;
+  border-bottom: 1px solid var(--gunmetal);
 }
 .results-count {
   padding: 0.5rem 0;
 }
 
-/* 
+/*
 
-MOE entry
+MOE result items
 
 */
-
-.entry {
-  margin: 1rem 0;
-  padding: 1rem 0;
+.moe-title {
+  padding-bottom: 1rem;
+  display: none;
+}
+.moe-result-item {
+  padding: 0rem 0 2rem 0;
   border-top: 1px solid var(--gunmetal);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   position: relative;
+  .pinyin-zhuyin {
+    font-size: 1rem;
+  }
 }
-.word,
-.word-item {
+.moe-word-taigi {
+  font-size: 3.5rem;
   display: flex;
   align-items: center;
+  gap: 1rem;
 }
-.word {
+.moe-english-chinese {
+  display: flex;
   gap: 2rem;
-  row-gap: 0;
-  flex-wrap: wrap;
 }
-.word-item {
-  padding: 0.5rem 0;
-  gap: 0.5rem;
-  /* border: 1px solid; */
-}
-.word-taigi,
-.word-chinese {
-  font-size: 3rem;
-}
-.word-english {
+.moe-word-chinese,
+.moe-word-english {
+  display: flex;
+  align-items: center;
+  gap: 0.66rem;
   font-size: 1.5rem;
+}
+.moe-word-chinese {
+  font-size: 2.5rem;
+  line-height: 1.5rem;
+  .pinyin-zhuyin {
+    gap: 0;
+  }
 }
 
 .edit-word {
   cursor: pointer;
   border: none;
-  display: block;
+  /* display: none; */
   width: 100px;
   margin-top: 1rem;
 }
-/* 
+/*
 
-CCEDICT results 
+CCEDICT results
 
 
 */
 .results-cedict {
   padding: 5vw;
-  li {
-    margin: 1rem 0;
+  li.cedict-item {
+    padding: 0.5rem 0;
     display: flex;
+    align-items: center;
     gap: 1rem;
+    border-bottom: 1px solid var(--gunmetal);
   }
+}
+.cedict-header {
+  display: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
 }
 .cedict-traditional {
   font-size: 1.5rem;
+  white-space: nowrap;
 }
 .cedict-pinyin-zhuyin {
   display: flex;
