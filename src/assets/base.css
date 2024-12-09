@@ -100,6 +100,12 @@ button {
   font-family: "Noto Sans", sans-serif;
 }
 
+/* global pinyin and zhuyin font styles */
+.pinyin,
+.zhuyin {
+  font-size: 1.5rem;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

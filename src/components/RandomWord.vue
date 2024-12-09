@@ -3,7 +3,7 @@
     <h4>Random word</h4>
     <Loader :loading="loading && !randomWordData" />
 
-    <div v-if="randomWordData">
+    <div class="rw-content" v-if="randomWordData">
       <Loader :loading="loading" />
 
       <div class="rw-words">
@@ -33,6 +33,10 @@
               v-if="randomWordData.chinese"
               @click="readChinese(randomWordData.chinese)"
             />
+            <span class="pinyin">{{
+              pinyin(randomWordData.chinese).join(" ")
+            }}</span>
+            <span class="zhuyin">{{ randomWordData.zhuyin }}</span>
           </div>
         </div>
         <div
@@ -66,8 +70,8 @@
           <li class="alphabetic">{{ definition.def_english }}</li>
         </ul>
       </div>
-      <button @click="fetchRandomWordAndDefinitions">Next word</button>
     </div>
+    <button @click="fetchRandomWordAndDefinitions">Get random word</button>
     <EditWord :visible="showDialog" :word="word" @close="closeDialog()" />
   </div>
 </template>
@@ -81,6 +85,8 @@ import { speakEnglish } from "@/utils";
 import IconPlayAudio from "./icons/IconPlayAudio.vue";
 import Loader from "./utility/Loader.vue";
 import EditWord from "./EditWord.vue";
+import pinyin from "pinyin";
+import fromPinyin from "zhuyin";
 
 const randomWordData = ref(null);
 
@@ -105,9 +111,15 @@ const fetchRandomWordAndDefinitions = async () => {
 
     if (wordError) throw new Error(wordError.message);
 
+    console.log(wordData);
     const randomWord = wordData[0];
 
-    // Step 3: Fetch definitions associated with the random word
+    // generate zhuyin for random word
+    // const zhuyinText = await fromPinyin(randomWord.pinyin).join(" ");
+
+    // randomWord.zhuyin = zhuyinText;
+
+    // fetch definitions associated with the random word
     const { data: definitionsData, error: definitionsError } = await supabase
       .from("definitions")
       .select("*")
@@ -117,8 +129,10 @@ const fetchRandomWordAndDefinitions = async () => {
 
     // Combine word and definitions in one object
     randomWord.definitions = definitionsData;
-    randomWordData.value = randomWord;
-    console.log(randomWordData);
+    if (randomWordData) {
+      randomWordData.value = randomWord;
+      console.log(randomWordData);
+    }
   } catch (error) {
     console.error("Error fetching random word and definitions:", error.message);
   } finally {
@@ -160,6 +174,9 @@ h4 {
   border: px solid;
   margin: 5vw;
   background-color: var(--rw-background);
+}
+.rw-content {
+  padding: 1rem;
 }
 .rw-words-main,
 .rw-word-item {

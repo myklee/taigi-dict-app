@@ -1,6 +1,7 @@
 <template>
   <Loader :loading="loading" />
-
+  <!-- <button @click="updatepinyin">update pinyin</button> -->
+  <!-- <button @click="processZhuyinColumn">update zhuyin</button> -->
   <div id="supasearch">
     <div class="search-header">
       <div class="search-words">
@@ -66,6 +67,8 @@
           >
             {{ word.chinese }}
             <IconPlayAudio @click="readChinese(word.chinese)"></IconPlayAudio>
+            <span class="pinyin">{{ pinyin(word.chinese).join(" ") }}</span>
+            <span class="zhuyin">{{ word.zhuyin }}</span>
           </div>
         </div>
         <div
@@ -98,7 +101,10 @@
     <ul class="results-cedict">
       <li v-for="(wordcedit, index) in wordsCedict" :key="index">
         <p>{{ wordcedit.traditional }}</p>
-        <p>{{ wordcedit.pinyin }}</p>
+        <p>{{ pinyin(wordcedit.traditional).join(" ") }}</p>
+        <p>
+          {{ fromPinyin(pinyin(wordcedit.traditional).join(" ")).join(" ") }}
+        </p>
         <p>{{ wordcedit.english_cedict }}</p>
       </li>
     </ul>
@@ -114,12 +120,16 @@
 
 <script>
 import { ref } from "vue";
-import { supabase } from "/src/supabase";
+import { supabase } from "/src/supabase.js";
 import AudioPlayerTaigi from "./AudioPlayerTaigi.vue";
 import IconPlayAudio from "./icons/IconPlayAudio.vue";
 import { speakChinese, speakEnglish } from "@/utils";
 import EditWord from "./EditWord.vue";
 import Loader from "./utility/Loader.vue";
+import { updatePinyinInBatches } from "@/addpinyinbopo";
+import pinyin from "pinyin"; // For Pinyin
+import fromPinyin from "zhuyin";
+import { updateZhuyinInBatches } from "@/addzhuyin";
 
 export default {
   components: {
@@ -146,6 +156,7 @@ export default {
     const clearInput = () => {
       searchQuery.value = "";
       words.value = [];
+      wordsCedict.value = [];
       searchExecuted.value = false;
     };
 
@@ -175,13 +186,13 @@ export default {
           let query = supabase
             .from("words")
             .select(
-              `id, english, chinese, romaji, audioid, taiwanese, english_mknoll, definitions (defid, def_english, def_chinese)`
+              `id, english, chinese, romaji, audioid, pinyin, zhuyin, taiwanese, english_mknoll, definitions (defid, def_english, def_chinese)`
             );
 
           if (exactSearch.value) {
             // Perform exact match search
             query = query.or(
-              `chinese.eq.${searchQuery.value},english.eq.${searchQuery.value},english_mknoll.eq.${searchQuery.value},romaji.eq.${searchQuery.value},taiwanese.eq.${searchQuery.value}`
+              `chinese.ilike.${searchQuery.value},english.ilike.${searchQuery.value},english_mknoll.ilike.${searchQuery.value},romaji.ilike.${searchQuery.value},taiwanese.ilike.${searchQuery.value}`
             );
           } else {
             // Perform partial match search
@@ -192,16 +203,13 @@ export default {
 
           const { data, error } = await query;
 
-          // cross reference cedict
-
-          searchWordsAndCedict(searchQuery.value);
-
-          console.log(data);
           if (error) {
             console.error("Error fetching words:", error.message);
           } else {
             words.value = data;
           }
+          // cross reference cedict
+          searchWordsAndCedict(searchQuery.value);
         } catch (err) {
           console.error("Error in searchWords:", err.message);
         } finally {
@@ -212,7 +220,7 @@ export default {
       }
     };
 
-    async function searchWordsAndCedict(searchTerm) {
+    const searchWordsAndCedict = async (searchTerm) => {
       try {
         const { data, error } = await supabase.rpc("search_words_cedict", {
           search_term: searchTerm,
@@ -222,40 +230,44 @@ export default {
           console.error("Error fetching search results:", error.message);
           return [];
         }
+
+        console.log(data);
+
         wordsCedict.value = data;
+
         console.log("Search results:", data);
         return data;
       } catch (err) {
         console.error("Unexpected error:", err);
         return [];
       }
-    }
+    };
 
     const readChinese = (text) => speakChinese(text);
     const readEnglish = (text) => speakEnglish(text);
     const resetVoice = () => window.speechSynthesis.cancel();
 
     return {
-      words,
-      wordsCedict,
-      word,
-      searchQuery,
-      exactSearch,
-      showDialog,
-      newDefinition,
       clearInput,
-      openEditDialog,
-      EditWord,
-      Loader,
-      loading,
       closeDialog,
-      searchWords,
-      searchExecuted,
-      searchWordsAndCedict,
-      refreshSearchResults,
+      exactSearch,
+      fromPinyin,
+      loading,
+      newDefinition,
+      openEditDialog,
+      pinyin,
       readChinese,
       readEnglish,
       resetVoice,
+      refreshSearchResults,
+      searchWords,
+      searchExecuted,
+      searchWordsAndCedict,
+      searchQuery,
+      showDialog,
+      words,
+      wordsCedict,
+      word,
     };
   },
 };

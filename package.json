@@ -14,7 +14,10 @@
     "csv-writer": "^1.6.0",
     "dexie": "^4.0.8",
     "papaparse": "^5.4.1",
-    "vue": "^3.4.29"
+    "pinyin": "^4.0.0-alpha.2",
+    "segmentit": "^2.0.3",
+    "vue": "^3.4.29",
+    "zhuyin": "^1.14.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.5",
