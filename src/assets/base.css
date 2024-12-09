@@ -105,6 +105,10 @@ button {
 .zhuyin {
   font-size: 1.5rem;
 }
+.pinyin-zhuyin {
+  display: flex;
+  flex-direction: column;
+}
 
 .visually-hidden {
   position: absolute;

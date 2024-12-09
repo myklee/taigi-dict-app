@@ -33,10 +33,12 @@
               v-if="randomWordData.chinese"
               @click="readChinese(randomWordData.chinese)"
             />
-            <span class="pinyin">{{
-              pinyin(randomWordData.chinese).join(" ")
-            }}</span>
-            <span class="zhuyin">{{ randomWordData.zhuyin }}</span>
+            <div class="pinyin-zhuyin">
+              <span class="pinyin">{{
+                pinyin(randomWordData.chinese).join(" ")
+              }}</span>
+              <span class="zhuyin">{{ randomWordData.zhuyin }}</span>
+            </div>
           </div>
         </div>
         <div
@@ -86,7 +88,6 @@ import IconPlayAudio from "./icons/IconPlayAudio.vue";
 import Loader from "./utility/Loader.vue";
 import EditWord from "./EditWord.vue";
 import pinyin from "pinyin";
-import fromPinyin from "zhuyin";
 
 const randomWordData = ref(null);
 
@@ -106,6 +107,7 @@ const fetchRandomWordAndDefinitions = async () => {
     const { data: wordData, error: wordError } = await supabase
       .from("words")
       .select("*")
+      .not("romaji", "is", null) // Filter for rows where romaji is not null
       .range(randomOffset, randomOffset)
       .limit(1);
 
@@ -135,6 +137,7 @@ const fetchRandomWordAndDefinitions = async () => {
     }
   } catch (error) {
     console.error("Error fetching random word and definitions:", error.message);
+    fetchRandomWordAndDefinitions();
   } finally {
     loading.value = false; // End loading
   }

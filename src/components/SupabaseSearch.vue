@@ -45,7 +45,7 @@
       </div>
     </div>
 
-    <ul class="results">
+    <ul class="results moe-results">
       <li v-for="word in words" :key="word.id" class="entry">
         <div class="word">
           <div
@@ -67,8 +67,10 @@
           >
             {{ word.chinese }}
             <IconPlayAudio @click="readChinese(word.chinese)"></IconPlayAudio>
-            <span class="pinyin">{{ pinyin(word.chinese).join(" ") }}</span>
-            <span class="zhuyin">{{ word.zhuyin }}</span>
+            <div class="pinyin-zhuyin">
+              <span class="pinyin">{{ pinyin(word.chinese).join(" ") }}</span>
+              <span class="zhuyin">{{ word.zhuyin }}</span>
+            </div>
           </div>
         </div>
         <div
@@ -98,14 +100,32 @@
         </button>
       </li>
     </ul>
-    <ul class="results-cedict">
-      <li v-for="(wordcedit, index) in wordsCedict" :key="index">
-        <p>{{ wordcedit.traditional }}</p>
-        <p>{{ pinyin(wordcedit.traditional).join(" ") }}</p>
-        <p>
-          {{ fromPinyin(pinyin(wordcedit.traditional).join(" ")).join(" ") }}
+    <!-- CC - CEDICDT -->
+
+    <ul v-if="wordsCedict.length" class="results-cedict">
+      <h2>CC-CEDICT (Creative Commons Chinese English Dictionary)</h2>
+      <li
+        class="cedit-item"
+        v-for="(wordcedict, index) in wordsCedict"
+        :key="index"
+      >
+        <p class="cedict-traditional">
+          {{ wordcedict.traditional }}
         </p>
-        <p>{{ wordcedit.english_cedict }}</p>
+        <div>
+          <IconPlayAudio
+            @click="readChinese(wordcedict.traditional)"
+          ></IconPlayAudio>
+        </div>
+        <div class="pinyin-zhuyin cedict-pinyin-zhuyin">
+          <p class="cedict-pinyin">
+            {{ pinyin(wordcedict.traditional).join(" ") }}
+          </p>
+          <p class="cedict-zhuyin">
+            {{ fromPinyin(pinyin(wordcedict.traditional).join(" ")).join(" ") }}
+          </p>
+        </div>
+        <p class="cedict-english">{{ wordcedict.english_cedict }}</p>
       </li>
     </ul>
 
@@ -250,6 +270,7 @@ export default {
     return {
       clearInput,
       closeDialog,
+      EditWord,
       exactSearch,
       fromPinyin,
       loading,
@@ -357,7 +378,7 @@ results
 
 /* 
 
-entry
+MOE entry
 
 */
 
@@ -399,5 +420,26 @@ entry
   display: block;
   width: 100px;
   margin-top: 1rem;
+}
+/* 
+
+CCEDICT results 
+
+
+*/
+.results-cedict {
+  padding: 5vw;
+  li {
+    margin: 1rem 0;
+    display: flex;
+    gap: 1rem;
+  }
+}
+.cedict-traditional {
+  font-size: 1.5rem;
+}
+.cedict-pinyin-zhuyin {
+  display: flex;
+  flex-direction: column;
 }
 </style>

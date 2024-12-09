@@ -31,7 +31,12 @@ onMounted(async () => {
       <h1>辭典</h1>
     </div> -->
     <div>
-      <!-- <h1>Taiwanese·English·Chinese</h1> -->
+      <h1 class="title-app">
+        <span class="title-english">English</span>
+        <span class="title-chinese">Chinese</span>
+        <span class="title-taiwanese">Taiwanese</span>
+        <span class="title-dictionary">Dictionary</span>
+      </h1>
     </div>
   </header>
 
@@ -51,3 +56,12 @@ onMounted(async () => {
     <!-- Data provided by 2024 Ministry of Education, R.O.C.  -->
   </footer>
 </template>
+<style scoped>
+.title-app {
+  display: none;
+  text-align: center;
+  span {
+    margin:1rem;
+  }
+}
+</style>
