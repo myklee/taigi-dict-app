@@ -401,7 +401,7 @@ MOE result items
   }
 }
 .moe-word-taigi {
-  font-size: 3.5rem;
+  font-size: 3rem;
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -415,11 +415,11 @@ MOE result items
   display: flex;
   align-items: center;
   gap: 0.66rem;
-  font-size: 1.5rem;
+  font-size: 1rem;
 }
 .moe-word-chinese {
-  font-size: 2.5rem;
-  line-height: 1.5rem;
+  font-size: 1.5rem;
+  line-height: 100%;
   .pinyin-zhuyin {
     gap: 0;
   }
