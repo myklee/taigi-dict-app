@@ -1,5 +1,12 @@
 <template>
   <div class="edit-dialog" v-if="visible">
+    <AudioRecorder :wordId="word.id" />
+    <!-- delete audio -->
+
+    <button v-if="word.audio_url" @click="deleteAudio(word.id, word.audio_url)">
+      Delete Audio
+    </button>
+
     <button class="close-dialog" @click="close">Close</button>
     <div class="edit-word">
       <form @submit.prevent="updateWord(word, index)">
@@ -108,11 +115,15 @@
 <script>
 import { ref, watch } from "vue";
 import { supabase } from "@/supabase";
+import AudioRecorder from "./AudioRecorder.vue";
 
 export default {
   props: {
     visible: Boolean,
     word: Object,
+  },
+  components: {
+    AudioRecorder,
   },
   emits: [
     "close",
@@ -163,7 +174,30 @@ export default {
       if (error) console.error("Error updating definition:", error.message);
       else console.log("Definition updated successfully:", data);
     };
+    const deleteAudio = async (wordId, audioUrl) => {
+      try {
+        // Delete the audio file from Supabase storage
+        const { error: deleteError } = await supabase.storage
+          .from("audio-files") // Replace 'audio' with the correct bucket name
+          .remove([`${audioUrl}`]); // Replace with the correct file path
 
+        if (deleteError) {
+          throw deleteError;
+        }
+
+        // Remove the audio URL reference from the database (or set it to null)
+        await supabase
+          .from("words") // Replace 'words' with your table name
+          .update({ audio_url: null })
+          .eq("id", wordId);
+
+        // Update the local state to reflect the change
+        props.word.audio_url = null;
+        console.log("Audio deleted successfully!");
+      } catch (error) {
+        console.error("Error deleting audio:", error);
+      }
+    };
     const deleteDefinition = async (defid, index) => {
       try {
         // Remove the definition from the database
@@ -236,7 +270,9 @@ export default {
     };
 
     return {
+      AudioRecorder,
       close,
+      deleteAudio,
       updateWord,
       updateDefinition,
       deleteDefinition,

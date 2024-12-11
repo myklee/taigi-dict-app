@@ -53,6 +53,8 @@
         </div>
       </li>
       <li v-for="word in words" :key="word.id" class="entry moe-result-item">
+        <audio ref="audio" :src="`${word.audio_url}`" controls></audio>
+        <div>{{ word.audio_url }}</div>
         <div
           v-if="word.romaji != null"
           class="word-item moe-word-taigi alphabetic"
@@ -211,7 +213,7 @@ export default {
           let query = supabase
             .from("words")
             .select(
-              `id, english, chinese, romaji, audioid, pinyin, zhuyin, taiwanese, english_mknoll, definitions (defid, def_english, def_chinese)`
+              `id, english, chinese, romaji, audioid, pinyin, zhuyin, taiwanese, audio_url, english_mknoll, definitions (defid, def_english, def_chinese)`
             );
 
           if (exactSearch.value) {
