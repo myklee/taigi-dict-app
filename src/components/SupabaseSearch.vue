@@ -53,14 +53,19 @@
         </div>
       </li>
       <li v-for="word in words" :key="word.id" class="entry moe-result-item">
-        <audio ref="audio" :src="`${word.audio_url}`" controls></audio>
-        <div>{{ word.audio_url }}</div>
         <div
           v-if="word.romaji != null"
           class="word-item moe-word-taigi alphabetic"
         >
           <!-- <header>Taiwanese Taigi</header> -->
           <p>{{ word.romaji }}</p>
+          <audio
+            v-if="word.audio_url"
+            ref="audio"
+            :src="`${word.audio_url}`"
+            controls
+          ></audio>
+
           <AudioPlayerTaigi v-if="word.audioid" :audioID="word.audioid" />
         </div>
 
