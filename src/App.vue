@@ -1,9 +1,9 @@
 <script setup>
 import DictionarySearch from "./components/DictionarySearch.vue";
-import SupabaseSearch from "./components/SupabaseSearch.vue";
+import SupabaseSearch from "./pages/SupabaseSearch.vue";
 import CVSUploader from "./components/CVSUploader.vue";
 import { uploadEntries } from "./utils";
-import RandomWord from "./components/RandomWord.vue";
+import RandomWord from "./pages/RandomWord.vue";
 import { ref, onMounted } from "vue";
 import db from "./db.js";
 
