@@ -174,7 +174,7 @@ export default {
     const words = ref([]);
     const wordsCedict = ref([]);
     const searchQuery = ref("");
-    const exactSearch = ref(true);
+    const exactSearch = ref(false);
     const word = ref(null);
     const showDialog = ref(false);
     const newDefinition = ref({
