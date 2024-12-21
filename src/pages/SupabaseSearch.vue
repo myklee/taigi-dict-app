@@ -35,7 +35,24 @@
           <button class="search-button" @click="searchWords">Search</button>
         </div>
       </div>
-
+      <!-- search history -->
+      <div
+        v-if="dictionaryStore.searchHistory.length > 0"
+        class="search-history"
+      >
+        <h3>Search History</h3>
+        <ul>
+          <li
+            v-for="(term, index) in dictionaryStore.searchHistory"
+            :key="index"
+          >
+            {{ term.term }}
+          </li>
+        </ul>
+        <button @click="dictionaryStore.clearSearchHistory">
+          Clear search history
+        </button>
+      </div>
       <div class="moe-search-results-header search-results-header">
         <div v-if="searchExecuted" class="results-count">
           {{ dictionaryStore.searchResults.length }} result<span
@@ -46,11 +63,6 @@
         </div>
         <!-- <button class="reset-voice" @click="resetVoice">Reset Voice</button> -->
       </div>
-    </div>
-    <!-- search history -->
-    <div>
-      <h2>History</h2>
-      {{ dictionaryStore.searchHistory }}
     </div>
 
     <ul
@@ -166,7 +178,7 @@
 </template>
 
 <script>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { supabase } from "@/supabase";
 import AudioPlayerTaigi from "@/components/AudioPlayerTaigi.vue";
 import IconPlayAudio from "@/components/icons/IconPlayAudio.vue";
@@ -204,6 +216,9 @@ export default {
 
     const dictionaryStore = useDictionaryStore();
 
+    onMounted(() => {
+      dictionaryStore.loadFromIndexedDB();
+    });
     // const saveSearch = (term) => {
     //   if (!term) return;
     //   console.log(localStorage);
@@ -409,7 +424,9 @@ exact search checkbox
     white-space: nowrap;
   }
 }
-
+.search-history {
+  padding: 0 5vw 5vw;
+}
 /*
 
 MOE results header

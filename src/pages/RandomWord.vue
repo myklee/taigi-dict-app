@@ -4,8 +4,6 @@
   <div v-if="randomWordData" class="rw">
     <h4>Random word</h4>
     <div class="rw-content" v-if="randomWordData">
-      <Loader :loading="loading" />
-
       <div class="rw-words">
         <div class="rw-words-main">
           <div
@@ -77,19 +75,24 @@
     <button class="button-get-random" @click="fetchRandomWordAndDefinitions">
       Get random word
     </button>
-    <!-- random word history-->
-    <div v-if="dictionaryStore.randomWordHistory.length > 1">
-      <h2>History</h2>
-      <div
-        v-for="(word, index) in dictionaryStore.randomWordHistory"
-        :key="index"
-        :class="`rw-${index}`"
-      >
-        {{ word.romaji }} {{ word.english }} {{ word.chinese }}
-        <!-- {{ dictionaryStore.randomWordHistory }} -->
-      </div>
-    </div>
 
+    <!-- random word history-->
+    <div v-if="dictionaryStore.randomWordHistory.length > 1" class="rw-history">
+      <h3>History</h3>
+      <ul>
+        <li
+          v-for="(word, index) in dictionaryStore.randomWordHistory"
+          :key="index"
+          :class="`rw-${index}`"
+        >
+          {{ word.romaji }} {{ word.english }} {{ word.chinese }}
+          <!-- {{ dictionaryStore.randomWordHistory }} -->
+        </li>
+      </ul>
+      <button @click="dictionaryStore.clearRandomWordHistory">
+        Clear random word history
+      </button>
+    </div>
     <EditWord :visible="showDialog" :word="word" @close="closeDialog()" />
   </div>
 </template>
@@ -105,7 +108,6 @@ import Loader from "@/components/utility/Loader.vue";
 import EditWord from "./EditWord.vue";
 import pinyin from "pinyin";
 import { useDictionaryStore } from "@/stores/dictionaryStore";
-import { DictOptimizer } from "segmentit";
 
 const randomWordData = ref(null);
 
@@ -115,9 +117,9 @@ const dictionaryStore = useDictionaryStore();
 
 const fetchRandomWordAndDefinitions = async () => {
   try {
-    if (randomWordData.value != null) {
-      dictionaryStore.addToRandomHistory(randomWordData);
-    }
+    // if (randomWordData.value != null) {
+    //   dictionaryStore.addToRandomHistory(randomWordData);
+    // }
     loading.value = true; // Start loading
     // Step 1: Get the total count of words
     const { count } = await supabase
@@ -233,7 +235,9 @@ h4 {
 .button-get-random {
   margin: 0 1rem 1rem;
 }
-
+.rw-history {
+  padding: 0 1rem 1rem;
+}
 .rw-0 {
   display: none;
 }
