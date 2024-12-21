@@ -77,6 +77,19 @@
     <button class="button-get-random" @click="fetchRandomWordAndDefinitions">
       Get random word
     </button>
+    <!-- random word history-->
+    <div v-if="dictionaryStore.randomWordHistory.length > 1">
+      <h2>History</h2>
+      <div
+        v-for="(word, index) in dictionaryStore.randomWordHistory"
+        :key="index"
+        :class="`rw-${index}`"
+      >
+        {{ word.romaji }} {{ word.english }} {{ word.chinese }}
+        <!-- {{ dictionaryStore.randomWordHistory }} -->
+      </div>
+    </div>
+
     <EditWord :visible="showDialog" :word="word" @close="closeDialog()" />
   </div>
 </template>
@@ -91,13 +104,20 @@ import IconPlayAudio from "@/components/icons/IconPlayAudio.vue";
 import Loader from "@/components/utility/Loader.vue";
 import EditWord from "./EditWord.vue";
 import pinyin from "pinyin";
+import { useDictionaryStore } from "@/stores/dictionaryStore";
+import { DictOptimizer } from "segmentit";
 
 const randomWordData = ref(null);
 
 const loading = ref(true);
 
+const dictionaryStore = useDictionaryStore();
+
 const fetchRandomWordAndDefinitions = async () => {
   try {
+    if (randomWordData.value != null) {
+      dictionaryStore.addToRandomHistory(randomWordData);
+    }
     loading.value = true; // Start loading
     // Step 1: Get the total count of words
     const { count } = await supabase
@@ -129,10 +149,11 @@ const fetchRandomWordAndDefinitions = async () => {
 
     // Combine word and definitions in one object
     randomWord.definitions = definitionsData;
-    
+
     if (randomWordData) {
       randomWordData.value = randomWord;
       console.log(randomWordData);
+      dictionaryStore.addToRandomHistory(randomWord);
     }
   } catch (error) {
     console.error("Error fetching random word and definitions:", error.message);
@@ -211,5 +232,9 @@ h4 {
 }
 .button-get-random {
   margin: 0 1rem 1rem;
+}
+
+.rw-0 {
+  display: none;
 }
 </style>

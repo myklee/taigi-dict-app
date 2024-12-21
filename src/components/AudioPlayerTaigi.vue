@@ -50,7 +50,7 @@ export default {
       console.log("Audio has finished playing.");
     },
     getAudioFolder(audioid) {
-      console.log(audioid);
+      // console.log(audioid);
       if (audioid) {
         const audioidnum = parseInt(audioid.match(/^(\d+)\(/)[1]);
         // console.log(audioid);

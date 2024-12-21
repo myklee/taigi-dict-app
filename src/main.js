@@ -1,9 +1,15 @@
 import './assets/main.css'
 
 import { createApp } from 'vue'
-import App from './App.vue'
 
-createApp(App).mount('#app')
+import { createPinia } from 'pinia';
+import App from './App.vue';
+
+const app = createApp(App);
+const pinia = createPinia();
+
+app.use(pinia);
+app.mount('#app');
 
 
 // Supabase postgres password VaJzmCmC2uIWw6UI

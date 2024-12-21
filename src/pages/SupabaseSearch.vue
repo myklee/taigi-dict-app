@@ -38,21 +38,36 @@
 
       <div class="moe-search-results-header search-results-header">
         <div v-if="searchExecuted" class="results-count">
-          {{ words.length }} result<span v-if="words.length != 1">s</span>
+          {{ dictionaryStore.searchResults.length }} result<span
+            v-if="dictionaryStore.searchResults.length != 1"
+            >s</span
+          >
           found
         </div>
         <!-- <button class="reset-voice" @click="resetVoice">Reset Voice</button> -->
       </div>
     </div>
+    <!-- search history -->
+    <div>
+      <h2>History</h2>
+      {{ dictionaryStore.searchHistory }}
+    </div>
 
-    <ul v-if="words.length != 0" class="results moe-results">
+    <ul
+      v-if="dictionaryStore.searchResults.length != 0"
+      class="results moe-results"
+    >
       <li>
-        <div class="moe-title" v-if="words.length">
+        <div class="moe-title" v-if="dictionaryStore.searchResults.length">
           <div>Ministry of Education Taiwanese Dictionary of Common Words</div>
           <div>教育部臺灣台語常用詞辭典</div>
         </div>
       </li>
-      <li v-for="word in words" :key="word.id" class="entry moe-result-item">
+      <li
+        v-for="word in dictionaryStore.searchResults"
+        :key="word.id"
+        class="entry moe-result-item"
+      >
         <div
           v-if="word.romaji != null"
           class="word-item moe-word-taigi alphabetic"
@@ -162,6 +177,7 @@ import { updatePinyinInBatches } from "@/addpinyinbopo";
 import pinyin from "pinyin"; // For Pinyin
 import fromPinyin from "zhuyin";
 import { updateZhuyinInBatches } from "@/addzhuyin";
+import { useDictionaryStore } from "../stores/dictionaryStore";
 
 export default {
   components: {
@@ -184,12 +200,30 @@ export default {
     });
     const loading = ref(false);
     const searchExecuted = ref(false);
+    const searchHistory = ref([]);
+
+    const dictionaryStore = useDictionaryStore();
+
+    // const saveSearch = (term) => {
+    //   if (!term) return;
+    //   console.log(localStorage);
+
+    //   const history = JSON.parse(localStorage.getItem("searchHistory")) || [];
+    //   // Avoid duplicates
+    //   if (!history.includes(term)) {
+    //     history.unshift(term); // Add the term to the beginning
+    //     if (history.length > 10) history.pop(); // Limit history to 10 items
+    //     localStorage.setItem("searchHistory", JSON.stringify(history));
+    //   }
+    //   searchHistory.value = history;
+    // };
 
     const clearInput = () => {
       searchQuery.value = "";
       words.value = [];
       wordsCedict.value = [];
       searchExecuted.value = false;
+      dictionaryStore.searchResults = [];
     };
 
     const openEditDialog = (selectedWord) => {
@@ -213,6 +247,10 @@ export default {
     const searchWords = async () => {
       if (searchQuery.value.length != 0) {
         try {
+          //save history
+          // saveSearch(searchQuery.value);
+          dictionaryStore.addToHistory(searchQuery.value);
+
           loading.value = true; // Start loading
           searchExecuted.value = true;
           let query = supabase
@@ -238,7 +276,9 @@ export default {
           if (error) {
             console.error("Error fetching words:", error.message);
           } else {
-            words.value = data;
+            // words.value = data;
+            dictionaryStore.setSearchResults(data);
+            // words.value = dictionaryStore.searchResults;
           }
           // cross reference cedict
           searchWordsAndCedict(searchQuery.value);
@@ -280,6 +320,7 @@ export default {
     return {
       clearInput,
       closeDialog,
+      dictionaryStore,
       EditWord,
       exactSearch,
       fromPinyin,
@@ -295,6 +336,7 @@ export default {
       searchExecuted,
       searchWordsAndCedict,
       searchQuery,
+      searchHistory,
       showDialog,
       words,
       wordsCedict,
