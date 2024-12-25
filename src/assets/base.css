@@ -4,33 +4,25 @@
 /* color palette */
 
 :root {
-  --black: rgb(0, 32, 0);
-  --white: rgb(218, 218, 218);
-  --green: rgb(0, 128, 0);
-  --greenLight: #dbebdb;
-  --greenDark: #004000;
+  --black: #0a0a0a;
+  --raisinBlack: #1a1d29;
+  --gunmetal: #2d3143;
+  --slateGray: #6e83a0;
+  --frenchGray: #acabb5;
+  --white: #f3f3f3;
   color-scheme: light dark;
-
-  /* CSS HSL */
-  --platinum: hsla(270, 8%, 85%, 1);
-  --frenchGray: hsla(247, 6%, 69%, 1);
-  --gunmetal: hsla(229, 19%, 22%, 1);
-  --eerieBlack: ##191716;
-  --raisinBlack: hsl(228, 23%, 13%);
-  --slateGray: hsla(215, 21%, 53%, 1);
-  --uranian-blue: hsla(210, 100%, 85%, 1);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --color-text: var(--frenchGray);
     --app-background: var(--raisinBlack);
-    --button-background: var(--frenchGray);
-    --button-text-color: var(--black);
+    --button-background: var(--black);
+    --button-text-color: var(--frenchGray);
     --rw-background: var(--gunmetal);
     --rw-header-background: var(--raisinBlack);
     --playAudioIcon: var(--frenchGray);
-    --moeItemBg: var(--eerieBlack);
+    --moeItemBg: var(--black);
   }
   body {
     background: var(--app-background);
@@ -88,9 +80,31 @@ input[type="text"] {
   }
 }
 button {
+  border-radius: 3px;
   padding: 0.5rem 1rem;
   cursor: pointer;
   font-size: 1rem;
+  border: none;
+}
+
+.icon-button {
+  cursor: pointer;
+  /* background-color: var(--black); */
+  border-radius: 50%;
+  height: 2.5rem;
+  width: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* edit word button */
+.edit-word {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  cursor: pointer;
   border: none;
 }
 

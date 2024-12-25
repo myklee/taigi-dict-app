@@ -2,7 +2,19 @@
   <Loader :loading="loading && !randomWordData" />
 
   <div v-if="randomWordData" class="rw">
-    <h4>Random word</h4>
+    <Loader :loading="loading"></Loader>
+    <header class="rw-header">
+      <h3>Random word</h3>
+      <div class="rw-header-actions">
+        <IconRefresh
+          class="rw-get-word"
+          color="#a5a5a5"
+          @click="fetchRandomWordAndDefinitions"
+        />
+        <IconEdit class="edit-rw" @click="openEditDialog(randomWordData)" />
+      </div>
+    </header>
+
     <div class="rw-content" v-if="randomWordData">
       <div class="rw-words">
         <div class="rw-words-main">
@@ -72,13 +84,13 @@
         </ul>
       </div>
     </div>
-    <button class="button-get-random" @click="fetchRandomWordAndDefinitions">
-      Get random word
-    </button>
 
     <!-- random word history-->
     <div v-if="dictionaryStore.randomWordHistory.length > 1" class="rw-history">
-      <h3>History</h3>
+      <div class="rw-history-header">
+        <h3>Random word history</h3>
+        <IconTrash @click="dictionaryStore.clearRandomWordHistory" />
+      </div>
       <ul>
         <li
           v-for="(word, index) in dictionaryStore.randomWordHistory"
@@ -89,11 +101,13 @@
           <!-- {{ dictionaryStore.randomWordHistory }} -->
         </li>
       </ul>
-      <button @click="dictionaryStore.clearRandomWordHistory">
-        Clear random word history
-      </button>
     </div>
-    <EditWord :visible="showDialog" :word="word" @close="closeDialog()" />
+
+    <EditWord
+      :visible="showDialog"
+      :word="randomWordData"
+      @close="closeDialog()"
+    />
   </div>
 </template>
 
@@ -104,16 +118,23 @@ import AudioPlayerTaigi from "@/components/AudioPlayerTaigi.vue";
 import { speakChinese } from "@/utils";
 import { speakEnglish } from "@/utils";
 import IconPlayAudio from "@/components/icons/IconPlayAudio.vue";
+import IconRefresh from "@/components/icons/IconRefresh.vue";
 import Loader from "@/components/utility/Loader.vue";
 import EditWord from "./EditWord.vue";
 import pinyin from "pinyin";
 import { useDictionaryStore } from "@/stores/dictionaryStore";
+import IconTrash from "@/components/icons/IconTrash.vue";
+import IconEdit from "@/components/icons/IconEdit.vue";
 
 const randomWordData = ref(null);
 
 const loading = ref(true);
-
 const dictionaryStore = useDictionaryStore();
+const showDialog = ref(false);
+const closeDialog = () => {
+  showDialog.value = false;
+  document.body.style.overflow = "scroll";
+};
 
 const fetchRandomWordAndDefinitions = async () => {
   try {
@@ -167,37 +188,36 @@ const fetchRandomWordAndDefinitions = async () => {
 
 onMounted(fetchRandomWordAndDefinitions);
 
-async function getDefinitionsForWord(wordId) {
-  const { data, error } = await supabase
-    .from("definitions")
-    .select("*")
-    .eq("wordid", wordId); // Match definitions with the random word's ID
-
-  if (error) {
-    console.error("Error fetching definitions:", error);
-    return [];
-  }
-
-  return data; // Return the list of definitions
-}
-
 const readChinese = async (text) => {
   speakChinese(text);
 };
 const readEnglish = async (text) => {
   speakEnglish(text);
 };
+
+const openEditDialog = (word) => {
+  showDialog.value = true;
+  document.body.style.overflow = "hidden";
+};
 </script>
 
 <style scoped>
-h4 {
-  padding: 0.25rem 0.5rem;
-  background-color: var(--rw-header-background);
-}
 .rw {
+  position: relative;
   border: 4px solid;
   margin: 5vw;
   background-color: var(--rw-background);
+}
+.rw-header {
+  background-color: var(--rw-header-background);
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.rw-header-actions {
+  display: flex;
 }
 .rw-content {
   padding: 0rem 1rem 1rem;
@@ -238,7 +258,13 @@ h4 {
 .rw-history {
   padding: 0 1rem 1rem;
 }
+.rw-history-header {
+  display: flex;
+  align-items: center;
+}
 .rw-0 {
   display: none;
+}
+.edit-rw {
 }
 </style>

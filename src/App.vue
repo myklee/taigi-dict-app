@@ -44,6 +44,7 @@ onMounted(async () => {
     <!-- <DictionarySearch /> -->
     <SupabaseSearch />
     <RandomWord />
+    
     <!-- <div id="auth">
       <input type="email" id="email" placeholder="Email" />
       <input type="password" id="password" placeholder="Password" />
@@ -61,7 +62,7 @@ onMounted(async () => {
   display: none;
   text-align: center;
   span {
-    margin:1rem;
+    margin: 1rem;
   }
 }
 </style>

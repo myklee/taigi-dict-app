@@ -9,7 +9,7 @@
           type="text"
           v-model="searchQuery"
           @keyup.enter="searchWords"
-          placeholder="Search/查找/tshuē"
+          placeholder="Search enligsh and chinese · 中文或英文搜尋"
           class="text-field search-words-text-field"
           autocapitalize="off"
         />
@@ -29,7 +29,7 @@
             v-model="exactSearch"
             @change="searchWords"
           />
-          <label for="exact-search">Exact Search</label>
+          <label for="exact-search">Strict search</label>
         </div>
         <div class="search-actions">
           <button class="search-button" @click="searchWords">Search</button>
@@ -40,7 +40,10 @@
         v-if="dictionaryStore.searchHistory.length > 0"
         class="search-history"
       >
-        <h3>Search History</h3>
+        <div class="search-history-header">
+          <h3>Search History</h3>
+          <IconTrash @click="dictionaryStore.clearSearchHistory" />
+        </div>
         <ul>
           <li
             v-for="(term, index) in dictionaryStore.searchHistory"
@@ -49,11 +52,14 @@
             {{ term.term }}
           </li>
         </ul>
-        <button @click="dictionaryStore.clearSearchHistory">
-          Clear search history
-        </button>
       </div>
+
       <div class="moe-search-results-header search-results-header">
+        <div class="moe-title" v-if="dictionaryStore.searchResults.length">
+          <div>Ministry of Education Taiwanese Dictionary of Common Words</div>
+          <div>教育部臺灣台語常用詞辭典</div>
+        </div>
+
         <div v-if="searchExecuted" class="results-count">
           {{ dictionaryStore.searchResults.length }} result<span
             v-if="dictionaryStore.searchResults.length != 1"
@@ -69,12 +75,6 @@
       v-if="dictionaryStore.searchResults.length != 0"
       class="results moe-results"
     >
-      <li>
-        <div class="moe-title" v-if="dictionaryStore.searchResults.length">
-          <div>Ministry of Education Taiwanese Dictionary of Common Words</div>
-          <div>教育部臺灣台語常用詞辭典</div>
-        </div>
-      </li>
       <li
         v-for="word in dictionaryStore.searchResults"
         :key="word.id"
@@ -124,17 +124,20 @@
             </ul>
           </li>
         </ul>
-        <button class="edit-word" @click="openEditDialog(word)">
-          Edit word
-        </button>
+        <IconEdit
+          class="edit-word"
+          title="Edit entry"
+          @click="openEditDialog(word)"
+        />
       </li>
     </ul>
     <!-- CC - CEDICDT -->
 
     <ul v-if="wordsCedict.length" class="results-cedict">
-      <h2 class="section-header cedict-header">
+      <div class="section-header cedict-header">
         CC-CEDICT (Creative Commons Chinese English Dictionary)
-      </h2>
+      </div>
+      <div>{{ wordsCedict.length }} results found</div>
       <li
         class="cedict-item"
         v-for="(wordcedict, index) in wordsCedict"
@@ -167,7 +170,6 @@
         <p class="cedict-english">{{ wordcedict.english_cedict }}</p>
       </li>
     </ul>
-
     <EditWord
       :visible="showDialog"
       :word="word"
@@ -177,7 +179,7 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref, onMounted } from "vue";
 import { supabase } from "@/supabase";
 import AudioPlayerTaigi from "@/components/AudioPlayerTaigi.vue";
@@ -190,175 +192,137 @@ import pinyin from "pinyin"; // For Pinyin
 import fromPinyin from "zhuyin";
 import { updateZhuyinInBatches } from "@/addzhuyin";
 import { useDictionaryStore } from "../stores/dictionaryStore";
+import IconTrash from "@/components/icons/IconTrash.vue";
+import IconEdit from "@/components/icons/IconEdit.vue";
 
-export default {
-  components: {
-    AudioPlayerTaigi,
-    IconPlayAudio,
-    EditWord,
-    Loader,
-  },
-  setup() {
-    const words = ref([]);
-    const wordsCedict = ref([]);
-    const searchQuery = ref("");
-    const exactSearch = ref(false);
-    const word = ref(null);
-    const showDialog = ref(false);
-    const newDefinition = ref({
-      partofspeech: "",
-      def_english: "",
-      def_chinese: "",
-    });
-    const loading = ref(false);
-    const searchExecuted = ref(false);
-    const searchHistory = ref([]);
+const words = ref([]);
+const wordsCedict = ref([]);
+const searchQuery = ref("");
+const exactSearch = ref(false);
+const word = ref(null);
+const showDialog = ref(false);
+const loading = ref(false);
+const searchExecuted = ref(false);
 
-    const dictionaryStore = useDictionaryStore();
+const dictionaryStore = useDictionaryStore();
 
-    onMounted(() => {
-      dictionaryStore.loadFromIndexedDB();
-    });
-    // const saveSearch = (term) => {
-    //   if (!term) return;
-    //   console.log(localStorage);
+onMounted(() => {
+  dictionaryStore.loadFromIndexedDB();
+});
 
-    //   const history = JSON.parse(localStorage.getItem("searchHistory")) || [];
-    //   // Avoid duplicates
-    //   if (!history.includes(term)) {
-    //     history.unshift(term); // Add the term to the beginning
-    //     if (history.length > 10) history.pop(); // Limit history to 10 items
-    //     localStorage.setItem("searchHistory", JSON.stringify(history));
-    //   }
-    //   searchHistory.value = history;
-    // };
-
-    const clearInput = () => {
-      searchQuery.value = "";
-      words.value = [];
-      wordsCedict.value = [];
-      searchExecuted.value = false;
-      dictionaryStore.searchResults = [];
-    };
-
-    const openEditDialog = (selectedWord) => {
-      console.log(selectedWord);
-      showDialog.value = true;
-      document.body.style.overflow = "hidden";
-      word.value = {
-        ...selectedWord,
-        definitions: selectedWord.definitions || [], // Initialize as an empty array if undefined
-      };
-    };
-
-    const closeDialog = () => {
-      showDialog.value = false;
-      document.body.style.overflow = "scroll";
-    };
-    const refreshSearchResults = async () => {
-      searchWords();
-    };
-
-    const searchWords = async () => {
-      if (searchQuery.value.length != 0) {
-        try {
-          //save history
-          // saveSearch(searchQuery.value);
-          dictionaryStore.addToHistory(searchQuery.value);
-
-          loading.value = true; // Start loading
-          searchExecuted.value = true;
-          let query = supabase
-            .from("words")
-            .select(
-              `id, english, chinese, romaji, audioid, pinyin, zhuyin, taiwanese, audio_url, english_mknoll, definitions (defid, def_english, def_chinese)`
-            );
-
-          if (exactSearch.value) {
-            // Perform exact match search
-            query = query.or(
-              `chinese.ilike.${searchQuery.value},english.ilike.${searchQuery.value},english_mknoll.ilike.${searchQuery.value},romaji.ilike.${searchQuery.value},taiwanese.ilike.${searchQuery.value}`
-            );
-          } else {
-            // Perform partial match search
-            query = query.or(
-              `chinese.ilike.%${searchQuery.value}%,english.ilike.%${searchQuery.value}%,english_mknoll.ilike.%${searchQuery.value}%,romaji.ilike.%${searchQuery.value}%,taiwanese.ilike.%${searchQuery.value}%`
-            );
-          }
-
-          const { data, error } = await query;
-
-          if (error) {
-            console.error("Error fetching words:", error.message);
-          } else {
-            // words.value = data;
-            dictionaryStore.setSearchResults(data);
-            // words.value = dictionaryStore.searchResults;
-          }
-          // cross reference cedict
-          searchWordsAndCedict(searchQuery.value);
-        } catch (err) {
-          console.error("Error in searchWords:", err.message);
-        } finally {
-          loading.value = false; // stop loading
-        }
-      } else {
-        console.log("empty search field!");
-      }
-    };
-
-    const searchWordsAndCedict = async (searchTerm) => {
-      try {
-        const { data, error } = await supabase.rpc("search_words_cedict", {
-          search_term: searchTerm,
-        });
-
-        if (error) {
-          console.error("Error fetching search results:", error.message);
-          return [];
-        }
-
-        wordsCedict.value = data;
-
-        console.log("Search results:", data);
-        return data;
-      } catch (err) {
-        console.error("Unexpected error:", err);
-        return [];
-      }
-    };
-
-    const readChinese = (text) => speakChinese(text);
-    const readEnglish = (text) => speakEnglish(text);
-    const resetVoice = () => window.speechSynthesis.cancel();
-
-    return {
-      clearInput,
-      closeDialog,
-      dictionaryStore,
-      EditWord,
-      exactSearch,
-      fromPinyin,
-      loading,
-      newDefinition,
-      openEditDialog,
-      pinyin,
-      readChinese,
-      readEnglish,
-      resetVoice,
-      refreshSearchResults,
-      searchWords,
-      searchExecuted,
-      searchWordsAndCedict,
-      searchQuery,
-      searchHistory,
-      showDialog,
-      words,
-      wordsCedict,
-      word,
-    };
-  },
+const clearInput = () => {
+  searchQuery.value = "";
+  words.value = [];
+  wordsCedict.value = [];
+  searchExecuted.value = false;
+  dictionaryStore.searchResults = [];
 };
+
+const openEditDialog = (selectedWord) => {
+  console.log(selectedWord);
+  showDialog.value = true;
+  document.body.style.overflow = "hidden";
+  word.value = {
+    ...selectedWord,
+    definitions: selectedWord.definitions || [], // Initialize as an empty array if undefined
+  };
+};
+
+const closeDialog = () => {
+  showDialog.value = false;
+  document.body.style.overflow = "scroll";
+};
+const refreshSearchResults = async () => {
+  searchWords();
+};
+
+const searchWords = async () => {
+  if (searchQuery.value.length != 0) {
+    try {
+      //save search history
+      dictionaryStore.addToHistory(searchQuery.value);
+      loading.value = true; // Start loading
+      searchExecuted.value = true;
+
+      //primary MOE query
+      let query = supabase
+        .from("words")
+        .select(
+          `id, english, chinese, romaji, audioid, pinyin, zhuyin, taiwanese, audio_url, english_mknoll, definitions (defid, def_english, def_chinese)`
+        );
+
+      if (exactSearch.value) {
+        // Perform exact match search
+        query = query.or(
+          `chinese.ilike.${searchQuery.value},english.ilike.${searchQuery.value},english_mknoll.ilike.${searchQuery.value},romaji.ilike.${searchQuery.value},taiwanese.ilike.${searchQuery.value}`
+        );
+      } else {
+        // Perform partial match search
+        query = query.or(
+          `chinese.ilike.%${searchQuery.value}%,english.ilike.%${searchQuery.value}%,english_mknoll.ilike.%${searchQuery.value}%,romaji.ilike.%${searchQuery.value}%,taiwanese.ilike.%${searchQuery.value}%`
+        );
+      }
+      const { data, error } = await query;
+
+      // //query cedict directly
+      // const { data: cedictData, cedictError } = await supabase
+      //   .from("cedict")
+      //   .select("*")
+      //   .or(
+      //     `english_cedict.ilike.%${searchQuery.value}%, traditional.ilike,%${searchQuery.value}%`
+      //   );
+
+      // console.log(cedictData);
+
+      // const allResults = {
+      //   moeResults: data,
+      //   cedictResults: cedictData,
+      // };
+
+      if (error) {
+        console.error("Error fetching words:", error.message);
+      } else {
+        // words.value = data;
+        dictionaryStore.setSearchResults(data);
+        // words.value = dictionaryStore.searchResults;
+      }
+
+      // cross reference cedict
+      searchWordsAndCedict(searchQuery.value);
+    } catch (err) {
+      console.error("Error in searchWords:", err.message);
+    } finally {
+      loading.value = false; // stop loading
+    }
+  } else {
+    console.log("empty search field!");
+  }
+};
+
+const searchWordsAndCedict = async (searchTerm) => {
+  try {
+    const { data, error } = await supabase.rpc("search_words_cedict", {
+      search_term: searchTerm,
+    });
+
+    if (error) {
+      console.error("Error fetching search results:", error.message);
+      return [];
+    }
+
+    wordsCedict.value = data;
+
+    console.log("Search results:", data);
+    return data;
+  } catch (err) {
+    console.error("Unexpected error:", err);
+    return [];
+  }
+};
+
+const readChinese = (text) => speakChinese(text);
+const readEnglish = (text) => speakEnglish(text);
+const resetVoice = () => window.speechSynthesis.cancel();
 </script>
 
 <style scoped>
@@ -427,6 +391,11 @@ exact search checkbox
 .search-history {
   padding: 0 5vw 5vw;
 }
+.search-history-header {
+  display: flex;
+  align-items: center;
+}
+
 /*
 
 MOE results header
@@ -453,14 +422,18 @@ MOE result items
 */
 .moe-title {
   padding-bottom: 1rem;
-  display: none;
+  /* display: none; */
 }
 .moe-result-item {
   padding: 0rem 0 2rem 0;
-  border-top: 1px solid var(--gunmetal);
+  background-color: var(--black);
+  /* border-top: 1px solid var(--gunmetal); */
+  border-radius: 0.25rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
   position: relative;
   .pinyin-zhuyin {
     font-size: 1rem;
@@ -491,13 +464,6 @@ MOE result items
   }
 }
 
-.edit-word {
-  cursor: pointer;
-  border: none;
-  /* display: none; */
-  width: 100px;
-  margin-top: 1rem;
-}
 /*
 
 CCEDICT results
@@ -515,7 +481,7 @@ CCEDICT results
   }
 }
 .cedict-header {
-  display: none;
+  /* display: none; */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

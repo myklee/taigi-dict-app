@@ -39,7 +39,7 @@ export const useDictionaryStore = defineStore("dictionary", {
     },
     async setSearchResults(results) {
       this.searchResults = results;
-      await db.searchResults.put({ term, results });
+      await db.searchResults.put({ results });
     },
   },
 });
