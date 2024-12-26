@@ -10,9 +10,11 @@ db.version(1).stores({
     "id,type,chinese,romaji,classification,audioid,english, created_at, sort, taiwanese, english_mknoll, simplified, pinyin, english_ccedict, classification_english, zhuyin, audio_url ",
   definitions: "defid,wordid,partofspeech,def_chinese,def_english",
   cedict: "id, created_at, traditional, simplified, pinyin, english_edict",
-  searchHistory: '++id, term',
-  searchResults: '++id, term, results', // Indexed by term
-  randomWordHistory: '++id, term, results'
+  searchHistory: "++id, term",
+  searchResults: "results",
+  cedictResults: "results",
+  crossRefResults: "results",
+  randomWordHistory: "",
 });
 
 export default db;

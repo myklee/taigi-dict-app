@@ -7,21 +7,21 @@ import RandomWord from "./pages/RandomWord.vue";
 import { ref, onMounted } from "vue";
 import db from "./db.js";
 
-// Reactive variable to track if data exists
-const hasData = ref(false);
+// // Reactive variable to track if data exists
+// const hasData = ref(false);
 
-onMounted(async () => {
-  // Check if there is any data in the 'words' table
-  hasData.value =
-    (await db.words.count()) > 0 && (await db.definitions.count()) > 0;
-  console.log(db);
-  if (hasData.value) {
-    console.log("Data is available in IndexedDB.");
-  } else {
-    console.log("No data in IndexedDB.");
-    uploadEntries();
-  }
-});
+// onMounted(async () => {
+//   // Check if there is any data in the 'words' table
+//   hasData.value =
+//     (await db.words.count()) > 0 && (await db.definitions.count()) > 0;
+//   console.log(db);
+//   if (hasData.value) {
+//     console.log("Data is available in IndexedDB.");
+//   } else {
+//     console.log("No data in IndexedDB.");
+//     uploadEntries();
+//   }
+// });
 </script>
 
 <template>

@@ -106,4 +106,4 @@ export async function updateZhuyinInBatches(batchSize = 1000) {
 
   console.log("Zhuyin update completed.");
 }
-updateZhuyinInBatches();
+// updateZhuyinInBatches();

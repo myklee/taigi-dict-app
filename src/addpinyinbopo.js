@@ -87,4 +87,4 @@ export async function updatePinyinInBatches(batchSize = 1000) {
 
   console.log("Pinyin update completed.");
 }
-updatePinyinInBatches();
+// updatePinyinInBatches();

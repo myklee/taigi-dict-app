@@ -6,13 +6,20 @@ export const useDictionaryStore = defineStore("dictionary", {
   state: () => ({
     searchHistory: [],
     searchResults: [],
+    cedictResults: [],
+    crossRefResults: [],
     randomWordHistory: [],
   }),
   actions: {
     async loadFromIndexedDB() {
       this.searchHistory = await db.searchHistory.toArray();
       this.randomWordHistory = await db.randomWordHistory.toArray();
-      // Optionally load search results if needed
+      const searchResults = await db.searchResults.toArray();
+      this.searchResults = searchResults.pop().results;
+      const cedictResults = await db.cedictResults.toArray();
+      this.cedictResults = cedictResults.pop().results;
+      const crossRefResults = await db.crossRefResults.toArray();
+      this.crossRefResults = crossRefResults.pop().results;
     },
     async clearSearchHistory() {
       this.searchHistory = [];
@@ -40,6 +47,14 @@ export const useDictionaryStore = defineStore("dictionary", {
     async setSearchResults(results) {
       this.searchResults = results;
       await db.searchResults.put({ results });
+    },
+    async setCedictResults(results) {
+      this.cedictResults = results;
+      await db.cedictResults.put({ results });
+    },
+    async setCrossRefCedict(results) {
+      this.crossRefResults = results;
+      await db.crossRefResults.put({ results });
     },
   },
 });

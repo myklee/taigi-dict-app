@@ -132,15 +132,18 @@
       </li>
     </ul>
     <!-- CC - CEDICDT -->
-
-    <ul v-if="wordsCedict.length" class="results-cedict">
+    <!-- cross ref cedict-->
+    <ul
+      v-if="dictionaryStore.crossRefResults.length > 0"
+      class="results-cedict"
+    >
       <div class="section-header cedict-header">
         CC-CEDICT (Creative Commons Chinese English Dictionary)
       </div>
-      <div>{{ wordsCedict.length }} results found</div>
+      <div>{{ dictionaryStore.crossRefResults.length }} results found</div>
       <li
         class="cedict-item"
-        v-for="(wordcedict, index) in wordsCedict"
+        v-for="(wordcedict, index) in dictionaryStore.crossRefResults"
         :key="index"
       >
         <p v-if="wordcedict.traditional != null" class="cedict-traditional">
@@ -170,6 +173,13 @@
         <p class="cedict-english">{{ wordcedict.english_cedict }}</p>
       </li>
     </ul>
+
+    <!-- driect ccedict results-->
+    <ul>
+      <li v-for="(word, index) in dictionaryStore.cedictResults" :key="index">
+        {{ word }}
+      </li>
+    </ul>
     <EditWord
       :visible="showDialog"
       :word="word"
@@ -195,8 +205,6 @@ import { useDictionaryStore } from "../stores/dictionaryStore";
 import IconTrash from "@/components/icons/IconTrash.vue";
 import IconEdit from "@/components/icons/IconEdit.vue";
 
-const words = ref([]);
-const wordsCedict = ref([]);
 const searchQuery = ref("");
 const exactSearch = ref(false);
 const word = ref(null);
@@ -212,10 +220,8 @@ onMounted(() => {
 
 const clearInput = () => {
   searchQuery.value = "";
-  words.value = [];
-  wordsCedict.value = [];
   searchExecuted.value = false;
-  dictionaryStore.searchResults = [];
+  // dictionaryStore.searchResults = [];
 };
 
 const openEditDialog = (selectedWord) => {
@@ -264,20 +270,25 @@ const searchWords = async () => {
       }
       const { data, error } = await query;
 
-      // //query cedict directly
-      // const { data: cedictData, cedictError } = await supabase
-      //   .from("cedict")
-      //   .select("*")
-      //   .or(
-      //     `english_cedict.ilike.%${searchQuery.value}%, traditional.ilike,%${searchQuery.value}%`
-      //   );
+      //query cedict directly
+      const { data: cedictData, error: cedictError } = await supabase
+        .from("cedict")
+        .select("*")
+        .or(
+          `english_cedict.ilike.%${searchQuery.value}%,traditional.ilike.%${searchQuery.value}%`
+        );
+      if (cedictError) {
+        console.error("Error fetching words:", error.message);
+      } else {
+        // console.log(cedictData);
+        // cedictResults.value = cedictData;
+        dictionaryStore.setCedictResults(cedictData);
+      }
 
-      // console.log(cedictData);
-
-      // const allResults = {
-      //   moeResults: data,
-      //   cedictResults: cedictData,
-      // };
+      const allResults = {
+        moeResults: data,
+        cedictResults: cedictData,
+      };
 
       if (error) {
         console.error("Error fetching words:", error.message);
@@ -288,7 +299,7 @@ const searchWords = async () => {
       }
 
       // cross reference cedict
-      searchWordsAndCedict(searchQuery.value);
+      crossRefCedict(searchQuery.value);
     } catch (err) {
       console.error("Error in searchWords:", err.message);
     } finally {
@@ -299,7 +310,7 @@ const searchWords = async () => {
   }
 };
 
-const searchWordsAndCedict = async (searchTerm) => {
+const crossRefCedict = async (searchTerm) => {
   try {
     const { data, error } = await supabase.rpc("search_words_cedict", {
       search_term: searchTerm,
@@ -309,8 +320,8 @@ const searchWordsAndCedict = async (searchTerm) => {
       console.error("Error fetching search results:", error.message);
       return [];
     }
-
-    wordsCedict.value = data;
+    dictionaryStore.setCrossRefCedict(data);
+    // wordsCedict.value = data;
 
     console.log("Search results:", data);
     return data;

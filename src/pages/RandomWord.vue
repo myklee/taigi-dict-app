@@ -159,7 +159,7 @@ const fetchRandomWordAndDefinitions = async () => {
 
     if (wordError) throw new Error(wordError.message);
 
-    console.log(wordData);
+    // console.log(wordData);
     const randomWord = wordData[0];
 
     // fetch definitions associated with the random word
@@ -175,7 +175,7 @@ const fetchRandomWordAndDefinitions = async () => {
 
     if (randomWordData) {
       randomWordData.value = randomWord;
-      console.log(randomWordData);
+      // console.log(randomWordData);
       dictionaryStore.addToRandomHistory(randomWord);
     }
   } catch (error) {
