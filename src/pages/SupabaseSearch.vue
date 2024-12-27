@@ -131,15 +131,56 @@
         />
       </li>
     </ul>
-    <!-- CC - CEDICDT -->
+    <!-- driect mknoll results-->
+    <div class="mknoll-search-results-header search-results-header">
+      <div class="mknoll-title" v-if="dictionaryStore.mknollResults.length">
+        <div>Mary Knoll Dictionary</div>
+        <!-- <div>教育部臺灣台語常用詞辭典</div> -->
+      </div>
+
+      <div v-if="searchExecuted" class="results-count">
+        {{ dictionaryStore.mknollResults.length }} result<span
+          v-if="dictionaryStore.mknollResults.length != 1"
+          >s</span
+        >
+        found
+      </div>
+      <!-- <button class="reset-voice" @click="resetVoice">Reset Voice</button> -->
+    </div>
+    <ul class="mknoll-results">
+      <li v-for="(word, index) in dictionaryStore.mknollResults" :key="index">
+        <div class="mknoll-taiwanese">{{ word.taiwanese }}</div>
+        <div class="mknoll-english">{{ word.english_mknoll }}</div>
+        <div class="mknoll-chinese">{{ word.chinese }}</div>
+      </li>
+    </ul>
+
+    <!-- driect ccedict results-->
+    <div class="cedict-search-results-header search-results-header">
+      <div class="cedict-title" v-if="dictionaryStore.cedictResults.length">
+        <div>CC-CEDICT (Creative Commons Chinese English Dictionary)</div>
+      </div>
+      <div v-if="searchExecuted" class="results-count">
+        {{ dictionaryStore.cedictResults.length }} result<span
+          v-if="dictionaryStore.cedictResults.length != 1"
+          >s</span
+        >
+        found
+      </div>
+    </div>
+    <ul class="cedict-results">
+      <li v-for="(word, index) in dictionaryStore.cedictResults" :key="index">
+        {{ word.traditional }}
+        {{ word.english_cedict }}
+      </li>
+    </ul>
+
     <!-- cross ref cedict-->
     <ul
       v-if="dictionaryStore.crossRefResults.length > 0"
-      class="results-cedict"
+      class="cedict-crossref"
     >
-      <div class="section-header cedict-header">
-        CC-CEDICT (Creative Commons Chinese English Dictionary)
-      </div>
+      <div class="section-header cedict-header">CC-CEDICT Cross reference</div>
       <div>{{ dictionaryStore.crossRefResults.length }} results found</div>
       <li
         class="cedict-item"
@@ -174,12 +215,6 @@
       </li>
     </ul>
 
-    <!-- driect ccedict results-->
-    <ul>
-      <li v-for="(word, index) in dictionaryStore.cedictResults" :key="index">
-        {{ word }}
-      </li>
-    </ul>
     <EditWord
       :visible="showDialog"
       :word="word"
@@ -270,26 +305,6 @@ const searchWords = async () => {
       }
       const { data, error } = await query;
 
-      //query cedict directly
-      const { data: cedictData, error: cedictError } = await supabase
-        .from("cedict")
-        .select("*")
-        .or(
-          `english_cedict.ilike.%${searchQuery.value}%,traditional.ilike.%${searchQuery.value}%`
-        );
-      if (cedictError) {
-        console.error("Error fetching words:", error.message);
-      } else {
-        // console.log(cedictData);
-        // cedictResults.value = cedictData;
-        dictionaryStore.setCedictResults(cedictData);
-      }
-
-      const allResults = {
-        moeResults: data,
-        cedictResults: cedictData,
-      };
-
       if (error) {
         console.error("Error fetching words:", error.message);
       } else {
@@ -304,6 +319,36 @@ const searchWords = async () => {
       console.error("Error in searchWords:", err.message);
     } finally {
       loading.value = false; // stop loading
+    }
+
+    //query cedict directly
+    const { data: cedictData, error: cedictError } = await supabase
+      .from("cedict")
+      .select("*")
+      .or(
+        `english_cedict.ilike.%${searchQuery.value}%,traditional.ilike.%${searchQuery.value}%`
+      );
+    if (cedictError) {
+      console.error("Error fetching words:", cedictError.message);
+    } else {
+      console.log(cedictData);
+      // cedictResults.value = cedictData;
+      dictionaryStore.setCedictResults(cedictData);
+    }
+
+    //query mknoll directly
+    const { data: mknollData, error: mknollError } = await supabase
+      .from("maryknoll")
+      .select("*")
+      .or(
+        `english_mknoll.ilike.%${searchQuery.value}%,chinese.ilike.%${searchQuery.value}%,taiwanese.ilike.%${searchQuery.value}%`
+      );
+    if (mknollError) {
+      console.error("Error fetching words:", mknollError.message);
+    } else {
+      console.log(mknollData);
+      // cedictResults.value = cedictData;
+      dictionaryStore.setMknollResults(mknollData);
     }
   } else {
     console.log("empty search field!");
@@ -481,7 +526,7 @@ CCEDICT results
 
 
 */
-.results-cedict {
+.cedict-crossref {
   padding: 5vw;
   li.cedict-item {
     padding: 0.5rem 0;

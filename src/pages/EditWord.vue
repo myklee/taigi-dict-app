@@ -9,21 +9,25 @@
 
     <button class="close-dialog" @click="close">Close</button>
 
-    <div class="edit-word">
+    <div class="edit-moe-word">
       <form @submit.prevent="updateWord(word, index)">
-        <div>
+        <div class="edit-moe-word edit-romaji">
           <label for="romaji">Romaji</label>
           <input v-model="word.romaji" type="text" id="romaji" />
         </div>
-        <div>
+        <div class="edit-moe-word edit-taiwanese">
           <label for="taiwanese">Taiwanese</label>
           <input v-model="word.taiwanese" type="text" id="taiwanese" />
         </div>
-        <div>
+        <div class="edit-moe-word edit-english">
           <label for="english">English</label>
           <input v-model="word.english" type="text" id="english" />
         </div>
-        <div>
+        <div class="edit-moe-word edit-chinese">
+          <label for="chinese">Chinese</label>
+          <input v-model="word.chinese" type="text" id="chinese" />
+        </div>
+        <div class="edit-moe-word edit-mknoll">
           <label for="english_mknoll">English Mary Knoll</label>
           <input
             v-model="word.english_mknoll"
@@ -31,11 +35,7 @@
             id="english_mknoll"
           />
         </div>
-        <div>
-          <label for="chinese">Chinese</label>
-          <input v-model="word.chinese" type="text" id="chinese" />
-        </div>
-        <div>
+        <div class="edit-moe-word edit-classification">
           <label for="classification">Classification:</label>
           <input
             v-model="word.classification"
@@ -47,21 +47,21 @@
       </form>
     </div>
 
-    <div class="definitions" v-if="word.definitions.length > 0">
+    <div class="edit-definitions-list" v-if="word.definitions.length > 0">
       <div
         v-for="(definition, index) in word.definitions"
         :key="definition.defid"
-        class="definition-container"
+        class="edit-definition-container"
       >
         <form @submit.prevent="updateDefinition(definition.defid, index)">
-          <div>
+          <div class="edit-def edit-english-def">
             <label for="def_english">English Definition:</label>
             <textarea
               v-model="definition.def_english"
               id="def_english"
             ></textarea>
           </div>
-          <div>
+          <div class="edit-chinese-def">
             <label for="def_chinese">Chinese Definition:</label>
             <input
               v-model="definition.def_chinese"
@@ -91,18 +91,18 @@
     <div class="add-definition">
       <h4>Add a new definition</h4>
       <form @submit.prevent="addDefinition(word.id)">
-        <div>
+        <div class="add-partofspeech">
           <label for="partofspeech">Part of Speech:</label>
           <input v-model="newDefinition.partofspeech" id="partofspeech" />
         </div>
-        <div>
+        <div class="add-def-english">
           <label for="def_english">English Definition:</label>
           <textarea
             v-model="newDefinition.def_english"
             id="def_english"
           ></textarea>
         </div>
-        <div>
+        <div class="add-def-chinese">
           <label for="def_chinese">Chinese Definition:</label>
           <textarea
             v-model="newDefinition.def_chinese"
@@ -165,20 +165,19 @@ const updateWord = async (word, index) => {
 
 const updateDefinition = async (defid, index) => {
   loading.value = true;
-
-  const definition = props.word.definitions[index];
-  const { data, error } = await supabase.from("definitions").upsert({
-    defid: defid,
-    wordid: props.word.id,
-    partofspeech: definition.partofspeech,
-    def_english: definition.def_english,
-    def_chinese: definition.def_chinese,
-  });
-  if (error) {
-    console.error("Error updating definition:", error.message);
-    loading.value = false;
-  } else {
+  try {
+    const definition = props.word.definitions[index];
+    const { data, error } = await supabase.from("definitions").upsert({
+      defid: defid,
+      wordid: props.word.id,
+      partofspeech: definition.partofspeech,
+      def_english: definition.def_english,
+      def_chinese: definition.def_chinese,
+    });
     console.log("Definition updated successfully:", data);
+  } catch (error) {
+    console.error("Error updating definition:", error.message);
+  } finally {
     loading.value = false;
   }
 };
@@ -195,9 +194,9 @@ const deleteAudio = async (wordId, audioUrl) => {
 
     props.word.audio_url = null;
     console.log("Audio deleted successfully!");
-    loading.value = false;
   } catch (error) {
     console.error("Error deleting audio:", error);
+  } finally {
     loading.value = false;
   }
 };
@@ -216,9 +215,9 @@ const deleteDefinition = async (defid, index) => {
     }
     props.word.definitions.splice(index, 1);
     console.log("Definition deleted successfully:", data);
-    loading.value = true;
   } catch (err) {
     console.error("Error in deleteDefinition:", err.message);
+  } finally {
     loading.value = false;
   }
 };
@@ -253,10 +252,10 @@ const addDefinition = async (wordId) => {
         def_chinese: "",
       };
       console.log("Definition added successfully:", addedDefinition);
-      loading.value = false;
     }
   } catch (err) {
     console.error("Error in addDefinition:", err.message);
+  } finally {
     loading.value = false;
   }
 };
@@ -278,7 +277,9 @@ Edit dialog
   transition: 1s all ease-in-out;
   overflow: scroll;
 }
-.definition-container {
+.edit-defintions-list {
+}
+.edit-definition-container {
   padding: 5vw;
 }
 .close-dialog {

@@ -7,6 +7,7 @@ export const useDictionaryStore = defineStore("dictionary", {
     searchHistory: [],
     searchResults: [],
     cedictResults: [],
+    mknollResults: [],
     crossRefResults: [],
     randomWordHistory: [],
   }),
@@ -18,6 +19,9 @@ export const useDictionaryStore = defineStore("dictionary", {
       this.searchResults = searchResults.pop().results;
       const cedictResults = await db.cedictResults.toArray();
       this.cedictResults = cedictResults.pop().results;
+      const mknollResults = await db.mknollResults.toArray();
+      this.mknollResults = mknollResults.pop().results;
+      console.log(mknollResults);
       const crossRefResults = await db.crossRefResults.toArray();
       this.crossRefResults = crossRefResults.pop().results;
     },
@@ -51,6 +55,10 @@ export const useDictionaryStore = defineStore("dictionary", {
     async setCedictResults(results) {
       this.cedictResults = results;
       await db.cedictResults.put({ results });
+    },
+    async setMknollResults(results) {
+      this.mknollResults = results;
+      await db.mknollResults.put({ results });
     },
     async setCrossRefCedict(results) {
       this.crossRefResults = results;

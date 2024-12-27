@@ -11,10 +11,11 @@ db.version(1).stores({
   definitions: "defid,wordid,partofspeech,def_chinese,def_english",
   cedict: "id, created_at, traditional, simplified, pinyin, english_edict",
   searchHistory: "++id, term",
-  searchResults: "results",
-  cedictResults: "results",
-  crossRefResults: "results",
-  randomWordHistory: "",
+  searchResults: "++id, results",
+  cedictResults: "++id, results",
+  mknollResults: "++id, results",
+  crossRefResults: "++id, results",
+  randomWordHistory: "++id, word",
 });
 
 export default db;
