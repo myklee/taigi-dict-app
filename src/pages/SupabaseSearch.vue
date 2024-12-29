@@ -221,6 +221,9 @@
       @close="closeDialog()"
       @word-updated="refreshSearchResults"
     />
+    <div class="admin">
+      <button class="clear-cache" @click="clearCache()">Clear cache</button>
+    </div>
   </div>
 </template>
 
@@ -257,6 +260,25 @@ const clearInput = () => {
   searchQuery.value = "";
   searchExecuted.value = false;
   // dictionaryStore.searchResults = [];
+};
+
+const clearCache = () => {
+  const dbName = "DictionaryDB"; // Replace with your database name
+  const request = indexedDB.deleteDatabase(dbName);
+
+  request.onsuccess = () => {
+    console.log(`Database '${dbName}' deleted successfully`);
+  };
+
+  request.onerror = (event) => {
+    console.error("Error deleting database:", event.target.error);
+  };
+
+  request.onblocked = () => {
+    console.warn(
+      "Delete request is blocked. Close all tabs accessing the database."
+    );
+  };
 };
 
 const openEditDialog = (selectedWord) => {
