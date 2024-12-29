@@ -9,7 +9,7 @@
           type="text"
           v-model="searchQuery"
           @keyup.enter="searchWords"
-          placeholder="Search enligsh and chinese · 中文或英文搜尋"
+          placeholder="Search english and chinese · 中文或英文搜尋"
           class="text-field search-words-text-field"
           autocapitalize="off"
         />

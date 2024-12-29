@@ -15,7 +15,7 @@ db.version(1).stores({
   cedictResults: "++id, results",
   mknollResults: "++id, results",
   crossRefResults: "++id, results",
-  randomWordHistory: "++id, word",
+  randomWordHistory: "++id_rw, word",
 });
 
 export default db;
