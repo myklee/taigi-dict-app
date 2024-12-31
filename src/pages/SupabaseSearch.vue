@@ -131,89 +131,82 @@
         />
       </li>
     </ul>
-    <!-- driect mknoll results-->
-    <div class="mknoll-search-results-header search-results-header">
-      <div class="mknoll-title" v-if="dictionaryStore.mknollResults.length">
-        <div>Mary Knoll Dictionary</div>
-        <!-- <div>教育部臺灣台語常用詞辭典</div> -->
-      </div>
 
-      <div v-if="searchExecuted" class="results-count">
-        {{ dictionaryStore.mknollResults.length }} result<span
-          v-if="dictionaryStore.mknollResults.length != 1"
-          >s</span
-        >
-        found
-      </div>
-      <!-- <button class="reset-voice" @click="resetVoice">Reset Voice</button> -->
-    </div>
-    <ul class="mknoll-results">
-      <li v-for="(word, index) in dictionaryStore.mknollResults" :key="index">
-        <div class="mknoll-taiwanese">{{ word.taiwanese }}</div>
-        <div class="mknoll-english">{{ word.english_mknoll }}</div>
-        <div class="mknoll-chinese">{{ word.chinese }}</div>
-      </li>
-    </ul>
+    <!-- driect mknoll results-->
+    <section class="mknoll">
+      <header class="mknoll-search-results-header search-results-header">
+        <h4 class="mknoll-title" v-if="dictionaryStore.mknollResults.length">
+          Mary Knoll Dictionary
+        </h4>
+      </header>
+      <ul class="mknoll-results">
+        <li v-for="(word, index) in dictionaryStore.mknollResults" :key="index">
+          <div class="mknoll-taiwanese">{{ word.taiwanese }}</div>
+          <div class="mknoll-english">{{ word.english_mknoll }}</div>
+          <div class="mknoll-chinese">{{ word.chinese }}</div>
+        </li>
+      </ul>
+    </section>
 
     <!-- driect ccedict results-->
-    <div class="cedict-search-results-header search-results-header">
-      <div class="cedict-title" v-if="dictionaryStore.cedictResults.length">
-        <div>CC-CEDICT (Creative Commons Chinese English Dictionary)</div>
-      </div>
-      <div v-if="searchExecuted" class="results-count">
-        {{ dictionaryStore.cedictResults.length }} result<span
-          v-if="dictionaryStore.cedictResults.length != 1"
-          >s</span
-        >
-        found
-      </div>
-    </div>
-    <ul class="cedict-results">
-      <li v-for="(word, index) in dictionaryStore.cedictResults" :key="index">
-        {{ word.traditional }}
-        {{ word.english_cedict }}
-      </li>
-    </ul>
 
+    <section>
+      <header class="cedict-search-results-header search-results-header">
+        <h4 class="cedict-title" v-if="dictionaryStore.cedictResults.length">
+          CC-CEDICT (Creative Commons Chinese English Dictionary)
+        </h4>
+      </header>
+      <ul class="cedict-results">
+        <li v-for="(word, index) in dictionaryStore.cedictResults" :key="index">
+          <div>{{ word.traditional }}</div>
+          <div>{{ word.english_cedict }}</div>
+        </li>
+      </ul>
+    </section>
     <!-- cross ref cedict-->
-    <ul
-      v-if="dictionaryStore.crossRefResults.length > 0"
-      class="cedict-crossref"
-    >
-      <div class="section-header cedict-header">CC-CEDICT Cross reference</div>
-      <div>{{ dictionaryStore.crossRefResults.length }} results found</div>
-      <li
-        class="cedict-item"
-        v-for="(wordcedict, index) in dictionaryStore.crossRefResults"
-        :key="index"
+    <header class="search-results-header">
+      <h4 class="section-header cedict-header">CC-CEDICT Cross reference</h4>
+    </header>
+    <section>
+      <ul
+        v-if="dictionaryStore.crossRefResults.length > 0"
+        class="cedict-crossref"
       >
-        <p v-if="wordcedict.traditional != null" class="cedict-traditional">
-          {{ wordcedict.traditional }}
-        </p>
-        <p class="cedict-traditional" v-if="wordcedict.traditional === null">
-          {{ wordcedict.chinese }}
-        </p>
-
-        <IconPlayAudio
-          v-if="wordcedict.traditional"
-          @click="readChinese(wordcedict.traditional)"
-        ></IconPlayAudio>
-        <IconPlayAudio
-          v-if="wordcedict.traditional === null && wordcedict.chinese != null"
-          @click="readChinese(wordcedict.chinese)"
-        ></IconPlayAudio>
-
-        <div class="pinyin-zhuyin cedict-pinyin-zhuyin">
-          <p class="cedict-pinyin pinyin">
-            {{ pinyin(wordcedict.traditional).join(" ") }}
+        <li
+          class="cedict-item"
+          v-for="(wordcedict, index) in dictionaryStore.crossRefResults"
+          :key="index"
+        >
+          <p v-if="wordcedict.traditional != null" class="cedict-traditional">
+            {{ wordcedict.traditional }}
           </p>
-          <p class="cedict-zhuyin zhuyin">
-            {{ fromPinyin(pinyin(wordcedict.traditional).join(" ")).join(" ") }}
+          <p class="cedict-traditional" v-if="wordcedict.traditional === null">
+            {{ wordcedict.chinese }}
           </p>
-        </div>
-        <p class="cedict-english">{{ wordcedict.english_cedict }}</p>
-      </li>
-    </ul>
+
+          <IconPlayAudio
+            v-if="wordcedict.traditional"
+            @click="readChinese(wordcedict.traditional)"
+          ></IconPlayAudio>
+          <IconPlayAudio
+            v-if="wordcedict.traditional === null && wordcedict.chinese != null"
+            @click="readChinese(wordcedict.chinese)"
+          ></IconPlayAudio>
+
+          <div class="pinyin-zhuyin cedict-pinyin-zhuyin">
+            <p class="cedict-pinyin pinyin">
+              {{ pinyin(wordcedict.traditional).join(" ") }}
+            </p>
+            <p class="cedict-zhuyin zhuyin">
+              {{
+                fromPinyin(pinyin(wordcedict.traditional).join(" ")).join(" ")
+              }}
+            </p>
+          </div>
+          <p class="cedict-english">{{ wordcedict.english_cedict }}</p>
+        </li>
+      </ul>
+    </section>
 
     <EditWord
       :visible="showDialog"
@@ -221,6 +214,7 @@
       @close="closeDialog()"
       @word-updated="refreshSearchResults"
     />
+
     <div class="admin">
       <button class="clear-cache" @click="clearCache()">Clear cache</button>
     </div>
@@ -483,7 +477,7 @@ MOE results header
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 5vw;
+  padding: 5vw 5vw 0 5vw;
 }
 .results {
   margin: 0 5vw;
@@ -544,33 +538,34 @@ MOE result items
 
 /*
 
-CCEDICT results
+cedict, mknoll, crossref results
 
 
 */
+.mknoll-results,
+.cedict-results,
 .cedict-crossref {
-  padding: 5vw;
-  li.cedict-item {
+  padding: 1vw 5vw;
+  li {
     padding: 0.5rem 0;
     display: flex;
     align-items: center;
     gap: 1rem;
     border-bottom: 1px solid var(--gunmetal);
+    word-break: break-all;
   }
-}
-.cedict-header {
-  /* display: none; */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-}
-.cedict-traditional {
-  font-size: 1.5rem;
-  white-space: nowrap;
 }
 .cedict-pinyin-zhuyin {
   display: flex;
   flex-direction: column;
+}
+
+/* 
+
+admin
+
+*/
+.admin {
+  padding: 5vw;
 }
 </style>
