@@ -42,8 +42,8 @@ import db from "./db.js";
 
   <main>
     <!-- <DictionarySearch /> -->
-    <SupabaseSearch />
     <RandomWord />
+    <SupabaseSearch />
     
     <!-- <div id="auth">
       <input type="email" id="email" placeholder="Email" />

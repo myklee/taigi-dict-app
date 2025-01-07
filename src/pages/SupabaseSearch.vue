@@ -9,7 +9,7 @@
           type="text"
           v-model="searchQuery"
           @keyup.enter="searchWords"
-          placeholder="Search english and chinese · 中文或英文搜尋"
+          placeholder="Search English, Chinese, Taiwanese · 中文或英文搜尋"
           class="text-field search-words-text-field"
           autocapitalize="off"
         />
@@ -53,12 +53,15 @@
           </li>
         </ul>
       </div>
+    </div>
 
-      <div class="moe-search-results-header search-results-header">
-        <div class="moe-title" v-if="dictionaryStore.searchResults.length">
-          <div>Ministry of Education Taiwanese Dictionary of Common Words</div>
-          <div>教育部臺灣台語常用詞辭典</div>
-        </div>
+    <!-- moe search results -->
+    <section v-if="dictionaryStore.searchResults.length">
+      <header class="moe-search-results-header search-results-header">
+        <h4 class="moe-title">
+          Ministry of Education Taiwanese Dictionary of Common Words
+          教育部臺灣台語常用詞辭典
+        </h4>
 
         <div v-if="searchExecuted" class="results-count">
           {{ dictionaryStore.searchResults.length }} result<span
@@ -67,111 +70,125 @@
           >
           found
         </div>
-        <!-- <button class="reset-voice" @click="resetVoice">Reset Voice</button> -->
-      </div>
-    </div>
-
-    <ul
-      v-if="dictionaryStore.searchResults.length != 0"
-      class="results moe-results"
-    >
-      <li
-        v-for="word in dictionaryStore.searchResults"
-        :key="word.id"
-        class="entry moe-result-item"
-      >
-        <div
-          v-if="word.romaji != null"
-          class="word-item moe-word-taigi alphabetic"
+      </header>
+      <ul class="results moe-results">
+        <li
+          v-for="word in dictionaryStore.searchResults"
+          :key="word.id"
+          class="entry moe-result-item"
         >
-          <!-- <header>Taiwanese Taigi</header> -->
-          <p>{{ word.romaji }}</p>
-          <audio
-            v-if="word.audio_url"
-            ref="audio"
-            :src="`${word.audio_url}`"
-            controls
-          ></audio>
-
-          <AudioPlayerTaigi v-if="word.audioid" :audioID="word.audioid" />
-        </div>
-
-        <div class="moe-english-chinese">
           <div
-            v-if="word.chinese != null"
-            class="word-item moe-word-chinese logographic"
+            v-if="word.romaji != null"
+            class="word-item moe-word-taigi alphabetic"
           >
-            <span class="">{{ word.chinese }}</span>
-            <div class="pinyin-zhuyin">
-              <span class="pinyin">{{ pinyin(word.chinese).join(" ") }}</span>
-              <span class="zhuyin">{{ word.zhuyin }}</span>
+            <p>{{ word.romaji }}</p>
+            <audio
+              v-if="word.audio_url"
+              ref="audio"
+              :src="`${word.audio_url}`"
+              controls
+            ></audio>
+
+            <AudioPlayerTaigi v-if="word.audioid" :audioID="word.audioid" />
+          </div>
+
+          <div class="moe-english-chinese">
+            <div
+              v-if="word.chinese != null"
+              class="word-item moe-word-chinese logographic"
+            >
+              <span class="">{{ word.chinese }}</span>
+
+              <Pinyinzhuyin :han="word.chinese" />
+
+              <div class="pinyin-zhuyin">
+                <span class="pinyin">{{ pinyin(word.chinese).join(" ") }}</span>
+                <span class="zhuyin">{{ word.zhuyin }}</span>
+              </div>
+              <IconPlayAudio @click="readChinese(word.chinese)"></IconPlayAudio>
             </div>
-            <IconPlayAudio @click="readChinese(word.chinese)"></IconPlayAudio>
+            <div
+              v-if="word.english != null"
+              class="word-item moe-word-english alphabetic"
+            >
+              {{ word.english }}
+              <IconPlayAudio @click="readEnglish(word.english)" />
+            </div>
           </div>
-          <div
-            v-if="word.english != null"
-            class="word-item moe-word-english alphabetic"
-          >
-            {{ word.english }}
-            <IconPlayAudio @click="readEnglish(word.english)" />
-          </div>
-        </div>
-        <ul>
-          <li v-for="def in word.definitions" :key="def.id">
-            <ul>
-              <li class="alphabetic">{{ def.def_english }}</li>
-              <li class="logographic">{{ def.def_chinese }}</li>
-            </ul>
-          </li>
-        </ul>
-        <IconEdit
-          class="edit-word"
-          title="Edit entry"
-          @click="openEditDialog(word)"
-        />
-      </li>
-    </ul>
+          <ul>
+            <li v-for="def in word.definitions" :key="def.id">
+              <ul>
+                <li class="alphabetic">{{ def.def_english }}</li>
+                <li class="logographic">{{ def.def_chinese }}</li>
+              </ul>
+            </li>
+          </ul>
+          <IconEdit
+            class="edit-word"
+            title="Edit entry"
+            @click="openEditDialog(word)"
+          />
+        </li>
+      </ul>
+    </section>
 
     <!-- driect mknoll results-->
-    <section class="mknoll">
+    <section class="mknoll" v-if="dictionaryStore.mknollResults.length">
       <header class="mknoll-search-results-header search-results-header">
-        <h4 class="mknoll-title" v-if="dictionaryStore.mknollResults.length">
-          Mary Knoll Dictionary
-        </h4>
+        <h4 class="mknoll-title">Mary Knoll Dictionary</h4>
       </header>
       <ul class="mknoll-results">
         <li v-for="(word, index) in dictionaryStore.mknollResults" :key="index">
-          <div class="mknoll-taiwanese">{{ word.taiwanese }}</div>
-          <div class="mknoll-english">{{ word.english_mknoll }}</div>
-          <div class="mknoll-chinese">{{ word.chinese }}</div>
+          <div>
+            <!-- {{ word.id }} -->
+            {{ word.audio_url }}
+            <div class="mknoll-taiwanese">
+              {{ word.taiwanese }}
+            </div>
+            <div class="mknoll-chinese">
+              {{ word.chinese }}
+              <Pinyinzhuyin :han="word.chinese" />
+            </div>
+          </div>
+          <div class="mknoll-english">
+            {{ word.english_mknoll }}
+            <audio
+              v-if="word.audio_url"
+              ref="audio"
+              :src="`${word.audio_url}`"
+              controls
+            ></audio>
+          </div>
+          <IconEdit title="Edit entry" @click="openEditDialogMknoll(word)" />
         </li>
       </ul>
     </section>
 
     <!-- driect ccedict results-->
 
-    <section>
+    <section v-if="dictionaryStore.cedictResults.length">
       <header class="cedict-search-results-header search-results-header">
-        <h4 class="cedict-title" v-if="dictionaryStore.cedictResults.length">
+        <h4 class="cedict-title">
           CC-CEDICT (Creative Commons Chinese English Dictionary)
         </h4>
       </header>
       <ul class="cedict-results">
         <li v-for="(word, index) in dictionaryStore.cedictResults" :key="index">
-          <div>{{ word.traditional }}</div>
+          <div>
+            {{ word.traditional }}
+            <Pinyinzhuyin :han="word.traditional" />
+          </div>
           <div>{{ word.english_cedict }}</div>
         </li>
       </ul>
     </section>
     <!-- cross ref cedict-->
-    <header class="search-results-header">
-      <h4 class="section-header cedict-header">CC-CEDICT Cross reference</h4>
-    </header>
-    <section>
-      <ul
-        v-if="dictionaryStore.crossRefResults.length > 0"
-        class="cedict-crossref"
-      >
+
+    <section v-if="dictionaryStore.crossRefResults.length > 0">
+      <header class="search-results-header">
+        <h4 class="section-header cedict-header">CC-CEDICT Cross reference</h4>
+      </header>
+      <ul class="cedict-crossref">
         <li
           class="cedict-item"
           v-for="(wordcedict, index) in dictionaryStore.crossRefResults"
@@ -194,14 +211,7 @@
           ></IconPlayAudio>
 
           <div class="pinyin-zhuyin cedict-pinyin-zhuyin">
-            <p class="cedict-pinyin pinyin">
-              {{ pinyin(wordcedict.traditional).join(" ") }}
-            </p>
-            <p class="cedict-zhuyin zhuyin">
-              {{
-                fromPinyin(pinyin(wordcedict.traditional).join(" ")).join(" ")
-              }}
-            </p>
+            <Pinyinzhuyin :han="wordcedict.traditional" />
           </div>
           <p class="cedict-english">{{ wordcedict.english_cedict }}</p>
         </li>
@@ -214,7 +224,12 @@
       @close="closeDialog()"
       @word-updated="refreshSearchResults"
     />
-
+    <EditWordMknoll
+      :visible="showDialogMknoll"
+      :word="word"
+      @close="closeDialogMknoll()"
+      @word-updated="refreshSearchResults"
+    />
     <div class="admin">
       <button class="clear-cache" @click="clearCache()">Clear cache</button>
     </div>
@@ -229,18 +244,18 @@ import IconPlayAudio from "@/components/icons/IconPlayAudio.vue";
 import { speakChinese, speakEnglish } from "@/utils";
 import EditWord from "./EditWord.vue";
 import Loader from "@/components/utility/Loader.vue";
-import { updatePinyinInBatches } from "@/addpinyinbopo";
-import pinyin from "pinyin"; // For Pinyin
-import fromPinyin from "zhuyin";
-import { updateZhuyinInBatches } from "@/addzhuyin";
+import pinyin from "pinyin";
 import { useDictionaryStore } from "../stores/dictionaryStore";
 import IconTrash from "@/components/icons/IconTrash.vue";
 import IconEdit from "@/components/icons/IconEdit.vue";
+import Pinyinzhuyin from "@/components/utility/pinyinzhuyin.vue";
+import EditWordMknoll from "./EditWordMknoll.vue";
 
 const searchQuery = ref("");
 const exactSearch = ref(false);
 const word = ref(null);
 const showDialog = ref(false);
+const showDialogMknoll = ref(false);
 const loading = ref(false);
 const searchExecuted = ref(false);
 
@@ -253,7 +268,6 @@ onMounted(() => {
 const clearInput = () => {
   searchQuery.value = "";
   searchExecuted.value = false;
-  // dictionaryStore.searchResults = [];
 };
 
 const clearCache = () => {
@@ -276,8 +290,15 @@ const clearCache = () => {
 };
 
 const openEditDialog = (selectedWord) => {
-  console.log(selectedWord);
   showDialog.value = true;
+  document.body.style.overflow = "hidden";
+  word.value = {
+    ...selectedWord,
+    definitions: selectedWord.definitions || [], // Initialize as an empty array if undefined
+  };
+};
+const openEditDialogMknoll = (selectedWord) => {
+  showDialogMknoll.value = true;
   document.body.style.overflow = "hidden";
   word.value = {
     ...selectedWord,
@@ -287,6 +308,11 @@ const openEditDialog = (selectedWord) => {
 
 const closeDialog = () => {
   showDialog.value = false;
+  document.body.style.overflow = "scroll";
+};
+
+const closeDialogMknoll = () => {
+  showDialogMknoll.value = false;
   document.body.style.overflow = "scroll";
 };
 const refreshSearchResults = async () => {
@@ -329,42 +355,56 @@ const searchWords = async () => {
         // words.value = dictionaryStore.searchResults;
       }
 
+      //query cedict directly
+      let cedictquery = supabase.from("cedict").select("*");
+
+      if (exactSearch.value) {
+        cedictquery = cedictquery.or(
+          `english_cedict.ilike.${searchQuery.value},traditional.ilike.${searchQuery.value}`
+        );
+      } else {
+        cedictquery = cedictquery.or(
+          `english_cedict.ilike.%${searchQuery.value}%,traditional.ilike.%${searchQuery.value}%`
+        );
+      }
+      const { data: cedictData, error: cedictError } = await cedictquery;
+
+      if (cedictError) {
+        console.error("Error fetching words:", cedictError.message);
+      } else {
+        console.log(cedictData);
+        // cedictResults.value = cedictData;
+        dictionaryStore.setCedictResults(cedictData);
+      }
+
+      // //primary mknoll query
+      let mknollquery = supabase.from("maryknoll").select(`*`);
+
+      if (exactSearch.value) {
+        mknollquery = mknollquery.or(
+          `english_mknoll.ilike.${searchQuery.value},chinese.ilike.${searchQuery.value},taiwanese.ilike.${searchQuery.value}`
+        );
+      } else {
+        mknollquery = mknollquery.or(
+          `english_mknoll.ilike.%${searchQuery.value}%,chinese.ilike.%${searchQuery.value}%,taiwanese.ilike.%${searchQuery.value}%`
+        );
+      }
+
+      const { data: mknollData, error: mknollError } = await mknollquery;
+
+      if (mknollError) {
+        console.error("Error fetching words:", mknollError.message);
+      } else {
+        console.log(mknollData);
+        dictionaryStore.setMknollResults(mknollData);
+      }
+
       // cross reference cedict
       crossRefCedict(searchQuery.value);
     } catch (err) {
       console.error("Error in searchWords:", err.message);
     } finally {
       loading.value = false; // stop loading
-    }
-
-    //query cedict directly
-    const { data: cedictData, error: cedictError } = await supabase
-      .from("cedict")
-      .select("*")
-      .or(
-        `english_cedict.ilike.%${searchQuery.value}%,traditional.ilike.%${searchQuery.value}%`
-      );
-    if (cedictError) {
-      console.error("Error fetching words:", cedictError.message);
-    } else {
-      console.log(cedictData);
-      // cedictResults.value = cedictData;
-      dictionaryStore.setCedictResults(cedictData);
-    }
-
-    //query mknoll directly
-    const { data: mknollData, error: mknollError } = await supabase
-      .from("maryknoll")
-      .select("*")
-      .or(
-        `english_mknoll.ilike.%${searchQuery.value}%,chinese.ilike.%${searchQuery.value}%,taiwanese.ilike.%${searchQuery.value}%`
-      );
-    if (mknollError) {
-      console.error("Error fetching words:", mknollError.message);
-    } else {
-      console.log(mknollData);
-      // cedictResults.value = cedictData;
-      dictionaryStore.setMknollResults(mknollData);
     }
   } else {
     console.log("empty search field!");
@@ -404,9 +444,8 @@ search
 
 */
 #supasearch {
-  padding: 2rem 0;
+  padding-top: 5vw;
 }
-
 .search-words {
   position: relative;
   padding: 0 5vw;
@@ -494,12 +533,10 @@ MOE result items
 */
 .moe-title {
   padding-bottom: 1rem;
-  /* display: none; */
 }
 .moe-result-item {
   padding: 0rem 0 2rem 0;
   background-color: var(--black);
-  /* border-top: 1px solid var(--gunmetal); */
   border-radius: 0.25rem;
   display: flex;
   flex-direction: column;
@@ -531,9 +568,6 @@ MOE result items
 .moe-word-chinese {
   font-size: 1.5rem;
   line-height: 100%;
-  .pinyin-zhuyin {
-    gap: 0;
-  }
 }
 
 /*
@@ -553,6 +587,13 @@ cedict, mknoll, crossref results
     gap: 1rem;
     border-bottom: 1px solid var(--gunmetal);
     word-break: break-all;
+  }
+}
+.mknoll-results {
+  li {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
   }
 }
 .cedict-pinyin-zhuyin {

@@ -22,6 +22,9 @@ export default {
       type: Number,
       required: true,
     },
+    mknoll: {
+      type: Boolean,
+    },
   },
   setup(props) {
     const mediaRecorder = ref(null);
@@ -83,17 +86,32 @@ export default {
           .from("audio-files")
           .getPublicUrl(fileName).data.publicUrl;
 
-        const { error: dbError } = await supabase
-          .from("words")
-          .update({
-            audio_url: publicUrl,
-          })
-          .eq("id", props.wordId);
-
-        if (dbError) {
-          console.error("Error saving audio URL to database:", dbError);
+        if (props.mknoll) {
+          const { error: dbError } = await supabase
+            .from("maryknoll")
+            .update({
+              audio_url: publicUrl,
+            })
+            .eq("id", props.wordId);
+          if (dbError) {
+            console.error("Error saving audio URL to database:", dbError);
+          } else {
+            alert(`Audio uploaded successfully for word ID ${props.wordId}`);
+          }
         } else {
-          alert(`Audio uploaded successfully for word ID ${props.wordId}`);
+          alert("didnt work");
+          console.log(props.wordId);
+          // const { error: dbError } = await supabase
+          //   .from("words")
+          //   .update({
+          //     audio_url: publicUrl,
+          //   })
+          //   .eq("id", props.wordId);
+          // if (dbError) {
+          //   console.error("Error saving audio URL to database:", dbError);
+          // } else {
+          //   alert(`Audio uploaded successfully for word ID ${props.wordId}`);
+          // }
         }
       } catch (error) {
         console.error("Error uploading audio:", error);

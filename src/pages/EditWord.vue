@@ -15,10 +15,6 @@
           <label for="romaji">Romaji</label>
           <input v-model="word.romaji" type="text" id="romaji" />
         </div>
-        <div class="edit-moe-word edit-taiwanese">
-          <label for="taiwanese">Taiwanese</label>
-          <input v-model="word.taiwanese" type="text" id="taiwanese" />
-        </div>
         <div class="edit-moe-word edit-english">
           <label for="english">English</label>
           <input v-model="word.english" type="text" id="english" />
@@ -26,14 +22,6 @@
         <div class="edit-moe-word edit-chinese">
           <label for="chinese">Chinese</label>
           <input v-model="word.chinese" type="text" id="chinese" />
-        </div>
-        <div class="edit-moe-word edit-mknoll">
-          <label for="english_mknoll">English Mary Knoll</label>
-          <input
-            v-model="word.english_mknoll"
-            type="text"
-            id="english_mknoll"
-          />
         </div>
         <div class="edit-moe-word edit-classification">
           <label for="classification">Classification:</label>

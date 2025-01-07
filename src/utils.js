@@ -217,3 +217,40 @@ export async function speakEnglish(text) {
   // utterance.voice = voices.find((voice) => voice.name === "Meijia");
   window.speechSynthesis.speak(utterance);
 }
+
+export async function convertToneNumbersToMarks(pojString) {
+  const toneMap = {
+      1: '', // No mark for tone 1
+      2: '́', // Acute accent
+      3: '̀', // Grave accent
+      5: '̂', // Circumflex
+      7: '̍', // Macron below
+      8: '̄', // Macron
+  };
+
+  const vowels = ['a', 'e', 'i', 'o', 'u', 'm', 'n'];
+
+  return pojString.split(' ').map(syllable => {
+      const tone = syllable.match(/\d$/); // Find tone number at the end
+      if (tone) {
+          const toneNumber = tone[0];
+          const baseSyllable = syllable.slice(0, -1); // Remove tone number
+          for (let i = baseSyllable.length - 1; i >= 0; i--) {
+              if (vowels.includes(baseSyllable[i].toLowerCase())) {
+                  return (
+                      baseSyllable.slice(0, i) +
+                      baseSyllable[i] +
+                      toneMap[toneNumber] +
+                      baseSyllable.slice(i + 1)
+                  );
+              }
+          }
+      }
+      return syllable; // Return unchanged if no tone number
+  }).join(' ');
+}
+
+// // Example usage:
+// const input = "ba8k-chiu nih-chhiauh nih-chhiauh";
+// console.log(convertToneNumbersToMarks(input));
+
