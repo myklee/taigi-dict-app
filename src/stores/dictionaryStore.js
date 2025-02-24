@@ -15,13 +15,13 @@ export const useDictionaryStore = defineStore("dictionary", {
     async loadFromIndexedDB() {
       this.searchHistory = await db.searchHistory.toArray();
       this.randomWordHistory = await db.randomWordHistory.toArray();
-      const searchResults =  await db.searchResults.toArray();
+      const searchResults = await db.searchResults.toArray();
       this.searchResults = searchResults.pop().results;
-      const mknollResults =  await db.mknollResults.toArray();
+      const mknollResults = await db.mknollResults.toArray();
       this.mknollResults = mknollResults.pop().results;
-      const cedictResults =  await db.cedictResults.toArray();
+      const cedictResults = await db.cedictResults.toArray();
       this.cedictResults = cedictResults.pop().results;
-      const crossRefResults =  await db.crossRefResults.toArray();
+      const crossRefResults = await db.crossRefResults.toArray();
       this.crossRefResults = crossRefResults.pop().results;
     },
     async clearSearchHistory() {
@@ -41,7 +41,9 @@ export const useDictionaryStore = defineStore("dictionary", {
       }
     },
     async addToRandomHistory(randomWord) {
-      this.randomWordHistory.unshift(randomWord); // Add to the beginning
+      this.randomWordHistory.unshift(randomWord);
+      console.log(this.randomWordHistory.length);
+      if (this.randomWordHistory.length > 5) this.randomWordHistory.pop();
       await db.randomWordHistory.add(randomWord); // Sync with IndexedDB
     },
     async setSearchResults(results) {

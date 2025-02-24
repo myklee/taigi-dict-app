@@ -98,13 +98,7 @@
               class="word-item moe-word-chinese logographic"
             >
               <span class="">{{ word.chinese }}</span>
-
               <Pinyinzhuyin :han="word.chinese" />
-
-              <div class="pinyin-zhuyin">
-                <span class="pinyin">{{ pinyin(word.chinese).join(" ") }}</span>
-                <span class="zhuyin">{{ word.zhuyin }}</span>
-              </div>
               <IconPlayAudio @click="readChinese(word.chinese)"></IconPlayAudio>
             </div>
             <div
@@ -556,6 +550,7 @@ MOE result items
 }
 .moe-english-chinese {
   display: flex;
+  flex-wrap: wrap;
   gap: 2rem;
 }
 .moe-word-chinese,
