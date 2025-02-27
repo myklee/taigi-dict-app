@@ -533,6 +533,7 @@ MOE result items
   background-color: var(--black);
   border-radius: 0.25rem;
   display: flex;
+  flex-wrap: wrap;
   flex-direction: column;
   gap: 0.5rem;
   margin-bottom: 1rem;
@@ -593,6 +594,7 @@ cedict, mknoll, crossref results
 }
 .cedict-pinyin-zhuyin {
   display: flex;
+  flex-wrap: wrap;
   flex-direction: column;
 }
 

@@ -119,10 +119,11 @@ button {
 /* global pinyin and zhuyin font styles */
 .pinyin,
 .zhuyin {
-  white-space: nowrap;
+  /* white-space: nowrap; */
 }
 .pinyin-zhuyin {
   display: flex;
+  flex-wrap: wrap;
   flex-direction: column;
 }
 
