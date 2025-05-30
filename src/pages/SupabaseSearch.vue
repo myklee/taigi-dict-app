@@ -3,7 +3,7 @@
   <!-- <button @click="updatepinyin">update pinyin</button> -->
   <!-- <button @click="processZhuyinColumn">update zhuyin</button> -->
   <div id="supasearch">
-    <div class="search-header">
+    <section class="search-header">
       <div class="search-words">
         <input
           type="text"
@@ -31,29 +31,21 @@
           />
           <label for="exact-search">Strict search</label>
         </div>
+        <div class="actions">
+          <button v-if="!showRandomWord" @click="showRandomWord = true">
+            Show random word</button
+          ><button v-if="showRandomWord" @click="showRandomWord = false">
+            Hide random word
+          </button>
+          <button class="clear-cache" @click="clearCache()">Clear cache</button>
+        </div>
         <div class="search-actions">
           <button class="search-button" @click="searchWords">Search</button>
         </div>
       </div>
-      <!-- search history -->
-      <div
-        v-if="dictionaryStore.searchHistory.length > 0"
-        class="search-history"
-      >
-        <div class="search-history-header">
-          <h3>Search History</h3>
-          <IconTrash @click="dictionaryStore.clearSearchHistory" />
-        </div>
-        <ul>
-          <li
-            v-for="(term, index) in dictionaryStore.searchHistory"
-            :key="index"
-          >
-            {{ term.term }}
-          </li>
-        </ul>
-      </div>
-    </div>
+    </section>
+
+    <RandomWord v-if="showRandomWord" />
 
     <!-- moe search results -->
     <section v-if="dictionaryStore.searchResults.length">
@@ -211,6 +203,18 @@
         </li>
       </ul>
     </section>
+    <!-- search history -->
+    <div v-if="dictionaryStore.searchHistory.length > 0" class="search-history">
+      <div class="search-history-header">
+        <h3>Search History</h3>
+        <IconTrash @click="dictionaryStore.clearSearchHistory" />
+      </div>
+      <ul>
+        <li v-for="(term, index) in dictionaryStore.searchHistory" :key="index">
+          {{ term.term }}
+        </li>
+      </ul>
+    </div>
 
     <EditWord
       :visible="showDialog"
@@ -224,9 +228,7 @@
       @close="closeDialogMknoll()"
       @word-updated="refreshSearchResults"
     />
-    <div class="admin">
-      <button class="clear-cache" @click="clearCache()">Clear cache</button>
-    </div>
+    <div class="admin"></div>
   </div>
 </template>
 
@@ -244,6 +246,7 @@ import IconTrash from "@/components/icons/IconTrash.vue";
 import IconEdit from "@/components/icons/IconEdit.vue";
 import Pinyinzhuyin from "@/components/utility/pinyinzhuyin.vue";
 import EditWordMknoll from "./EditWordMknoll.vue";
+import RandomWord from "./RandomWord.vue";
 
 const searchQuery = ref("");
 const exactSearch = ref(false);
@@ -252,6 +255,7 @@ const showDialog = ref(false);
 const showDialogMknoll = ref(false);
 const loading = ref(false);
 const searchExecuted = ref(false);
+const showRandomWord = ref(true);
 
 const dictionaryStore = useDictionaryStore();
 
@@ -438,7 +442,17 @@ search
 
 */
 #supasearch {
-  padding-top: 5vw;
+  padding-top: 200px;
+}
+.search-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100vw;
+  padding-top: 2rem;
+  z-index: 10000;
+  background-color: var(--raisinBlack);
 }
 .search-words {
   position: relative;
@@ -510,7 +524,10 @@ MOE results header
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 5vw 5vw 0 5vw;
+  padding: 1vh 5vw 0 5vw;
+}
+.moe-search-results-header {
+  padding-top: 0;
 }
 .results {
   margin: 0 5vw;

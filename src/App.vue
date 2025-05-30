@@ -41,8 +41,7 @@ import db from "./db.js";
   </header>
 
   <main>
-    <!-- <DictionarySearch /> -->
-    <RandomWord />
+
     <SupabaseSearch />
     
     <!-- <div id="auth">
