@@ -2,7 +2,7 @@
   <Loader :loading="loading" />
   <!-- <button @click="updatepinyin">update pinyin</button> -->
   <!-- <button @click="processZhuyinColumn">update zhuyin</button> -->
-  <div id="supasearch">
+  <div id="dictionary-search">
     <section class="search-header">
       <div class="search-words">
         <input
@@ -199,110 +199,51 @@
           <div class="pinyin-zhuyin cedict-pinyin-zhuyin">
             <Pinyinzhuyin :han="wordcedict.traditional" />
           </div>
-          <p class="cedict-english">{{ wordcedict.english_cedict }}</p>
+          <div class="cedict-english">
+            {{ wordcedict.english_cedict }}
+          </div>
         </li>
       </ul>
     </section>
-    <!-- search history -->
-    <div v-if="dictionaryStore.searchHistory.length > 0" class="search-history">
-      <div class="search-history-header">
-        <h3>Search History</h3>
-        <IconTrash @click="dictionaryStore.clearSearchHistory" />
-      </div>
-      <ul>
-        <li v-for="(term, index) in dictionaryStore.searchHistory" :key="index">
-          {{ term.term }}
-        </li>
-      </ul>
-    </div>
 
     <EditWord
       :visible="showDialog"
-      :word="word"
+      :word="selectedWord"
       @close="closeDialog()"
-      @word-updated="refreshSearchResults"
     />
     <EditWordMknoll
       :visible="showDialogMknoll"
-      :word="word"
+      :word="selectedWordMknoll"
       @close="closeDialogMknoll()"
-      @word-updated="refreshSearchResults"
     />
-    <div class="admin"></div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
+import { useDictionaryStore } from "@/stores/dictionaryStore";
 import { supabase } from "@/supabase";
 import AudioPlayerTaigi from "@/components/AudioPlayerTaigi.vue";
+import { speakChinese } from "@/utils";
+import { speakEnglish } from "@/utils";
 import IconPlayAudio from "@/components/icons/IconPlayAudio.vue";
-import { speakChinese, speakEnglish } from "@/utils";
-import EditWord from "./EditWord.vue";
 import Loader from "@/components/utility/Loader.vue";
-import pinyin from "pinyin";
-import { useDictionaryStore } from "../stores/dictionaryStore";
-import IconTrash from "@/components/icons/IconTrash.vue";
-import IconEdit from "@/components/icons/IconEdit.vue";
-import Pinyinzhuyin from "@/components/utility/pinyinzhuyin.vue";
+import EditWord from "./EditWord.vue";
 import EditWordMknoll from "./EditWordMknoll.vue";
 import RandomWord from "./RandomWord.vue";
-
-const searchQuery = ref("");
-const exactSearch = ref(false);
-const word = ref(null);
-const showDialog = ref(false);
-const showDialogMknoll = ref(false);
-const loading = ref(false);
-const searchExecuted = ref(false);
-const showRandomWord = ref(true);
+import Pinyinzhuyin from "@/components/utility/Pinyinzhuyin.vue";
+import IconEdit from "@/components/icons/IconEdit.vue";
 
 const dictionaryStore = useDictionaryStore();
-
-onMounted(() => {
-  dictionaryStore.loadFromIndexedDB();
-});
-
-const clearInput = () => {
-  searchQuery.value = "";
-  searchExecuted.value = false;
-};
-
-const clearCache = () => {
-  const dbName = "DictionaryDB"; // Replace with your database name
-  const request = indexedDB.deleteDatabase(dbName);
-
-  request.onsuccess = () => {
-    console.log(`Database '${dbName}' deleted successfully`);
-  };
-
-  request.onerror = (event) => {
-    console.error("Error deleting database:", event.target.error);
-  };
-
-  request.onblocked = () => {
-    console.warn(
-      "Delete request is blocked. Close all tabs accessing the database."
-    );
-  };
-};
-
-const openEditDialog = (selectedWord) => {
-  showDialog.value = true;
-  document.body.style.overflow = "hidden";
-  word.value = {
-    ...selectedWord,
-    definitions: selectedWord.definitions || [], // Initialize as an empty array if undefined
-  };
-};
-const openEditDialogMknoll = (selectedWord) => {
-  showDialogMknoll.value = true;
-  document.body.style.overflow = "hidden";
-  word.value = {
-    ...selectedWord,
-    definitions: selectedWord.definitions || [], // Initialize as an empty array if undefined
-  };
-};
+const searchQuery = ref("");
+const exactSearch = ref(false);
+const loading = ref(false);
+const searchExecuted = ref(false);
+const showRandomWord = ref(false);
+const showDialog = ref(false);
+const showDialogMknoll = ref(false);
+const selectedWord = ref(null);
+const selectedWordMknoll = ref(null);
 
 const closeDialog = () => {
   showDialog.value = false;
@@ -313,126 +254,135 @@ const closeDialogMknoll = () => {
   showDialogMknoll.value = false;
   document.body.style.overflow = "scroll";
 };
-const refreshSearchResults = async () => {
+
+const openEditDialog = (word) => {
+  selectedWord.value = word;
+  showDialog.value = true;
+  document.body.style.overflow = "hidden";
+};
+
+const openEditDialogMknoll = (word) => {
+  selectedWordMknoll.value = word;
+  showDialogMknoll.value = true;
+  document.body.style.overflow = "hidden";
+};
+
+const clearInput = () => {
+  searchQuery.value = "";
   searchWords();
 };
 
+const clearCache = async () => {
+  await dictionaryStore.clearSearchHistory();
+  await dictionaryStore.clearRandomWordHistory();
+  await dictionaryStore.setSearchResults([]);
+  await dictionaryStore.setCedictResults([]);
+  await dictionaryStore.setMknollResults([]);
+  await dictionaryStore.setCrossRefCedict([]);
+};
+
 const searchWords = async () => {
-  if (searchQuery.value.length != 0) {
-    try {
-      //save search history
-      dictionaryStore.addToHistory(searchQuery.value);
-      loading.value = true; // Start loading
-      searchExecuted.value = true;
-
-      //primary MOE query
-      let query = supabase
-        .from("words")
-        .select(
-          `id, english, chinese, romaji, audioid, pinyin, zhuyin, taiwanese, audio_url, english_mknoll, definitions (defid, def_english, def_chinese)`
-        );
-
-      if (exactSearch.value) {
-        // Perform exact match search
-        query = query.or(
-          `chinese.ilike.${searchQuery.value},english.ilike.${searchQuery.value},english_mknoll.ilike.${searchQuery.value},romaji.ilike.${searchQuery.value},taiwanese.ilike.${searchQuery.value}`
-        );
-      } else {
-        // Perform partial match search
-        query = query.or(
-          `chinese.ilike.%${searchQuery.value}%,english.ilike.%${searchQuery.value}%,english_mknoll.ilike.%${searchQuery.value}%,romaji.ilike.%${searchQuery.value}%,taiwanese.ilike.%${searchQuery.value}%`
-        );
-      }
-      const { data, error } = await query;
-
-      if (error) {
-        console.error("Error fetching words:", error.message);
-      } else {
-        // words.value = data;
-        dictionaryStore.setSearchResults(data);
-        // words.value = dictionaryStore.searchResults;
-      }
-
-      //query cedict directly
-      let cedictquery = supabase.from("cedict").select("*");
-
-      if (exactSearch.value) {
-        cedictquery = cedictquery.or(
-          `english_cedict.ilike.${searchQuery.value},traditional.ilike.${searchQuery.value}`
-        );
-      } else {
-        cedictquery = cedictquery.or(
-          `english_cedict.ilike.%${searchQuery.value}%,traditional.ilike.%${searchQuery.value}%`
-        );
-      }
-      const { data: cedictData, error: cedictError } = await cedictquery;
-
-      if (cedictError) {
-        console.error("Error fetching words:", cedictError.message);
-      } else {
-        console.log(cedictData);
-        // cedictResults.value = cedictData;
-        dictionaryStore.setCedictResults(cedictData);
-      }
-
-      // //primary mknoll query
-      let mknollquery = supabase.from("maryknoll").select(`*`);
-
-      if (exactSearch.value) {
-        mknollquery = mknollquery.or(
-          `english_mknoll.ilike.${searchQuery.value},chinese.ilike.${searchQuery.value},taiwanese.ilike.${searchQuery.value}`
-        );
-      } else {
-        mknollquery = mknollquery.or(
-          `english_mknoll.ilike.%${searchQuery.value}%,chinese.ilike.%${searchQuery.value}%,taiwanese.ilike.%${searchQuery.value}%`
-        );
-      }
-
-      const { data: mknollData, error: mknollError } = await mknollquery;
-
-      if (mknollError) {
-        console.error("Error fetching words:", mknollError.message);
-      } else {
-        console.log(mknollData);
-        dictionaryStore.setMknollResults(mknollData);
-      }
-
-      // cross reference cedict
-      crossRefCedict(searchQuery.value);
-    } catch (err) {
-      console.error("Error in searchWords:", err.message);
-    } finally {
-      loading.value = false; // stop loading
-    }
-  } else {
-    console.log("empty search field!");
+  if (!searchQuery.value.trim()) {
+    searchExecuted.value = false;
+    return;
   }
-};
 
-const crossRefCedict = async (searchTerm) => {
+  loading.value = true;
+  searchExecuted.value = true;
+
   try {
-    const { data, error } = await supabase.rpc("search_words_cedict", {
-      search_term: searchTerm,
-    });
+    // Add to search history
+    await dictionaryStore.addToHistory(searchQuery.value);
 
-    if (error) {
-      console.error("Error fetching search results:", error.message);
-      return [];
-    }
-    dictionaryStore.setCrossRefCedict(data);
-    // wordsCedict.value = data;
+    // Determine search pattern based on exactSearch setting
+    const searchPattern = exactSearch.value ? searchQuery.value : `%${searchQuery.value}%`;
 
-    console.log("Search results:", data);
-    return data;
-  } catch (err) {
-    console.error("Unexpected error:", err);
-    return [];
+    // Search MOE dictionary
+    const { data: moeResults, error: moeError } = await supabase
+      .from("words")
+      .select(`
+        *,
+        definitions (
+          defid,
+          wordid,
+          partofspeech,
+          def_chinese,
+          def_english
+        )
+      `)
+      .or(
+        `chinese.ilike.${searchPattern},english.ilike.${searchPattern},romaji.ilike.${searchPattern}`
+      )
+      .limit(50);
+
+    if (moeError) throw moeError;
+
+    // Search Mary Knoll dictionary
+    const { data: mknollResults, error: mknollError } = await supabase
+      .from("maryknoll")
+      .select("*")
+      .or(
+        `taiwanese.ilike.${searchPattern},chinese.ilike.${searchPattern},english_mknoll.ilike.${searchPattern}`
+      )
+      .limit(20);
+
+    if (mknollError) throw mknollError;
+
+    // Search CC-CEDICT
+    const { data: cedictResults, error: cedictError } = await supabase
+      .from("cedict")
+      .select("*")
+      .or(
+        `traditional.ilike.${searchPattern},simplified.ilike.${searchPattern},english_cedict.ilike.${searchPattern}`
+      )
+      .limit(20);
+
+    if (cedictError) throw cedictError;
+
+    // Cross-reference search
+    const { data: crossRefResults, error: crossRefError } = await supabase
+      .from("cedict")
+      .select("*")
+      .or(
+        `traditional.ilike.${searchPattern},simplified.ilike.${searchPattern}`
+      )
+      .limit(10);
+
+    if (crossRefError) throw crossRefError;
+
+    // Update store
+    await dictionaryStore.setSearchResults(moeResults || []);
+    await dictionaryStore.setMknollResults(mknollResults || []);
+    await dictionaryStore.setCedictResults(cedictResults || []);
+    await dictionaryStore.setCrossRefCedict(crossRefResults || []);
+
+  } catch (error) {
+    console.error("Search error:", error);
+  } finally {
+    loading.value = false;
   }
 };
 
-const readChinese = (text) => speakChinese(text);
-const readEnglish = (text) => speakEnglish(text);
-const resetVoice = () => window.speechSynthesis.cancel();
+const readChinese = async (text) => {
+  speakChinese(text);
+};
+
+const readEnglish = async (text) => {
+  speakEnglish(text);
+};
+
+// Load data on mount
+onMounted(async () => {
+  await dictionaryStore.loadFromIndexedDB();
+  await dictionaryStore.loadSearchHistoryFromSupabase();
+});
+
+// Watch for search query changes
+watch(searchQuery, (newQuery) => {
+  if (!newQuery.trim()) {
+    searchExecuted.value = false;
+  }
+});
 </script>
 
 <style scoped>
@@ -441,7 +391,7 @@ const resetVoice = () => window.speechSynthesis.cancel();
 search
 
 */
-#supasearch {
+#dictionary-search {
   padding-top: 200px;
 }
 .search-header {
@@ -623,4 +573,4 @@ admin
 .admin {
   padding: 5vw;
 }
-</style>
+</style> 
