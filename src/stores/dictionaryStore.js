@@ -12,7 +12,7 @@ export const useDictionaryStore = defineStore("dictionary", {
     mknollResults: [],
     crossRefResults: [],
     randomWordHistory: [],
-    showRandomWord: false,
+    showRandomWord: true,
   }),
   actions: {
     async loadFromIndexedDB() {

@@ -373,8 +373,7 @@ watch(searchQuery, (newQuery) => {
 search
 
 */
-#dictionary-search {
-}
+
 .search-header {
   background-color: var(--raisinBlack);
 }
