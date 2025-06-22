@@ -63,14 +63,6 @@ const goToProfile = () => {
 <template>
   <header>
     <div class="header-content">
-      <div class="title-section">
-        <h1 class="title-app">
-          <span class="title-english">English</span>
-          <span class="title-chinese">Chinese</span>
-          <span class="title-taiwanese">Taiwanese</span>
-          <span class="title-dictionary">Dictionary</span>
-        </h1>
-      </div>
       <AuthHeader />
     </div>
   </header>
@@ -119,44 +111,11 @@ const goToProfile = () => {
 <style scoped>
 .header-content {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   padding: 1rem 2rem;
   max-width: 1200px;
   margin: 0 auto;
-}
-
-.title-section {
-  flex: 1;
-}
-
-.title-app {
-  display: block;
-  text-align: left;
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937;
-}
-
-.title-app span {
-  margin-right: 0.5rem;
-}
-
-.title-english {
-  color: #3b82f6;
-}
-
-.title-chinese {
-  color: #ef4444;
-}
-
-.title-taiwanese {
-  color: #10b981;
-}
-
-.title-dictionary {
-  color: #6b7280;
 }
 
 /* Navigation Styles */
@@ -212,20 +171,7 @@ const goToProfile = () => {
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .header-content {
-    flex-direction: column;
-    gap: 1rem;
     padding: 1rem;
-  }
-  
-  .title-app {
-    text-align: center;
-    font-size: 1.25rem;
-  }
-  
-  .title-app span {
-    display: block;
-    margin-right: 0;
-    margin-bottom: 0.25rem;
   }
 
   .nav-container {
