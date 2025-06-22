@@ -12,6 +12,7 @@ export const useDictionaryStore = defineStore("dictionary", {
     mknollResults: [],
     crossRefResults: [],
     randomWordHistory: [],
+    showRandomWord: false,
   }),
   actions: {
     async loadFromIndexedDB() {
@@ -152,6 +153,9 @@ export const useDictionaryStore = defineStore("dictionary", {
       } catch (error) {
         console.error("Error loading search history from Supabase:", error);
       }
-    }
+    },
+    toggleRandomWord() {
+      this.showRandomWord = !this.showRandomWord;
+    },
   },
 });

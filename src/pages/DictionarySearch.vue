@@ -16,7 +16,7 @@
         <button
           v-if="searchQuery.length > 0"
           class="clear-search"
-          @click="clearInput"
+          @click="clearSearch"
         >
           <span class="visually-hidden">Clear</span>
         </button>
@@ -24,20 +24,12 @@
       <div class="search-options">
         <div class="exact-search-container">
           <input
-            id="exact-search"
             type="checkbox"
+            id="exact-search"
             v-model="exactSearch"
             @change="searchWords"
           />
           <label for="exact-search">Strict search</label>
-        </div>
-        <div class="actions">
-          <button v-if="!showRandomWord" @click="showRandomWord = true">
-            Show random word</button
-          ><button v-if="showRandomWord" @click="showRandomWord = false">
-            Hide random word
-          </button>
-          <button class="clear-cache" @click="clearCache()">Clear cache</button>
         </div>
         <div class="search-actions">
           <button class="search-button" @click="searchWords">Search</button>
@@ -45,7 +37,7 @@
       </div>
     </section>
 
-    <RandomWord v-if="showRandomWord" />
+    <RandomWord v-if="dictionaryStore.showRandomWord" />
 
     <!-- moe search results -->
     <section v-if="dictionaryStore.searchResults.length">
@@ -239,7 +231,6 @@ const searchQuery = ref("");
 const exactSearch = ref(false);
 const loading = ref(false);
 const searchExecuted = ref(false);
-const showRandomWord = ref(false);
 const showDialog = ref(false);
 const showDialogMknoll = ref(false);
 const selectedWord = ref(null);
@@ -267,18 +258,9 @@ const openEditDialogMknoll = (word) => {
   document.body.style.overflow = "hidden";
 };
 
-const clearInput = () => {
+const clearSearch = () => {
   searchQuery.value = "";
   searchWords();
-};
-
-const clearCache = async () => {
-  await dictionaryStore.clearSearchHistory();
-  await dictionaryStore.clearRandomWordHistory();
-  await dictionaryStore.setSearchResults([]);
-  await dictionaryStore.setCedictResults([]);
-  await dictionaryStore.setMknollResults([]);
-  await dictionaryStore.setCrossRefCedict([]);
 };
 
 const searchWords = async () => {
@@ -392,16 +374,8 @@ search
 
 */
 #dictionary-search {
-  padding-top: 200px;
 }
 .search-header {
-  position: fixed;
-  top: 60px; /* Account for navigation bar height */
-  left: 0;
-  right: 0;
-  width: 100vw;
-  padding-top: 2rem;
-  z-index: 1000; /* Lower than navigation */
   background-color: var(--raisinBlack);
 }
 .search-words {

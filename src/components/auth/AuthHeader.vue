@@ -2,27 +2,29 @@
   <div class="auth-header">
     <!-- Not authenticated -->
     <div v-if="!authStore.isAuthenticated" class="auth-actions">
-      <button class="btn-signin" @click="showAuthModal = true">
-        Sign In
+      <button @click="toggleRandomWord">
+        {{ showRandomWord ? 'Hide random word' : 'Show random word' }}
+      </button>
+      <button @click="showAuthModal = true">
+        Log in
       </button>
     </div>
 
     <!-- Authenticated -->
     <div v-else class="user-menu">
-      <div class="user-info" @click="showUserProfile = true">
-        <div class="user-avatar">
+      <div class="user-left">
+        <div class="user-avatar" @click="showUserProfile = true">
           {{ userInitials }}
         </div>
-        <span class="user-email">{{ userEmail }}</span>
-        <svg class="dropdown-icon" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-        </svg>
+        <button @click="handleSignOut">
+          Sign Out
+        </button>
+        <button @click="clearCache">
+          Clear cache
+        </button>
       </div>
-      <button class="btn-profile" @click="goToProfile">
-        Profile
-      </button>
-      <button class="btn-signout" @click="handleSignOut">
-        Sign Out
+      <button @click="toggleRandomWord">
+        {{ showRandomWord ? 'Hide random word' : 'Show random word' }}
       </button>
     </div>
 
@@ -46,10 +48,12 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
+import { useDictionaryStore } from '@/stores/dictionaryStore';
 import AuthModal from './AuthModal.vue';
 import UserProfile from './UserProfile.vue';
 
 const authStore = useAuthStore();
+const dictionaryStore = useDictionaryStore();
 const showAuthModal = ref(false);
 const showUserProfile = ref(false);
 const authMode = ref('signin');
@@ -64,6 +68,8 @@ const userInitials = computed(() => {
   return authStore.user.email.charAt(0).toUpperCase();
 });
 
+const showRandomWord = computed(() => dictionaryStore.showRandomWord);
+
 const handleAuthSuccess = () => {
   showAuthModal.value = false;
   // You can add any additional logic here after successful authentication
@@ -73,154 +79,100 @@ const handleSignOut = () => {
   authStore.signOut();
 };
 
-const goToProfile = () => {
-  // Navigate to profile page using hash routing
-  window.location.hash = '#profile';
+const toggleRandomWord = () => {
+  dictionaryStore.toggleRandomWord();
+};
+
+const clearCache = async () => {
+  await dictionaryStore.clearSearchHistory();
+  await dictionaryStore.clearRandomWordHistory();
+  await dictionaryStore.setSearchResults([]);
+  await dictionaryStore.setCedictResults([]);
+  await dictionaryStore.setMknollResults([]);
+  await dictionaryStore.setCrossRefCedict([]);
 };
 </script>
 
 <style scoped>
 .auth-header {
+  background-color: var(--raisinBlack);
+  border-bottom: 1px solid var(--gunmetal);
+  padding: 1rem 2rem;
+}
+
+.auth-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.user-menu {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.user-left {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.auth-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.btn-signin {
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.btn-signin:hover {
-  background-color: #2563eb;
-}
-
-.btn-profile {
-  background-color: #10b981;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  margin-left: 0.5rem;
-}
-
-.btn-profile:hover {
-  background-color: #059669;
-}
-
-.btn-signout {
-  background-color: #ef4444;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  margin-left: 0.5rem;
-}
-
-.btn-signout:hover {
-  background-color: #dc2626;
-}
-
-.user-menu {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.user-info:hover {
-  background-color: #f3f4f6;
-}
-
 .user-avatar {
-  width: 32px;
-  height: 32px;
-  background-color: #3b82f6;
-  color: white;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
+  background-color: var(--black);
+  color: var(--white);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.user-email {
-  font-size: 0.875rem;
-  color: #374151;
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.dropdown-icon {
-  width: 16px;
-  height: 16px;
-  color: #6b7280;
-  transition: transform 0.2s;
-}
-
-.user-info:hover .dropdown-icon {
-  transform: rotate(180deg);
+.user-avatar:hover {
+  background-color: var(--gunmetal);
+  transform: scale(1.05);
 }
 
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100%;
+  height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   z-index: 1000;
-  padding: 1rem;
 }
 
 .modal-content {
-  width: 100%;
+  background-color: var(--raisinBlack);
+  border-radius: 12px;
+  padding: 2rem;
   max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 /* Responsive adjustments */
-@media (max-width: 640px) {
-  .user-email {
-    display: none;
+@media (max-width: 768px) {
+  .auth-header {
+    padding: 1rem;
   }
-  
-  .user-info {
-    padding: 0.25rem;
+
+  .user-menu {
+    flex-direction: column;
+    gap: 1rem;
   }
 }
 </style> 

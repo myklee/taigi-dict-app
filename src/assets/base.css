@@ -85,6 +85,19 @@ button {
   cursor: pointer;
   font-size: 1rem;
   border: none;
+  background-color: var(--black);
+  color: var(--white);
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+button:hover:not(:disabled) {
+  background-color: var(--gunmetal);
+}
+
+button:disabled {
+  background-color: var(--slateGray);
+  cursor: not-allowed;
 }
 
 .icon-button {
