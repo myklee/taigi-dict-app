@@ -2,40 +2,27 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
-
-permissions:
-  contents: write
-  pages: write
-  id-token: write
+    branches: [ main ]
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-
-      - name: Clear npm cache
-        run: npm cache clean --force
-
+          node-version: '20'
+          
       - name: Install dependencies
-        run: |
-          rm -rf node_modules package-lock.json
-          npm install
-
+        run: npm install
+        
       - name: Build
         run: npm run build
-
+        
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          force_orphan: true 
+          publish_dir: ./dist 
