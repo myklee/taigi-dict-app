@@ -21,18 +21,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
-      - name: Debug Node and npm versions
-        run: |
-          node --version
-          npm --version
+      - name: Clear npm cache
+        run: npm cache clean --force
 
       - name: Install dependencies
-        run: npm install
-
-      - name: Debug installed packages
-        run: npm list --depth=0
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
 
       - name: Build
         run: npm run build
