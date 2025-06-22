@@ -1,0 +1,23 @@
+# Ignore all audio files
+*.mp3
+*.ogg
+*.wav
+*.flac
+*.aac
+*.m4a
+*.wma
+
+*.DS_store
+
+.gitignore
+
+# Optionally, you can also ignore an entire folder
+# /src/assets/audio/*
+/public/src/assets/audio_taigi/*
+/src/assets/audio_taigi/*
+node_modules/*
+node_modules/.vite/deps/
+
+# Build output
+dist/
+
