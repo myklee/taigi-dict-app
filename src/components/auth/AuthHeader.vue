@@ -18,6 +18,12 @@
           <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
         </svg>
       </div>
+      <button class="btn-profile" @click="goToProfile">
+        Profile
+      </button>
+      <button class="btn-signout" @click="handleSignOut">
+        Sign Out
+      </button>
     </div>
 
     <!-- Auth Modal -->
@@ -62,6 +68,15 @@ const handleAuthSuccess = () => {
   showAuthModal.value = false;
   // You can add any additional logic here after successful authentication
 };
+
+const handleSignOut = () => {
+  authStore.signOut();
+};
+
+const goToProfile = () => {
+  // Navigate to profile page using hash routing
+  window.location.hash = '#profile';
+};
 </script>
 
 <style scoped>
@@ -92,8 +107,44 @@ const handleAuthSuccess = () => {
   background-color: #2563eb;
 }
 
+.btn-profile {
+  background-color: #10b981;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-left: 0.5rem;
+}
+
+.btn-profile:hover {
+  background-color: #059669;
+}
+
+.btn-signout {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-left: 0.5rem;
+}
+
+.btn-signout:hover {
+  background-color: #dc2626;
+}
+
 .user-menu {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .user-info {

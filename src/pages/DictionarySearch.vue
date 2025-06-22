@@ -396,12 +396,12 @@ search
 }
 .search-header {
   position: fixed;
-  top: 0;
+  top: 60px; /* Account for navigation bar height */
   left: 0;
   right: 0;
   width: 100vw;
   padding-top: 2rem;
-  z-index: 10000;
+  z-index: 1000; /* Lower than navigation */
   background-color: var(--raisinBlack);
 }
 .search-words {
