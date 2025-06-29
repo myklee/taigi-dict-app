@@ -37,7 +37,11 @@ export default {
       if (!this.audioID) return "";
       const folder = this.getAudioFolder(this.audioID);
       if (folder === "Out of range") return "";
-      return `${this.baseSrc}${folder}/${this.audioID}.mp3`;
+      
+      // Use the public directory path for audio files
+      const path = `/src/assets/audio_taigi/${folder}/${this.audioID}.mp3`;
+      console.log(`Audio source path: ${path}`);
+      return path;
     },
   },
   methods: {
@@ -50,26 +54,44 @@ export default {
       const audio = this.$refs.audio;
       if (!audio) return;
 
-      try {
-        if (this.isPlaying) {
-          audio.pause();
-        } else {
-          audio.play().catch(error => {
-            console.error("Error playing audio:", error);
-            this.hasError = true;
-          });
+      // Check if the audio file exists before playing
+      this.checkAudioExists().then(exists => {
+        if (!exists) {
+          console.warn(`Audio file not found: ${this.audioSrc}`);
+          this.hasError = true;
+          return;
         }
-        this.isPlaying = !this.isPlaying;
+
+        try {
+          if (this.isPlaying) {
+            audio.pause();
+          } else {
+            audio.play().catch(error => {
+              console.error("Error playing audio:", error);
+              this.hasError = true;
+            });
+          }
+          this.isPlaying = !this.isPlaying;
+        } catch (error) {
+          console.error("Error toggling audio:", error);
+          this.hasError = true;
+        }
+      });
+    },
+    async checkAudioExists() {
+      try {
+        const response = await fetch(this.audioSrc, { method: 'HEAD' });
+        return response.ok;
       } catch (error) {
-        console.error("Error toggling audio:", error);
-        this.hasError = true;
+        console.error("Error checking audio file:", error);
+        return false;
       }
     },
     audioEnded() {
       this.isPlaying = false;
     },
     handleAudioError(event) {
-      console.error("Audio error:", event);
+      console.error("Audio error for path:", this.audioSrc, event);
       this.hasError = true;
       this.isPlaying = false;
     },
