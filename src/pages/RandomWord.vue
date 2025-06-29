@@ -138,14 +138,15 @@ const closeDialog = () => {
 
 const fetchRandomWordAndDefinitions = async () => {
   try {
-    // if (randomWordData.value != null) {
-    //   dictionaryStore.addToRandomHistory(randomWordData);
-    // }
     loading.value = true; // Start loading
     // Step 1: Get the total count of words
     const { count } = await supabase
       .from("words")
       .select("*", { count: "exact", head: true });
+
+    if (!count || count === 0) {
+      throw new Error("No words found in database");
+    }
 
     const randomOffset = Math.floor(Math.random() * count);
 
@@ -158,9 +159,14 @@ const fetchRandomWordAndDefinitions = async () => {
       .limit(1);
 
     if (wordError) throw new Error(wordError.message);
+    if (!wordData || wordData.length === 0) {
+      throw new Error("No word data returned");
+    }
 
-    // console.log(wordData);
     const randomWord = wordData[0];
+    if (!randomWord || !randomWord.id) {
+      throw new Error("Invalid word data - missing ID");
+    }
 
     // fetch definitions associated with the random word
     const { data: definitionsData, error: definitionsError } = await supabase
@@ -171,16 +177,15 @@ const fetchRandomWordAndDefinitions = async () => {
     if (definitionsError) throw new Error(definitionsError.message);
 
     // Combine word and definitions in one object
-    randomWord.definitions = definitionsData;
+    randomWord.definitions = definitionsData || [];
 
-    if (randomWordData) {
-      randomWordData.value = randomWord;
-      // console.log(randomWordData);
-      dictionaryStore.addToRandomHistory(randomWord);
-    }
+    // Set the random word data
+    randomWordData.value = randomWord;
+    dictionaryStore.addToRandomHistory(randomWord);
   } catch (error) {
     console.error("Error fetching random word and definitions:", error.message);
-    fetchRandomWordAndDefinitions();
+    // Don't recursively call this function to avoid infinite loops
+    // Instead, set loading to false and show an error state
   } finally {
     loading.value = false; // End loading
   }

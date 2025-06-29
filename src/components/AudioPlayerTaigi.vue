@@ -3,10 +3,12 @@
     <!-- Audio Element (hidden but referenced in the script) -->
     <audio
       ref="audio"
-      :src="`${this.baseSrc}${getAudioFolder(audioID)}/${audioID}.mp3`"
+      :src="audioSrc"
       @ended="audioEnded"
+      @error="handleAudioError"
+      preload="none"
     ></audio>
-    <IconPlayAudio @click="togglePlay"></IconPlayAudio>
+    <IconPlayAudio @click="togglePlay" :class="{ 'playing': isPlaying }"></IconPlayAudio>
   </div>
 </template>
 
@@ -25,35 +27,61 @@ export default {
   },
   data() {
     return {
-      isPlaying: false, // Boolean to track whether the audio is playing
-      baseSrc: "src/assets/audio_taigi/",
+      isPlaying: false,
+      hasError: false,
+      baseSrc: "/src/assets/audio_taigi/",
     };
   },
   computed: {
-    fullSrc() {
-      return `${this.baseSrc}${getAudioFolder(this.audioid)}/${audioid}.mp3`;
+    audioSrc() {
+      if (!this.audioID) return "";
+      const folder = this.getAudioFolder(this.audioID);
+      if (folder === "Out of range") return "";
+      return `${this.baseSrc}${folder}/${this.audioID}.mp3`;
     },
   },
   methods: {
-    // Toggle between play and pause
     togglePlay() {
-      const audio = this.$refs.audio;
-      if (this.isPlaying) {
-        audio.pause();
-      } else {
-        audio.play();
+      if (this.hasError || !this.audioSrc) {
+        console.warn("Audio not available");
+        return;
       }
-      this.isPlaying = !this.isPlaying;
+
+      const audio = this.$refs.audio;
+      if (!audio) return;
+
+      try {
+        if (this.isPlaying) {
+          audio.pause();
+        } else {
+          audio.play().catch(error => {
+            console.error("Error playing audio:", error);
+            this.hasError = true;
+          });
+        }
+        this.isPlaying = !this.isPlaying;
+      } catch (error) {
+        console.error("Error toggling audio:", error);
+        this.hasError = true;
+      }
     },
     audioEnded() {
-      this.isPlaying = false; // Set to false when audio ends
-      console.log("Audio has finished playing.");
+      this.isPlaying = false;
+    },
+    handleAudioError(event) {
+      console.error("Audio error:", event);
+      this.hasError = true;
+      this.isPlaying = false;
     },
     getAudioFolder(audioid) {
-      // console.log(audioid);
-      if (audioid) {
-        const audioidnum = parseInt(audioid.match(/^(\d+)\(/)[1]);
-        // console.log(audioid);
+      if (!audioid) return "Out of range";
+      
+      try {
+        const match = audioid.match(/^(\d+)\(/);
+        if (!match) return "Out of range";
+        
+        const audioidnum = parseInt(match[1]);
+        
         if (audioidnum < 1000) {
           return "0";
         } else if (audioidnum >= 1000 && audioidnum < 2000) {
@@ -113,16 +141,28 @@ export default {
         } else if (audioidnum >= 28000 && audioidnum < 29000) {
           return "28";
         } else {
-          return "Out of range"; // Optional, if you want to handle numbers >= 29000
+          return "Out of range";
         }
+      } catch (error) {
+        console.error("Error parsing audio ID:", error);
+        return "Out of range";
       }
     },
   },
   mounted() {
+    // Initialize audio element
     const audio = this.$refs.audio;
+    if (audio) {
+      audio.load();
+    }
   },
   beforeDestroy() {
+    // Clean up audio
     const audio = this.$refs.audio;
+    if (audio) {
+      audio.pause();
+      audio.src = "";
+    }
   },
 };
 </script>
@@ -137,5 +177,8 @@ svg {
 }
 .play-taigi {
   cursor: pointer;
+}
+.playing {
+  opacity: 0.7;
 }
 </style>
