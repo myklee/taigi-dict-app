@@ -1,4 +1,17 @@
-# Ignore all audio files
+# Ignore system files
+*.DS_store
+
+# Ignore git files
+.gitignore
+
+# Ignore node modules
+node_modules/*
+node_modules/.vite/deps/
+
+# Build output
+dist/
+
+# Ignore audio files (now stored in Supabase Storage)
 *.mp3
 *.ogg
 *.wav
@@ -6,18 +19,6 @@
 *.aac
 *.m4a
 *.wma
-
-*.DS_store
-
-.gitignore
-
-# Optionally, you can also ignore an entire folder
-# /src/assets/audio/*
-/public/src/assets/audio_taigi/*
-/src/assets/audio_taigi/*
-node_modules/*
-node_modules/.vite/deps/
-
-# Build output
-dist/
+public/src/assets/audio_taigi/
+src/assets/audio_taigi/
 

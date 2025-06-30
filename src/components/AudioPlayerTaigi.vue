@@ -38,10 +38,11 @@ export default {
       const folder = this.getAudioFolder(this.audioID);
       if (folder === "Out of range") return "";
       
-      // Use the public directory path for audio files
-      const path = `/src/assets/audio_taigi/${folder}/${this.audioID}.mp3`;
-      console.log(`Audio source path: ${path}`);
-      return path;
+      // Use Supabase Storage URL for audio files
+      const path = `${folder}/${this.audioID}.mp3`;
+      const supabaseUrl = `https://oqwvljqwtearyepyaslo.supabase.co/storage/v1/object/public/audio-files/${path}`;
+      console.log(`Audio source path: ${supabaseUrl}`);
+      return supabaseUrl;
     },
   },
   methods: {
