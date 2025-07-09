@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
+    "build": "vite build --config vite.config.web.js",
     "build:mobile": "vite build && npx cap sync",
+    "preview": "vite preview",
     "ios": "npx cap open ios",
     "android": "npx cap open android",
     "cap:sync": "npx cap sync"
