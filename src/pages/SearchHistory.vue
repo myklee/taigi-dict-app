@@ -9,7 +9,7 @@
           type="text"
           v-model="searchQuery"
           @keyup.enter="searchWords"
-          placeholder="Search/查找/tshuē"
+          :placeholder="getPlaceholderText()"
           class="text-field search-words-text-field"
           autocapitalize="off"
         />
@@ -22,6 +22,20 @@
         </button>
       </div>
       <div class="search-options">
+        <div class="search-mode-container">
+          <label for="search-mode">Search mode:</label>
+          <select 
+            id="search-mode" 
+            v-model="searchMode" 
+            @change="searchWords"
+            class="search-mode-select"
+          >
+            <option value="all">All (English, Chinese, Taiwanese)</option>
+            <option value="phonetic">Phonetic (Taiwanese romanization)</option>
+            <option value="chinese">Chinese characters</option>
+            <option value="english">English</option>
+          </select>
+        </div>
         <div class="exact-search-container">
           <input
             id="exact-search"
@@ -71,6 +85,18 @@
       </div>
     </div>
 
+    <!-- Phonetic search hint -->
+    <section v-if="searchMode === 'phonetic'" class="phonetic-hint">
+      <div class="hint-content">
+        <p>💡 <strong>Phonetic Search Tips:</strong></p>
+        <ul>
+          <li>Use Taiwanese romanization (Tâi-lô) like "tshuē" for 搜</li>
+          <li>Try partial matches: "tsh" will find words starting with "tsh"</li>
+          <li>Common patterns: "a̍" (a with dot below), "o͘" (o with dot above)</li>
+        </ul>
+      </div>
+    </section>
+
     <ul
       v-if="dictionaryStore.searchResults.length != 0"
       class="results moe-results"
@@ -88,7 +114,7 @@
       >
         <div
           v-if="word.romaji != null"
-          class="word-item moe-word-taigi alphabetic"
+          :class="['word-item', 'moe-word-taigi', 'alphabetic', { 'phonetic-highlight': searchMode === 'phonetic' }]"
         >
           <!-- <header>Taiwanese Taigi</header> -->
           <p>{{ word.romaji }}</p>
@@ -198,6 +224,7 @@ const words = ref([]);
 const wordsCedict = ref([]);
 const searchQuery = ref("");
 const exactSearch = ref(false);
+const searchMode = ref("all");
 const word = ref(null);
 const showDialog = ref(false);
 const newDefinition = ref({
@@ -250,22 +277,35 @@ const searchWords = async () => {
 
       loading.value = true; // Start loading
       searchExecuted.value = true;
+      
+      // Determine search pattern based on exactSearch setting
+      const searchPattern = exactSearch.value ? searchQuery.value : `%${searchQuery.value}%`;
+      
       let query = supabase
         .from("words")
         .select(
           `id, english, chinese, romaji, audioid, pinyin, zhuyin, taiwanese, audio_url, english_mknoll, definitions (defid, def_english, def_chinese)`
         );
 
-      if (exactSearch.value) {
-        // Perform exact match search
-        query = query.or(
-          `chinese.ilike.${searchQuery.value},english.ilike.${searchQuery.value},english_mknoll.ilike.${searchQuery.value},romaji.ilike.${searchQuery.value},taiwanese.ilike.${searchQuery.value}`
-        );
-      } else {
-        // Perform partial match search
-        query = query.or(
-          `chinese.ilike.%${searchQuery.value}%,english.ilike.%${searchQuery.value}%,english_mknoll.ilike.%${searchQuery.value}%,romaji.ilike.%${searchQuery.value}%,taiwanese.ilike.%${searchQuery.value}%`
-        );
+      // Apply search mode filters
+      switch (searchMode.value) {
+        case "phonetic":
+          // Search only Taiwanese romanization (romaji)
+          query = query.or(`romaji.ilike.${searchPattern}`);
+          break;
+        case "chinese":
+          // Search only Chinese characters
+          query = query.or(`chinese.ilike.${searchPattern}`);
+          break;
+        case "english":
+          // Search only English
+          query = query.or(`english.ilike.${searchPattern},english_mknoll.ilike.${searchPattern}`);
+          break;
+        default:
+          // Search all fields (original behavior)
+          query = query.or(
+            `chinese.ilike.${searchPattern},english.ilike.${searchPattern},english_mknoll.ilike.${searchPattern},romaji.ilike.${searchPattern},taiwanese.ilike.${searchPattern}`
+          );
       }
 
       const { data, error } = await query;
@@ -277,8 +317,12 @@ const searchWords = async () => {
         dictionaryStore.setSearchResults(data);
         // words.value = dictionaryStore.searchResults;
       }
-      // cross reference cedict
-      searchWordsAndCedict(searchQuery.value);
+      // cross reference cedict (only for Chinese mode or all mode)
+      if (searchMode.value === "chinese" || searchMode.value === "all") {
+        searchWordsAndCedict(searchQuery.value);
+      } else {
+        wordsCedict.value = [];
+      }
     } catch (err) {
       console.error("Error in searchWords:", err.message);
     } finally {
@@ -313,6 +357,19 @@ const searchWordsAndCedict = async (searchTerm) => {
 const readChinese = (text) => speakChinese(text);
 const readEnglish = (text) => speakEnglish(text);
 const resetVoice = () => window.speechSynthesis.cancel();
+
+const getPlaceholderText = () => {
+  switch (searchMode.value) {
+    case "phonetic":
+      return "Search phonetic (Taiwanese romanization) · 台羅搜尋";
+    case "chinese":
+      return "Search Chinese characters · 中文搜尋";
+    case "english":
+      return "Search English · 英文搜尋";
+    default:
+      return "Search English, Chinese, Taiwanese · 中文或英文搜尋";
+  }
+};
 </script>
 
 <style scoped>
@@ -322,5 +379,102 @@ const resetVoice = () => window.speechSynthesis.cancel();
 .search-history-header {
   display: flex;
   align-items: center;
+}
+
+/*
+
+search mode selector
+
+*/
+
+.search-mode-container {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 1rem;
+  padding-left: 0;
+  label {
+    white-space: nowrap;
+    color: var(--frenchGray);
+  }
+}
+
+.search-mode-select {
+  background-color: var(--black);
+  color: var(--frenchGray);
+  border: 1px solid var(--gunmetal);
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  
+  &:hover {
+    border-color: var(--frenchGray);
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: white;
+  }
+}
+
+/*
+
+phonetic search hint
+
+*/
+
+.phonetic-hint {
+  background-color: var(--black);
+  margin: 0 5vw;
+  border-radius: 0.25rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.hint-content {
+  color: var(--frenchGray);
+  font-size: 0.9rem;
+}
+
+.hint-content p {
+  margin: 0 0 0.5rem 0;
+}
+
+.hint-content ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.hint-content li {
+  margin: 0.25rem 0;
+}
+
+/*
+
+search options layout
+
+*/
+
+.search-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 5vw;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/*
+
+phonetic highlight
+
+*/
+
+.phonetic-highlight {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  border-left: 4px solid var(--frenchGray);
 }
 </style>

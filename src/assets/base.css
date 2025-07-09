@@ -11,6 +11,16 @@
   --frenchGray: #acabb5;
   --white: #f3f3f3;
   color-scheme: light dark;
+  
+  /* Default dark theme for mobile */
+  --color-text: var(--frenchGray);
+  --app-background: var(--raisinBlack);
+  --button-background: var(--black);
+  --button-text-color: var(--frenchGray);
+  --rw-background: var(--gunmetal);
+  --rw-header-background: var(--raisinBlack);
+  --playAudioIcon: var(--frenchGray);
+  --moeItemBg: var(--black);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -51,14 +61,21 @@
 
 body {
   min-height: 100vh;
-  color: var(--color-text);
-  background: var(--app-background);
+  color: var(--color-text) !important;
+  background: var(--app-background) !important;
   line-height: 1.6;
-  font-family: "Helvetica Neue", sans-serif;
+  font-family: "Noto Sans", "Helvetica Neue", sans-serif;
   font-size: 16px;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Mobile-specific styling for Capacitor */
+#app {
+  min-height: 100vh;
+  color: var(--color-text) !important;
+  background: var(--app-background) !important;
 }
 
 ul,
@@ -71,12 +88,16 @@ li {
 input[type="text"] {
   font-size: 1.5rem;
   border-radius: 0;
+  background-color: var(--gunmetal) !important;
+  color: var(--white) !important;
+  border: 1px solid var(--slateGray);
+  padding: 0.5rem;
   &::placeholder {
     color: var(--slateGray);
   }
   &:focus {
     outline: none;
-    background-color: var(--gunmetal);
+    background-color: var(--gunmetal) !important;
   }
 }
 button {
@@ -85,8 +106,8 @@ button {
   cursor: pointer;
   font-size: 1rem;
   border: none;
-  background-color: var(--black);
-  color: var(--white);
+  background-color: var(--button-background) !important;
+  color: var(--button-text-color) !important;
   font-weight: 500;
   transition: background-color 0.2s;
 }
