@@ -9,7 +9,7 @@
           type="text"
           v-model="searchQuery"
           @keyup.enter="searchWords"
-          :placeholder="getPlaceholderText()"
+          placeholder="Search English, Chinese, Taiwanese · 中文或英文搜尋"
           class="text-field search-words-text-field"
           autocapitalize="off"
         />
@@ -22,20 +22,6 @@
         </button>
       </div>
       <div class="search-options">
-        <div class="search-mode-container">
-          <label for="search-mode">Search mode:</label>
-          <select 
-            id="search-mode" 
-            v-model="searchMode" 
-            @change="searchWords"
-            class="search-mode-select"
-          >
-            <option value="all">All (English, Chinese, Taiwanese)</option>
-            <option value="phonetic">Phonetic (Taiwanese romanization)</option>
-            <option value="chinese">Chinese characters</option>
-            <option value="english">English</option>
-          </select>
-        </div>
         <div class="exact-search-container">
           <input
             type="checkbox"
@@ -51,17 +37,6 @@
       </div>
     </section>
 
-    <!-- Phonetic search hint -->
-    <section v-if="searchMode === 'phonetic'" class="phonetic-hint">
-      <div class="hint-content">
-        <p>💡 <strong>Phonetic Search Tips:</strong></p>
-        <ul>
-          <li>Use Taiwanese romanization (Tâi-lô) like "tshuē" for 搜</li>
-          <li>Try partial matches: "tsh" will find words starting with "tsh"</li>
-          <li>Common patterns: "a̍" (a with dot below), "o͘" (o with dot above)</li>
-        </ul>
-      </div>
-    </section>
 
     <RandomWord v-if="dictionaryStore.showRandomWord" />
 
@@ -89,7 +64,7 @@
         >
           <div
             v-if="word.romaji != null"
-            :class="['word-item', 'moe-word-taigi', 'alphabetic', { 'phonetic-highlight': searchMode === 'phonetic' }]"
+            class="word-item moe-word-taigi alphabetic"
           >
             <p>{{ word.romaji }}</p>
             <audio
@@ -278,7 +253,6 @@ const showDialog = ref(false);
 const showDialogMknoll = ref(false);
 const selectedWord = ref(null);
 const selectedWordMknoll = ref(null);
-const searchMode = ref("all");
 
 const closeDialog = () => {
   showDialog.value = false;
@@ -323,7 +297,7 @@ const searchWords = async () => {
     // Determine search pattern based on exactSearch setting
     const searchPattern = exactSearch.value ? searchQuery.value : `%${searchQuery.value}%`;
 
-    // Build search query based on search mode
+    // Build search queries - search all fields
     let moeSearchQuery = supabase
       .from("words")
       .select(`
@@ -335,42 +309,18 @@ const searchWords = async () => {
           def_chinese,
           def_english
         )
-      `);
+      `)
+      .or(`chinese.ilike.${searchPattern},english.ilike.${searchPattern},romaji.ilike.${searchPattern}`);
 
     let mknollSearchQuery = supabase
       .from("maryknoll")
-      .select("*");
+      .select("*")
+      .or(`taiwanese.ilike.${searchPattern},chinese.ilike.${searchPattern},english_mknoll.ilike.${searchPattern}`);
 
     let cedictSearchQuery = supabase
       .from("cedict")
-      .select("*");
-
-    // Apply search mode filters
-    switch (searchMode.value) {
-      case "phonetic":
-        // Search only Taiwanese romanization (romaji)
-        moeSearchQuery = moeSearchQuery.or(`romaji.ilike.${searchPattern}`);
-        mknollSearchQuery = mknollSearchQuery.or(`taiwanese.ilike.${searchPattern}`);
-        cedictSearchQuery = cedictSearchQuery.or(`pinyin.ilike.${searchPattern}`);
-        break;
-      case "chinese":
-        // Search only Chinese characters
-        moeSearchQuery = moeSearchQuery.or(`chinese.ilike.${searchPattern}`);
-        mknollSearchQuery = mknollSearchQuery.or(`chinese.ilike.${searchPattern}`);
-        cedictSearchQuery = cedictSearchQuery.or(`traditional.ilike.${searchPattern},simplified.ilike.${searchPattern}`);
-        break;
-      case "english":
-        // Search only English
-        moeSearchQuery = moeSearchQuery.or(`english.ilike.${searchPattern}`);
-        mknollSearchQuery = mknollSearchQuery.or(`english_mknoll.ilike.${searchPattern}`);
-        cedictSearchQuery = cedictSearchQuery.or(`english_cedict.ilike.${searchPattern}`);
-        break;
-      default:
-        // Search all fields (original behavior)
-        moeSearchQuery = moeSearchQuery.or(`chinese.ilike.${searchPattern},english.ilike.${searchPattern},romaji.ilike.${searchPattern}`);
-        mknollSearchQuery = mknollSearchQuery.or(`taiwanese.ilike.${searchPattern},chinese.ilike.${searchPattern},english_mknoll.ilike.${searchPattern}`);
-        cedictSearchQuery = cedictSearchQuery.or(`traditional.ilike.${searchPattern},simplified.ilike.${searchPattern},english_cedict.ilike.${searchPattern}`);
-    }
+      .select("*")
+      .or(`traditional.ilike.${searchPattern},simplified.ilike.${searchPattern},english_cedict.ilike.${searchPattern}`);
 
     // Execute searches
     const { data: moeResults, error: moeError } = await moeSearchQuery.limit(50);
@@ -382,18 +332,15 @@ const searchWords = async () => {
     const { data: cedictResults, error: cedictError } = await cedictSearchQuery.limit(20);
     if (cedictError) throw cedictError;
 
-    // Cross-reference search (only for Chinese mode or all mode)
-    let crossRefResults = [];
-    if (searchMode.value === "chinese" || searchMode.value === "all") {
-      const { data: crossRefData, error: crossRefError } = await supabase
-        .from("cedict")
-        .select("*")
-        .or(`traditional.ilike.${searchPattern},simplified.ilike.${searchPattern}`)
-        .limit(10);
-      
-      if (crossRefError) throw crossRefError;
-      crossRefResults = crossRefData || [];
-    }
+    // Cross-reference search
+    const { data: crossRefData, error: crossRefError } = await supabase
+      .from("cedict")
+      .select("*")
+      .or(`traditional.ilike.${searchPattern},simplified.ilike.${searchPattern}`)
+      .limit(10);
+    
+    if (crossRefError) throw crossRefError;
+    const crossRefResults = crossRefData || [];
 
     // Update store
     await dictionaryStore.setSearchResults(moeResults || []);
@@ -416,18 +363,6 @@ const readEnglish = async (text) => {
   speakEnglish(text);
 };
 
-const getPlaceholderText = () => {
-  switch (searchMode.value) {
-    case "phonetic":
-      return "Search phonetic (Taiwanese romanization) · 台羅搜尋";
-    case "chinese":
-      return "Search Chinese characters · 中文搜尋";
-    case "english":
-      return "Search English · 英文搜尋";
-    default:
-      return "Search English, Chinese, Taiwanese · 中文或英文搜尋";
-  }
-};
 
 // Load data on mount
 onMounted(async () => {
@@ -493,42 +428,6 @@ search
   justify-self: end;
 }
 
-/*
-
-search mode selector
-
-*/
-
-.search-mode-container {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  padding: 1rem;
-  padding-left: 0;
-  label {
-    white-space: nowrap;
-    color: var(--frenchGray);
-  }
-}
-
-.search-mode-select {
-  background-color: var(--black);
-  color: var(--frenchGray);
-  border: 1px solid var(--gunmetal);
-  border-radius: 0.25rem;
-  padding: 0.5rem;
-  font-size: 0.9rem;
-  cursor: pointer;
-  
-  &:hover {
-    border-color: var(--frenchGray);
-  }
-  
-  &:focus {
-    outline: none;
-    border-color: white;
-  }
-}
 
 /*
 
@@ -555,37 +454,6 @@ exact search checkbox
   align-items: center;
 }
 
-/*
-
-phonetic search hint
-
-*/
-
-.phonetic-hint {
-  background-color: var(--black);
-  margin: 0 5vw;
-  border-radius: 0.25rem;
-  padding: 1rem;
-  margin-bottom: 1rem;
-}
-
-.hint-content {
-  color: var(--frenchGray);
-  font-size: 0.9rem;
-}
-
-.hint-content p {
-  margin: 0 0 0.5rem 0;
-}
-
-.hint-content ul {
-  margin: 0;
-  padding-left: 1.5rem;
-}
-
-.hint-content li {
-  margin: 0.25rem 0;
-}
 
 /*
 
@@ -639,12 +507,6 @@ MOE result items
   gap: 1rem;
 }
 
-.phonetic-highlight {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 0.5rem;
-  padding: 0.5rem;
-  border-left: 4px solid var(--frenchGray);
-}
 .moe-english-chinese {
   display: flex;
   flex-wrap: wrap;
