@@ -1,5 +1,6 @@
 <script setup>
 import DictionarySearch from "./pages/DictionarySearch.vue";
+import UserProfile from "./pages/UserProfile.vue";
 import CVSUploader from "./components/CVSUploader.vue";
 import { uploadEntries } from "./utils";
 import RandomWord from "./pages/RandomWord.vue";
@@ -10,6 +11,35 @@ import AuthHeader from "@/components/auth/AuthHeader.vue";
 
 const authStore = useAuthStore();
 const currentRoute = ref('dictionary');
+
+// Simple routing system
+const navigate = (route) => {
+  currentRoute.value = route;
+  // Update URL without page reload
+  const path = route === 'dictionary' ? '/' : `/${route}`;
+  window.history.pushState({}, '', path);
+};
+
+// Handle browser back/forward buttons
+window.addEventListener('popstate', () => {
+  const path = window.location.pathname;
+  if (path === '/profile') {
+    currentRoute.value = 'profile';
+  } else {
+    currentRoute.value = 'dictionary';
+  }
+});
+
+// Initialize route based on current URL
+onMounted(() => {
+  const path = window.location.pathname;
+  if (path === '/profile') {
+    currentRoute.value = 'profile';
+  }
+});
+
+// Provide navigation function globally
+window.$navigate = navigate;
 
 // // Reactive variable to track if data exists
 // const hasData = ref(false);
@@ -34,17 +64,23 @@ onMounted(async () => {
 
 // Computed property to determine which component to show
 const currentComponent = computed(() => {
-  return DictionarySearch;
+  switch (currentRoute.value) {
+    case 'profile':
+      return UserProfile;
+    case 'dictionary':
+    default:
+      return DictionarySearch;
+  }
 });
 </script>
 
 <template>
   <header>
-    <AuthHeader />
+    <AuthHeader :navigate="navigate" />
   </header>
 
   <main>
-    <component :is="currentComponent" />
+    <component :is="currentComponent" :navigate="navigate" />
 
     <!-- <div id="auth">
       <input type="email" id="email" placeholder="Email" />

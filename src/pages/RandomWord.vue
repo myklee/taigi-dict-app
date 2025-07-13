@@ -6,12 +6,23 @@
     <header class="rw-header">
       <h3>Random word</h3>
       <div class="rw-header-actions">
+        <IconHeart
+          v-if="randomWordData && randomWordData.id"
+          :isFavorited="favoritesStore.isFavorited(randomWordData.id)"
+          @click="favoritesStore.toggleFavorite(randomWordData)"
+          title="Add to favorites"
+          class="rw-favorite"
+        />
         <IconRefresh
           class="rw-get-word"
           color="#a5a5a5"
           @click="fetchRandomWordAndDefinitions"
         />
-        <IconEdit class="edit-rw" @click="openEditDialog(randomWordData)" />
+        <IconEdit 
+          v-if="randomWordData"
+          class="edit-rw" 
+          @click="openEditDialog(randomWordData)" 
+        />
       </div>
     </header>
 
@@ -96,9 +107,19 @@
           v-for="(word, index) in dictionaryStore.randomWordHistory"
           :key="index"
           :class="`rw-${index}`"
+          class="rw-history-item"
         >
-          {{ word.romaji }} {{ word.english }} {{ word.chinese }}
-          <!-- {{ dictionaryStore.randomWordHistory }} -->
+          <div class="rw-history-word">
+            <span class="rw-history-romaji">{{ word.romaji }}</span>
+            <span class="rw-history-english">{{ word.english }}</span>
+            <span class="rw-history-chinese">{{ word.chinese }}</span>
+          </div>
+          <IconHeart
+            :isFavorited="favoritesStore.isFavorited(word.id)"
+            @click="favoritesStore.toggleFavorite(word)"
+            title="Add to favorites"
+            class="rw-history-favorite"
+          />
         </li>
       </ul>
     </div>
@@ -125,11 +146,14 @@ import pinyin from "pinyin";
 import { useDictionaryStore } from "@/stores/dictionaryStore";
 import IconTrash from "@/components/icons/IconTrash.vue";
 import IconEdit from "@/components/icons/IconEdit.vue";
+import IconHeart from "@/components/icons/IconHeart.vue";
+import { useFavoritesStore } from "@/stores/favoritesStore";
 
 const randomWordData = ref(null);
 
 const loading = ref(true);
 const dictionaryStore = useDictionaryStore();
+const favoritesStore = useFavoritesStore();
 const showDialog = ref(false);
 const closeDialog = () => {
   showDialog.value = false;
@@ -191,7 +215,11 @@ const fetchRandomWordAndDefinitions = async () => {
   }
 };
 
-onMounted(fetchRandomWordAndDefinitions);
+onMounted(async () => {
+  await favoritesStore.loadFromIndexedDB();
+  await favoritesStore.loadFromSupabase();
+  fetchRandomWordAndDefinitions();
+});
 
 const readChinese = async (text) => {
   speakChinese(text);
@@ -223,6 +251,8 @@ const openEditDialog = (word) => {
 }
 .rw-header-actions {
   display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }
 .rw-content {
   padding: 0rem 1rem 1rem;
@@ -266,10 +296,56 @@ const openEditDialog = (word) => {
 .rw-history-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
 }
+
+.rw-history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rw-history-word {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.rw-history-romaji {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--primary-color, white);
+}
+
+.rw-history-english {
+  font-size: 0.9rem;
+  color: var(--secondary-color, #ccc);
+}
+
+.rw-history-chinese {
+  font-size: 1rem;
+  color: var(--primary-color, white);
+}
+
+.rw-history-favorite {
+  margin-left: 1rem;
+  flex-shrink: 0;
+}
+
 .rw-0 {
   display: none;
 }
+.rw-favorite {
+  transition: all 0.2s ease;
+}
+
+.rw-favorite:hover {
+  transform: scale(1.1);
+}
+
 .edit-rw {
 }
 </style>

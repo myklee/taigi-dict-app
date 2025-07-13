@@ -13,7 +13,7 @@
     <!-- Authenticated -->
     <div v-else class="user-menu">
       <div class="user-left">
-        <div class="user-avatar" @click="showUserProfile = true">
+        <div class="user-avatar" @click="goToProfile">
           {{ userInitials }}
         </div>
         <button @click="handleSignOut">
@@ -36,12 +36,6 @@
       @success="handleAuthSuccess"
     />
 
-    <!-- User Profile Modal -->
-    <div v-if="showUserProfile" class="modal-overlay" @click="showUserProfile = false">
-      <div class="modal-content" @click.stop>
-        <UserProfile @close="showUserProfile = false" />
-      </div>
-    </div>
   </div>
 </template>
 
@@ -50,12 +44,14 @@ import { ref, computed } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
 import { useDictionaryStore } from '@/stores/dictionaryStore';
 import AuthModal from './AuthModal.vue';
-import UserProfile from './UserProfile.vue';
+
+const props = defineProps({
+  navigate: Function
+});
 
 const authStore = useAuthStore();
 const dictionaryStore = useDictionaryStore();
 const showAuthModal = ref(false);
-const showUserProfile = ref(false);
 const authMode = ref('signin');
 
 const userEmail = computed(() => {
@@ -77,6 +73,12 @@ const handleAuthSuccess = () => {
 
 const handleSignOut = () => {
   authStore.signOut();
+};
+
+const goToProfile = () => {
+  if (props.navigate) {
+    props.navigate('profile');
+  }
 };
 
 const toggleRandomWord = () => {
@@ -139,29 +141,6 @@ const clearCache = async () => {
 .user-avatar:hover {
   background-color: var(--gunmetal);
   transform: scale(1.05);
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background-color: var(--raisinBlack);
-  border-radius: 12px;
-  padding: 2rem;
-  max-width: 500px;
-  width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
 }
 
 /* Responsive adjustments */

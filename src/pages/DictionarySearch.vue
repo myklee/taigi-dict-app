@@ -127,11 +127,18 @@
               </ul>
             </li>
           </ul>
-          <IconEdit
-            class="edit-word"
-            title="Edit entry"
-            @click="openEditDialog(word)"
-          />
+          <div class="word-actions">
+            <IconHeart
+              :isFavorited="favoritesStore.isFavorited(word.id)"
+              @click="favoritesStore.toggleFavorite(word)"
+              title="Add to favorites"
+            />
+            <IconEdit
+              class="edit-word"
+              title="Edit entry"
+              @click="openEditDialog(word)"
+            />
+          </div>
         </li>
       </ul>
     </section>
@@ -163,7 +170,14 @@
               controls
             ></audio>
           </div>
-          <IconEdit title="Edit entry" @click="openEditDialogMknoll(word)" />
+          <div class="word-actions">
+            <IconHeart
+              :isFavorited="favoritesStore.isFavorited(word.id)"
+              @click="favoritesStore.toggleFavorite(word)"
+              title="Add to favorites"
+            />
+            <IconEdit title="Edit entry" @click="openEditDialogMknoll(word)" />
+          </div>
         </li>
       </ul>
     </section>
@@ -251,8 +265,11 @@ import EditWordMknoll from "./EditWordMknoll.vue";
 import RandomWord from "./RandomWord.vue";
 import Pinyinzhuyin from "@/components/utility/Pinyinzhuyin.vue";
 import IconEdit from "@/components/icons/IconEdit.vue";
+import IconHeart from "@/components/icons/IconHeart.vue";
 
+import { useFavoritesStore } from "@/stores/favoritesStore";
 const dictionaryStore = useDictionaryStore();
+const favoritesStore = useFavoritesStore();
 const searchQuery = ref("");
 const exactSearch = ref(false);
 const loading = ref(false);
@@ -416,6 +433,8 @@ const getPlaceholderText = () => {
 onMounted(async () => {
   await dictionaryStore.loadFromIndexedDB();
   await dictionaryStore.loadSearchHistoryFromSupabase();
+  await favoritesStore.loadFromIndexedDB();
+  await favoritesStore.loadFromSupabase();
 });
 
 // Watch for search query changes
@@ -667,6 +686,7 @@ cedict, mknoll, crossref results
     display: flex;
     flex-direction: column;
     align-items: start;
+    position: relative;
   }
 }
 .cedict-pinyin-zhuyin {
@@ -682,5 +702,17 @@ admin
 */
 .admin {
   padding: 5vw;
+}
+
+/* 
+word actions (favorites and edit)
+*/
+.word-actions {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }
 </style> 
