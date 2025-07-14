@@ -14,6 +14,5 @@ import fromPinyin from "zhuyin";
 
 const pinyinMarks = pinyin(props.han).join(" ");
 </script>
-<style scoped></style>
 
 <!-- https://github.com/hotoo/pinyin -->

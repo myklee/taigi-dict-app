@@ -23,9 +23,4 @@
   </div>
 </template>
 <script setup>
-const props = defineProps({
-  color: String,
-});
 </script>
-<style scoped>
-</style>
