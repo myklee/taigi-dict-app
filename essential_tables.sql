@@ -26,22 +26,28 @@ ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 -- Create RLS Policies
 
 -- search_history policies
+DROP POLICY IF EXISTS "Users can view their own search history" ON search_history;
 CREATE POLICY "Users can view their own search history" ON search_history
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own search history" ON search_history;
 CREATE POLICY "Users can insert their own search history" ON search_history
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own search history" ON search_history;
 CREATE POLICY "Users can delete their own search history" ON search_history
   FOR DELETE USING (auth.uid() = user_id);
 
 -- user_profiles policies
+DROP POLICY IF EXISTS "Users can view their own profile" ON user_profiles;
 CREATE POLICY "Users can view their own profile" ON user_profiles
   FOR SELECT USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update their own profile" ON user_profiles;
 CREATE POLICY "Users can update their own profile" ON user_profiles
   FOR UPDATE USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can insert their own profile" ON user_profiles;
 CREATE POLICY "Users can insert their own profile" ON user_profiles
   FOR INSERT WITH CHECK (auth.uid() = id);
 
@@ -82,6 +88,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create trigger for updated_at column
+DROP TRIGGER IF EXISTS update_user_profiles_updated_at ON user_profiles;
 CREATE TRIGGER update_user_profiles_updated_at
   BEFORE UPDATE ON user_profiles
   FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();

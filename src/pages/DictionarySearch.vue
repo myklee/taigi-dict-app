@@ -60,6 +60,23 @@
       @readChinese="readChinese"
     />
 
+    <!-- community search results -->
+    <CommunitySearchResults 
+      :results="communityResults"
+      :search-query="searchQuery"
+      :search-executed="searchExecuted"
+      :loading="communityLoading"
+      :loading-more="communityLoadingMore"
+      :error="communityError"
+      :has-more="communityHasMore"
+      @vote-submitted="handleCommunityVoteSubmitted"
+      @vote-updated="handleCommunityVoteUpdated"
+      @voting-error="handleCommunityVotingError"
+      @login-required="handleLoginRequired"
+      @load-more="loadMoreCommunityResults"
+      @retry="searchCommunityDefinitions"
+    />
+
     <EditWord
       :visible="showDialog"
       :word="selectedWord"
@@ -86,10 +103,13 @@ import RandomWord from "./RandomWord.vue";
 import MoeSearchResults from "@/components/search/MoeSearchResults.vue";
 import MknollSearchResults from "@/components/search/MknollSearchResults.vue";
 import CedictSearchResults from "@/components/search/CedictSearchResults.vue";
+import CommunitySearchResults from "@/components/search/CommunitySearchResults.vue";
 
 import { useFavoritesStore } from "@/stores/favoritesStore";
+import { useCommunityStore } from "@/stores/communityStore";
 const dictionaryStore = useDictionaryStore();
 const favoritesStore = useFavoritesStore();
+const communityStore = useCommunityStore();
 const searchQuery = ref("");
 const exactSearch = ref(false);
 const loading = ref(false);
@@ -98,6 +118,13 @@ const showDialog = ref(false);
 const showDialogMknoll = ref(false);
 const selectedWord = ref(null);
 const selectedWordMknoll = ref(null);
+
+// Community search state
+const communityResults = ref([]);
+const communityLoading = ref(false);
+const communityLoadingMore = ref(false);
+const communityError = ref(null);
+const communityHasMore = ref(false);
 
 const closeDialog = () => {
   showDialog.value = false;
@@ -193,11 +220,99 @@ const searchWords = async () => {
     await dictionaryStore.setCedictResults(cedictResults || []);
     await dictionaryStore.setCrossRefCedict(crossRefResults);
 
+    // Search community definitions
+    await searchCommunityDefinitions();
+
   } catch (error) {
     console.error("Search error:", error);
   } finally {
     loading.value = false;
   }
+};
+
+// Community search functionality
+const searchCommunityDefinitions = async (loadMore = false) => {
+  if (!searchQuery.value.trim()) {
+    communityResults.value = [];
+    return;
+  }
+
+  try {
+    if (loadMore) {
+      communityLoadingMore.value = true;
+    } else {
+      communityLoading.value = true;
+      communityResults.value = [];
+    }
+    
+    communityError.value = null;
+
+    // Create search filters for community content
+    const searchFilters = {
+      sortBy: 'score',
+      sortOrder: 'desc',
+      status: ['approved'], // Only show approved content in search results
+      limit: 10,
+      offset: loadMore ? communityResults.value.length : 0
+    };
+
+    // Search community definitions using the search term
+    const result = await communityStore.searchDefinitions({
+      ...searchFilters,
+      searchTerm: searchQuery.value // Add search term to filters
+    });
+
+    if (result.success) {
+      if (loadMore) {
+        communityResults.value.push(...result.data);
+      } else {
+        communityResults.value = result.data;
+      }
+      
+      communityHasMore.value = result.data.length === searchFilters.limit;
+    } else {
+      throw new Error(result.error?.message || 'Failed to search community definitions');
+    }
+  } catch (error) {
+    console.error('Community search error:', error);
+    communityError.value = error.message;
+  } finally {
+    communityLoading.value = false;
+    communityLoadingMore.value = false;
+  }
+};
+
+// Community event handlers
+const loadMoreCommunityResults = async () => {
+  if (!communityHasMore.value || communityLoadingMore.value) return;
+  await searchCommunityDefinitions(true);
+};
+
+const handleCommunityVoteSubmitted = (voteData) => {
+  console.log('Community vote submitted:', voteData);
+  // The vote update will be handled by real-time subscriptions
+};
+
+const handleCommunityVoteUpdated = (voteData) => {
+  console.log('Community vote updated:', voteData);
+  // Update local community results if needed
+  const definition = communityResults.value.find(def => def.id === voteData.definitionId);
+  if (definition) {
+    definition.voteScore = voteData.voteScore;
+    definition.upvotes = voteData.upvotes;
+    definition.downvotes = voteData.downvotes;
+    definition.userVote = voteData.userVote;
+  }
+};
+
+const handleCommunityVotingError = (error) => {
+  console.error('Community voting error:', error);
+  // Could show a toast notification here
+};
+
+const handleLoginRequired = () => {
+  console.log('Login required for community features');
+  // Could trigger login modal here
 };
 
 const readChinese = async (text) => {

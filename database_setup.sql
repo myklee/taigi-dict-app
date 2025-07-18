@@ -95,54 +95,69 @@ ALTER TABLE user_learning_progress ENABLE ROW LEVEL SECURITY;
 -- Create RLS Policies
 
 -- search_history policies
+DROP POLICY IF EXISTS "Users can view their own search history" ON search_history;
 CREATE POLICY "Users can view their own search history" ON search_history
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own search history" ON search_history;
 CREATE POLICY "Users can insert their own search history" ON search_history
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own search history" ON search_history;
 CREATE POLICY "Users can delete their own search history" ON search_history
   FOR DELETE USING (auth.uid() = user_id);
 
 -- user_profiles policies
+DROP POLICY IF EXISTS "Users can view their own profile" ON user_profiles;
 CREATE POLICY "Users can view their own profile" ON user_profiles
   FOR SELECT USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update their own profile" ON user_profiles;
 CREATE POLICY "Users can update their own profile" ON user_profiles
   FOR UPDATE USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can insert their own profile" ON user_profiles;
 CREATE POLICY "Users can insert their own profile" ON user_profiles
   FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- user_sessions policies
+DROP POLICY IF EXISTS "Users can manage their own sessions" ON user_sessions;
 CREATE POLICY "Users can manage their own sessions" ON user_sessions
   FOR ALL USING (auth.uid() = user_id);
 
 -- user_favorites policies
+DROP POLICY IF EXISTS "Users can view their own favorites" ON user_favorites;
 CREATE POLICY "Users can view their own favorites" ON user_favorites
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can manage their own favorites" ON user_favorites;
 CREATE POLICY "Users can manage their own favorites" ON user_favorites
   FOR ALL USING (auth.uid() = user_id);
 
 -- user_notes policies
+DROP POLICY IF EXISTS "Users can view their own notes" ON user_notes;
 CREATE POLICY "Users can view their own notes" ON user_notes
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can manage their own notes" ON user_notes;
 CREATE POLICY "Users can manage their own notes" ON user_notes
   FOR ALL USING (auth.uid() = user_id);
 
 -- user_study_lists policies
+DROP POLICY IF EXISTS "Users can view their own study lists" ON user_study_lists;
 CREATE POLICY "Users can view their own study lists" ON user_study_lists
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can view public study lists" ON user_study_lists;
 CREATE POLICY "Users can view public study lists" ON user_study_lists
   FOR SELECT USING (is_public = TRUE);
 
+DROP POLICY IF EXISTS "Users can manage their own study lists" ON user_study_lists;
 CREATE POLICY "Users can manage their own study lists" ON user_study_lists
   FOR ALL USING (auth.uid() = user_id);
 
 -- study_list_items policies
+DROP POLICY IF EXISTS "Users can view items in their study lists" ON study_list_items;
 CREATE POLICY "Users can view items in their study lists" ON study_list_items
   FOR SELECT USING (
     EXISTS (
@@ -152,6 +167,7 @@ CREATE POLICY "Users can view items in their study lists" ON study_list_items
     )
   );
 
+DROP POLICY IF EXISTS "Users can view items in public study lists" ON study_list_items;
 CREATE POLICY "Users can view items in public study lists" ON study_list_items
   FOR SELECT USING (
     EXISTS (
@@ -161,6 +177,7 @@ CREATE POLICY "Users can view items in public study lists" ON study_list_items
     )
   );
 
+DROP POLICY IF EXISTS "Users can manage items in their study lists" ON study_list_items;
 CREATE POLICY "Users can manage items in their study lists" ON study_list_items
   FOR ALL USING (
     EXISTS (
@@ -171,9 +188,11 @@ CREATE POLICY "Users can manage items in their study lists" ON study_list_items
   );
 
 -- user_learning_progress policies
+DROP POLICY IF EXISTS "Users can view their own learning progress" ON user_learning_progress;
 CREATE POLICY "Users can view their own learning progress" ON user_learning_progress
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can manage their own learning progress" ON user_learning_progress;
 CREATE POLICY "Users can manage their own learning progress" ON user_learning_progress
   FOR ALL USING (auth.uid() = user_id);
 
@@ -222,18 +241,22 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create triggers for updated_at columns
+DROP TRIGGER IF EXISTS update_user_profiles_updated_at ON user_profiles;
 CREATE TRIGGER update_user_profiles_updated_at
   BEFORE UPDATE ON user_profiles
   FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_user_notes_updated_at ON user_notes;
 CREATE TRIGGER update_user_notes_updated_at
   BEFORE UPDATE ON user_notes
   FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_user_study_lists_updated_at ON user_study_lists;
 CREATE TRIGGER update_user_study_lists_updated_at
   BEFORE UPDATE ON user_study_lists
   FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_user_learning_progress_updated_at ON user_learning_progress;
 CREATE TRIGGER update_user_learning_progress_updated_at
   BEFORE UPDATE ON user_learning_progress
   FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
