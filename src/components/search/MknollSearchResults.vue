@@ -9,6 +9,7 @@
         :key="index"
         :word="word"
         @openEditDialog="$emit('openEditDialog', $event)"
+        @addDefinition="$emit('addDefinition', $event)"
       />
     </ul>
   </section>
@@ -24,7 +25,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['openEditDialog']);
+const emit = defineEmits(['openEditDialog', 'addDefinition']);
 </script>
 
 <style scoped>

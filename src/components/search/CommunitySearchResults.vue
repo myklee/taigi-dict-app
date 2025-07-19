@@ -172,7 +172,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import CommunityDefinitionCard from '@/components/CommunityDefinitionCard.vue';
+import CommunityDefinitionCard from '@/components/cards/CommunityDefinitionCard.vue';
 
 const props = defineProps({
   results: {

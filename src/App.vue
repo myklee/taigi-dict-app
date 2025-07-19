@@ -7,9 +7,12 @@ import RandomWord from "./pages/RandomWord.vue";
 import { ref, onMounted, computed } from "vue";
 import db from "./db.js";
 import { useAuthStore } from "@/stores/authStore";
+import { useCommunityStore } from "@/stores/communityStore";
 import AuthHeader from "@/components/auth/AuthHeader.vue";
+import AdminDashboard from "@/components/AdminDashboard.vue";
 
 const authStore = useAuthStore();
+const communityStore = useCommunityStore();
 const currentRoute = ref('dictionary');
 
 // Simple routing system
@@ -25,6 +28,8 @@ window.addEventListener('popstate', () => {
   const path = window.location.pathname;
   if (path === '/profile') {
     currentRoute.value = 'profile';
+  } else if (path === '/admin') {
+    currentRoute.value = 'admin';
   } else {
     currentRoute.value = 'dictionary';
   }
@@ -35,6 +40,8 @@ onMounted(() => {
   const path = window.location.pathname;
   if (path === '/profile') {
     currentRoute.value = 'profile';
+  } else if (path === '/admin') {
+    currentRoute.value = 'admin';
   }
 });
 
@@ -60,6 +67,11 @@ window.$navigate = navigate;
 onMounted(async () => {
   // Initialize authentication
   await authStore.initializeAuth();
+  
+  // Initialize community store if user is authenticated
+  if (authStore.isAuthenticated) {
+    await communityStore.initialize();
+  }
 });
 
 // Computed property to determine which component to show
@@ -67,6 +79,8 @@ const currentComponent = computed(() => {
   switch (currentRoute.value) {
     case 'profile':
       return UserProfile;
+    case 'admin':
+      return AdminDashboard;
     case 'dictionary':
     default:
       return DictionarySearch;

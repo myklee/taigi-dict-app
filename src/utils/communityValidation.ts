@@ -235,12 +235,20 @@ export function validateCreateDefinition(data: unknown): CreateCommunityDefiniti
     return CreateCommunityDefinitionSchema.parse(data);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const firstError = error.errors[0];
-      throw new CommunityValidationError(
-        firstError.message,
-        firstError.path.join('.'),
-        'VALIDATION_ERROR'
-      );
+      const firstError = error.errors?.[0];
+      if (firstError) {
+        throw new CommunityValidationError(
+          firstError.message,
+          firstError.path?.join('.') || 'unknown',
+          'VALIDATION_ERROR'
+        );
+      } else {
+        throw new CommunityValidationError(
+          'Validation failed',
+          'unknown',
+          'VALIDATION_ERROR'
+        );
+      }
     }
     throw error;
   }
@@ -251,12 +259,20 @@ export function validateUpdateDefinition(data: unknown): UpdateCommunityDefiniti
     return UpdateCommunityDefinitionSchema.parse(data);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const firstError = error.errors[0];
-      throw new CommunityValidationError(
-        firstError.message,
-        firstError.path.join('.'),
-        'VALIDATION_ERROR'
-      );
+      const firstError = error.errors?.[0];
+      if (firstError) {
+        throw new CommunityValidationError(
+          firstError.message,
+          firstError.path?.join('.') || 'unknown',
+          'VALIDATION_ERROR'
+        );
+      } else {
+        throw new CommunityValidationError(
+          'Validation failed',
+          'unknown',
+          'VALIDATION_ERROR'
+        );
+      }
     }
     throw error;
   }
@@ -267,12 +283,20 @@ export function validateCreateVote(data: unknown): CreateVote {
     return CreateVoteSchema.parse(data);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const firstError = error.errors[0];
-      throw new CommunityValidationError(
-        firstError.message,
-        firstError.path.join('.'),
-        'VALIDATION_ERROR'
-      );
+      const firstError = error.errors?.[0];
+      if (firstError) {
+        throw new CommunityValidationError(
+          firstError.message,
+          firstError.path?.join('.') || 'unknown',
+          'VALIDATION_ERROR'
+        );
+      } else {
+        throw new CommunityValidationError(
+          'Validation failed',
+          'unknown',
+          'VALIDATION_ERROR'
+        );
+      }
     }
     throw error;
   }
@@ -283,12 +307,20 @@ export function validateUpdateProfile(data: unknown): UpdateUserProfile {
     return UpdateUserProfileSchema.parse(data);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const firstError = error.errors[0];
-      throw new CommunityValidationError(
-        firstError.message,
-        firstError.path.join('.'),
-        'VALIDATION_ERROR'
-      );
+      const firstError = error.errors?.[0];
+      if (firstError) {
+        throw new CommunityValidationError(
+          firstError.message,
+          firstError.path?.join('.') || 'unknown',
+          'VALIDATION_ERROR'
+        );
+      } else {
+        throw new CommunityValidationError(
+          'Validation failed',
+          'unknown',
+          'VALIDATION_ERROR'
+        );
+      }
     }
     throw error;
   }
@@ -299,12 +331,20 @@ export function validateCreateReport(data: unknown): CreateContentReport {
     return CreateContentReportSchema.parse(data);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const firstError = error.errors[0];
-      throw new CommunityValidationError(
-        firstError.message,
-        firstError.path.join('.'),
-        'VALIDATION_ERROR'
-      );
+      const firstError = error.errors?.[0];
+      if (firstError) {
+        throw new CommunityValidationError(
+          firstError.message,
+          firstError.path?.join('.') || 'unknown',
+          'VALIDATION_ERROR'
+        );
+      } else {
+        throw new CommunityValidationError(
+          'Validation failed',
+          'unknown',
+          'VALIDATION_ERROR'
+        );
+      }
     }
     throw error;
   }
@@ -315,12 +355,20 @@ export function validateSearchFilters(data: unknown): CommunitySearchFilters {
     return CommunitySearchFiltersSchema.parse(data);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const firstError = error.errors[0];
-      throw new CommunityValidationError(
-        firstError.message,
-        firstError.path.join('.'),
-        'VALIDATION_ERROR'
-      );
+      const firstError = error.errors?.[0];
+      if (firstError) {
+        throw new CommunityValidationError(
+          firstError.message,
+          firstError.path?.join('.') || 'unknown',
+          'VALIDATION_ERROR'
+        );
+      } else {
+        throw new CommunityValidationError(
+          'Validation failed',
+          'unknown',
+          'VALIDATION_ERROR'
+        );
+      }
     }
     throw error;
   }

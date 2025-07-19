@@ -154,30 +154,40 @@ export const useCommunityStore = defineStore('community', () => {
       }
 
       // Insert definition
+      const insertPayload = {
+        word_id: validatedData.wordId,
+        user_id: user.id,
+        definition: validatedData.definition,
+        usage_example: validatedData.usageExample,
+        tags: validatedData.tags,
+        context: validatedData.context,
+        status: 'pending'
+      };
+      
+      console.log('Submitting definition with payload:', insertPayload);
+      
       const { data, error: insertError } = await supabase
         .from('community_definitions')
-        .insert({
-          word_id: validatedData.wordId,
-          user_id: user.id,
-          definition: validatedData.definition,
-          usage_example: validatedData.usageExample,
-          tags: validatedData.tags,
-          context: validatedData.context,
-          status: 'pending'
-        })
-        .select(`
-          *,
-          user_profiles!inner(username, reputation_score)
-        `)
+        .insert(insertPayload)
+        .select('*')
         .single();
 
+      console.log('Insert result:', { data, error: insertError });
+
       if (insertError) throw insertError;
+
+      // Fetch user profile data separately
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('username, reputation_score')
+        .eq('id', user.id)
+        .single();
 
       // Transform data to match our interface
       const newDefinition = {
         ...data,
-        username: data.user_profiles.username,
-        authorReputation: data.user_profiles.reputation_score,
+        username: userProfile?.username || user.email?.split('@')[0] || 'Anonymous',
+        authorReputation: userProfile?.reputation_score || 0,
         voteScore: 0,
         upvotes: 0,
         downvotes: 0,
@@ -230,21 +240,25 @@ export const useCommunityStore = defineStore('community', () => {
           updated_at: new Date().toISOString()
         })
         .eq('id', definitionId)
-        .select(`
-          *,
-          user_profiles!inner(username, reputation_score)
-        `)
+        .select('*')
         .single();
 
       if (updateError) throw updateError;
+
+      // Fetch user profile data separately
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('username, reputation_score')
+        .eq('id', data.user_id)
+        .single();
 
       // Update local state
       const index = communityDefinitions.value.findIndex(def => def.id === definitionId);
       if (index !== -1) {
         const updatedDefinition = {
           ...data,
-          username: data.user_profiles.username,
-          authorReputation: data.user_profiles.reputation_score,
+          username: userProfile?.username || 'Anonymous',
+          authorReputation: userProfile?.reputation_score || 0,
           voteScore: communityDefinitions.value[index].voteScore || 0,
           upvotes: communityDefinitions.value[index].upvotes || 0,
           downvotes: communityDefinitions.value[index].downvotes || 0,
@@ -418,6 +432,10 @@ export const useCommunityStore = defineStore('community', () => {
       );
 
       const { data, error: searchError } = await query;
+      
+      console.log('Community store search - Query filters:', validatedFilters);
+      console.log('Community store search - Raw results:', data);
+      console.log('Community store search - Error:', searchError);
 
       if (searchError) throw searchError;
 
@@ -778,6 +796,579 @@ export const useCommunityStore = defineStore('community', () => {
       return { success: true, data };
     } catch (err) {
       console.error('Failed to update user role:', err);
+      error.value = err.message;
+      return {
+        success: false,
+        error: {
+          code: COMMUNITY_ERROR_CODES.FORBIDDEN,
+          message: err.message
+        }
+      };
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  /**
+   * Fetch moderation queue (pending submissions)
+   */
+  async function fetchModerationQueue(filters = {}) {
+    try {
+      loading.value = true;
+      error.value = null;
+
+      // Check if user can moderate
+      if (!canModerate.value) {
+        throw new Error('You do not have permission to access the moderation queue');
+      }
+
+      let query = supabase
+        .from('community_definitions_with_scores')
+        .select('*');
+
+      // Apply status filter (default to pending)
+      const status = filters.status || ['pending'];
+      query = query.in('status', Array.isArray(status) ? status : [status]);
+
+      // Apply search filter
+      if (filters.searchTerm) {
+        const searchPattern = `%${filters.searchTerm}%`;
+        query = query.or(`definition.ilike.${searchPattern},usage_example.ilike.${searchPattern},word_id.ilike.${searchPattern},username.ilike.${searchPattern}`);
+      }
+
+      // Apply date range filter
+      if (filters.dateFrom) {
+        query = query.gte('created_at', filters.dateFrom);
+      }
+      if (filters.dateTo) {
+        query = query.lte('created_at', filters.dateTo);
+      }
+
+      // Apply user filter
+      if (filters.userId) {
+        query = query.eq('user_id', filters.userId);
+      }
+
+      // Apply sorting
+      const sortBy = filters.sortBy || 'created_at';
+      const sortOrder = filters.sortOrder || 'desc';
+      query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+
+      // Apply pagination
+      const limit = filters.limit || 50;
+      const offset = filters.offset || 0;
+      query = query.range(offset, offset + limit - 1);
+
+      const { data, error: fetchError } = await query;
+
+      if (fetchError) throw fetchError;
+
+      // Transform data
+      const transformedData = data.map(item => ({
+        ...item,
+        createdAt: new Date(item.created_at),
+        updatedAt: new Date(item.updated_at),
+        voteScore: item.vote_score,
+        authorReputation: item.author_reputation
+      }));
+
+      moderationQueue.value = transformedData;
+
+      return { success: true, data: transformedData };
+    } catch (err) {
+      console.error('Failed to fetch moderation queue:', err);
+      error.value = err.message;
+      return {
+        success: false,
+        error: {
+          code: COMMUNITY_ERROR_CODES.FORBIDDEN,
+          message: err.message
+        }
+      };
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  /**
+   * Approve a community definition
+   */
+  async function approveDefinition(definitionId, moderatorNotes = '') {
+    try {
+      loading.value = true;
+      error.value = null;
+
+      // Check if user can moderate
+      if (!canModerate.value) {
+        throw new Error('You do not have permission to moderate content');
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('You must be logged in to moderate content');
+      }
+
+      const { data, error: updateError } = await supabase
+        .from('community_definitions')
+        .update({
+          status: 'approved',
+          moderator_notes: moderatorNotes,
+          moderator_id: user.id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', definitionId)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      // Update local state
+      const index = moderationQueue.value.findIndex(def => def.id === definitionId);
+      if (index !== -1) {
+        moderationQueue.value.splice(index, 1);
+      }
+
+      // Update main definitions list if present
+      const mainIndex = communityDefinitions.value.findIndex(def => def.id === definitionId);
+      if (mainIndex !== -1) {
+        communityDefinitions.value[mainIndex] = {
+          ...communityDefinitions.value[mainIndex],
+          status: 'approved',
+          moderator_notes: moderatorNotes,
+          moderator_id: user.id,
+          updatedAt: new Date()
+        };
+      }
+
+      return { success: true, data };
+    } catch (err) {
+      console.error('Failed to approve definition:', err);
+      error.value = err.message;
+      return {
+        success: false,
+        error: {
+          code: COMMUNITY_ERROR_CODES.FORBIDDEN,
+          message: err.message
+        }
+      };
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  /**
+   * Reject a community definition
+   */
+  async function rejectDefinition(definitionId, moderatorNotes = '') {
+    try {
+      loading.value = true;
+      error.value = null;
+
+      // Check if user can moderate
+      if (!canModerate.value) {
+        throw new Error('You do not have permission to moderate content');
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('You must be logged in to moderate content');
+      }
+
+      const { data, error: updateError } = await supabase
+        .from('community_definitions')
+        .update({
+          status: 'rejected',
+          moderator_notes: moderatorNotes,
+          moderator_id: user.id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', definitionId)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      // Update local state
+      const index = moderationQueue.value.findIndex(def => def.id === definitionId);
+      if (index !== -1) {
+        moderationQueue.value.splice(index, 1);
+      }
+
+      // Update main definitions list if present
+      const mainIndex = communityDefinitions.value.findIndex(def => def.id === definitionId);
+      if (mainIndex !== -1) {
+        communityDefinitions.value[mainIndex] = {
+          ...communityDefinitions.value[mainIndex],
+          status: 'rejected',
+          moderator_notes: moderatorNotes,
+          moderator_id: user.id,
+          updatedAt: new Date()
+        };
+      }
+
+      return { success: true, data };
+    } catch (err) {
+      console.error('Failed to reject definition:', err);
+      error.value = err.message;
+      return {
+        success: false,
+        error: {
+          code: COMMUNITY_ERROR_CODES.FORBIDDEN,
+          message: err.message
+        }
+      };
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  /**
+   * Bulk approve definitions
+   */
+  async function bulkApproveDefinitions(definitionIds, moderatorNotes = '') {
+    try {
+      loading.value = true;
+      error.value = null;
+
+      // Check if user can moderate
+      if (!canModerate.value) {
+        throw new Error('You do not have permission to moderate content');
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('You must be logged in to moderate content');
+      }
+
+      const { data, error: updateError } = await supabase
+        .from('community_definitions')
+        .update({
+          status: 'approved',
+          moderator_notes: moderatorNotes,
+          moderator_id: user.id,
+          updated_at: new Date().toISOString()
+        })
+        .in('id', definitionIds)
+        .select();
+
+      if (updateError) throw updateError;
+
+      // Update local state
+      definitionIds.forEach(id => {
+        const index = moderationQueue.value.findIndex(def => def.id === id);
+        if (index !== -1) {
+          moderationQueue.value.splice(index, 1);
+        }
+
+        // Update main definitions list if present
+        const mainIndex = communityDefinitions.value.findIndex(def => def.id === id);
+        if (mainIndex !== -1) {
+          communityDefinitions.value[mainIndex] = {
+            ...communityDefinitions.value[mainIndex],
+            status: 'approved',
+            moderator_notes: moderatorNotes,
+            moderator_id: user.id,
+            updatedAt: new Date()
+          };
+        }
+      });
+
+      return { success: true, data, count: data.length };
+    } catch (err) {
+      console.error('Failed to bulk approve definitions:', err);
+      error.value = err.message;
+      return {
+        success: false,
+        error: {
+          code: COMMUNITY_ERROR_CODES.FORBIDDEN,
+          message: err.message
+        }
+      };
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  /**
+   * Bulk reject definitions
+   */
+  async function bulkRejectDefinitions(definitionIds, moderatorNotes = '') {
+    try {
+      loading.value = true;
+      error.value = null;
+
+      // Check if user can moderate
+      if (!canModerate.value) {
+        throw new Error('You do not have permission to moderate content');
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('You must be logged in to moderate content');
+      }
+
+      const { data, error: updateError } = await supabase
+        .from('community_definitions')
+        .update({
+          status: 'rejected',
+          moderator_notes: moderatorNotes,
+          moderator_id: user.id,
+          updated_at: new Date().toISOString()
+        })
+        .in('id', definitionIds)
+        .select();
+
+      if (updateError) throw updateError;
+
+      // Update local state
+      definitionIds.forEach(id => {
+        const index = moderationQueue.value.findIndex(def => def.id === id);
+        if (index !== -1) {
+          moderationQueue.value.splice(index, 1);
+        }
+
+        // Update main definitions list if present
+        const mainIndex = communityDefinitions.value.findIndex(def => def.id === id);
+        if (mainIndex !== -1) {
+          communityDefinitions.value[mainIndex] = {
+            ...communityDefinitions.value[mainIndex],
+            status: 'rejected',
+            moderator_notes: moderatorNotes,
+            moderator_id: user.id,
+            updatedAt: new Date()
+          };
+        }
+      });
+
+      return { success: true, data, count: data.length };
+    } catch (err) {
+      console.error('Failed to bulk reject definitions:', err);
+      error.value = err.message;
+      return {
+        success: false,
+        error: {
+          code: COMMUNITY_ERROR_CODES.FORBIDDEN,
+          message: err.message
+        }
+      };
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  /**
+   * Promote user to admin (super admin only)
+   */
+  async function promoteToAdmin(targetUserId, adminPermissions = {}, notes = '') {
+    try {
+      loading.value = true;
+      error.value = null;
+
+      const { data, error: promoteError } = await supabase
+        .rpc('promote_to_admin', {
+          target_user_id: targetUserId,
+          admin_permissions: adminPermissions,
+          notes: notes
+        });
+
+      if (promoteError) throw promoteError;
+
+      return { success: data.success, message: data.message, error: data.error };
+    } catch (err) {
+      console.error('Failed to promote user to admin:', err);
+      error.value = err.message;
+      return {
+        success: false,
+        error: {
+          code: COMMUNITY_ERROR_CODES.FORBIDDEN,
+          message: err.message
+        }
+      };
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  /**
+   * Promote user to moderator (admin only)
+   */
+  async function promoteToModerator(targetUserId, notes = '') {
+    try {
+      loading.value = true;
+      error.value = null;
+
+      const { data, error: promoteError } = await supabase
+        .rpc('promote_to_moderator', {
+          target_user_id: targetUserId,
+          notes: notes
+        });
+
+      if (promoteError) throw promoteError;
+
+      return { success: data.success, message: data.message, error: data.error };
+    } catch (err) {
+      console.error('Failed to promote user to moderator:', err);
+      error.value = err.message;
+      return {
+        success: false,
+        error: {
+          code: COMMUNITY_ERROR_CODES.FORBIDDEN,
+          message: err.message
+        }
+      };
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  /**
+   * Demote user to regular user (admin only)
+   */
+  async function demoteToUser(targetUserId, reason = '') {
+    try {
+      loading.value = true;
+      error.value = null;
+
+      const { data, error: demoteError } = await supabase
+        .rpc('demote_to_user', {
+          target_user_id: targetUserId,
+          reason: reason
+        });
+
+      if (demoteError) throw demoteError;
+
+      return { success: data.success, message: data.message, error: data.error };
+    } catch (err) {
+      console.error('Failed to demote user:', err);
+      error.value = err.message;
+      return {
+        success: false,
+        error: {
+          code: COMMUNITY_ERROR_CODES.FORBIDDEN,
+          message: err.message
+        }
+      };
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  /**
+   * Suspend user account (admin only)
+   */
+  async function suspendUser(targetUserId, reason, durationDays = null) {
+    try {
+      loading.value = true;
+      error.value = null;
+
+      const { data, error: suspendError } = await supabase
+        .rpc('suspend_user', {
+          target_user_id: targetUserId,
+          reason: reason,
+          duration_days: durationDays
+        });
+
+      if (suspendError) throw suspendError;
+
+      return { success: data.success, message: data.message, error: data.error };
+    } catch (err) {
+      console.error('Failed to suspend user:', err);
+      error.value = err.message;
+      return {
+        success: false,
+        error: {
+          code: COMMUNITY_ERROR_CODES.FORBIDDEN,
+          message: err.message
+        }
+      };
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  /**
+   * Reactivate user account (admin only)
+   */
+  async function reactivateUser(targetUserId, notes = '') {
+    try {
+      loading.value = true;
+      error.value = null;
+
+      const { data, error: reactivateError } = await supabase
+        .rpc('reactivate_user', {
+          target_user_id: targetUserId,
+          notes: notes
+        });
+
+      if (reactivateError) throw reactivateError;
+
+      return { success: data.success, message: data.message, error: data.error };
+    } catch (err) {
+      console.error('Failed to reactivate user:', err);
+      error.value = err.message;
+      return {
+        success: false,
+        error: {
+          code: COMMUNITY_ERROR_CODES.FORBIDDEN,
+          message: err.message
+        }
+      };
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  /**
+   * Get admin dashboard statistics
+   */
+  async function getAdminDashboardStats() {
+    try {
+      loading.value = true;
+      error.value = null;
+
+      const { data, error: statsError } = await supabase
+        .rpc('get_admin_dashboard_stats');
+
+      if (statsError) throw statsError;
+
+      return { success: data.success, data: data.data, error: data.error };
+    } catch (err) {
+      console.error('Failed to get admin dashboard stats:', err);
+      error.value = err.message;
+      return {
+        success: false,
+        error: {
+          code: COMMUNITY_ERROR_CODES.FORBIDDEN,
+          message: err.message
+        }
+      };
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  /**
+   * Get user management list with filters
+   */
+  async function getUserManagementList(filters = {}) {
+    try {
+      loading.value = true;
+      error.value = null;
+
+      const { data, error: listError } = await supabase
+        .rpc('get_user_management_list', {
+          search_term: filters.searchTerm || null,
+          role_filter: filters.roleFilter || null,
+          status_filter: filters.statusFilter || null,
+          limit_count: filters.limit || 50,
+          offset_count: filters.offset || 0
+        });
+
+      if (listError) throw listError;
+
+      return { success: data.success, data: data.data, error: data.error };
+    } catch (err) {
+      console.error('Failed to get user management list:', err);
       error.value = err.message;
       return {
         success: false,
@@ -1278,6 +1869,23 @@ export const useCommunityStore = defineStore('community', () => {
     getLeaderboard,
     updateUserRole,
     refreshUserReputation,
+
+    // Moderation actions
+    fetchModerationQueue,
+    approveDefinition,
+    rejectDefinition,
+    bulkApproveDefinitions,
+    bulkRejectDefinitions,
+
+    // Admin management actions
+    promoteToAdmin,
+    promoteToModerator,
+    demoteToUser,
+    suspendUser,
+    reactivateUser,
+    getAdminDashboardStats,
+    getUserManagementList,
+    updateUserRole,
 
     // Voting actions
     submitVote,

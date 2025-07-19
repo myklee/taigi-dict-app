@@ -11,6 +11,7 @@
         v-for="(word, index) in results"
         :key="index"
         :word="word"
+        @addDefinition="$emit('addDefinition', $event)"
       />
     </ul>
   </section>
@@ -26,6 +27,7 @@
         :key="index"
         :word="wordcedict"
         @readChinese="$emit('readChinese', $event)"
+        @addDefinition="$emit('addDefinition', $event)"
       />
     </ul>
   </section>
@@ -46,7 +48,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['readChinese']);
+const emit = defineEmits(['readChinese', 'addDefinition']);
 </script>
 
 <style scoped>

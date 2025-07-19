@@ -16,6 +16,9 @@
         <div class="user-avatar" @click="goToProfile">
           {{ userInitials }}
         </div>
+        <button v-if="canModerate" @click="goToAdmin" class="admin-btn">
+          Admin Dashboard
+        </button>
         <button @click="handleSignOut">
           Sign Out
         </button>
@@ -42,6 +45,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
+import { useCommunityStore } from '@/stores/communityStore';
 import { useDictionaryStore } from '@/stores/dictionaryStore';
 import AuthModal from './AuthModal.vue';
 
@@ -50,6 +54,7 @@ const props = defineProps({
 });
 
 const authStore = useAuthStore();
+const communityStore = useCommunityStore();
 const dictionaryStore = useDictionaryStore();
 const showAuthModal = ref(false);
 const authMode = ref('signin');
@@ -66,9 +71,17 @@ const userInitials = computed(() => {
 
 const showRandomWord = computed(() => dictionaryStore.showRandomWord);
 
-const handleAuthSuccess = () => {
+const canModerate = computed(() => communityStore.canModerate);
+
+const isAdmin = computed(() => {
+  const role = communityStore.userProfile?.role;
+  return role === 'admin';
+});
+
+const handleAuthSuccess = async () => {
   showAuthModal.value = false;
-  // You can add any additional logic here after successful authentication
+  // Initialize community store after successful authentication
+  await communityStore.initialize();
 };
 
 const handleSignOut = () => {
@@ -78,6 +91,12 @@ const handleSignOut = () => {
 const goToProfile = () => {
   if (props.navigate) {
     props.navigate('profile');
+  }
+};
+
+const goToAdmin = () => {
+  if (props.navigate) {
+    props.navigate('admin');
   }
 };
 
@@ -141,6 +160,24 @@ const clearCache = async () => {
 .user-avatar:hover {
   background-color: var(--gunmetal);
   transform: scale(1.05);
+}
+
+.admin-btn {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-btn:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Responsive adjustments */

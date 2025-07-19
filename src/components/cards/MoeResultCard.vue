@@ -46,6 +46,11 @@
         @click="favoritesStore.toggleFavorite(word)"
         title="Add to favorites"
       />
+      <IconAdd
+        class="add-definition"
+        title="Add community definition"
+        @click="$emit('addDefinition', word)"
+      />
       <IconEdit
         class="edit-word"
         title="Edit entry"
@@ -61,6 +66,7 @@ import Pinyinzhuyin from "@/components/utility/Pinyinzhuyin.vue";
 import IconPlayAudio from "@/components/icons/IconPlayAudio.vue";
 import IconEdit from "@/components/icons/IconEdit.vue";
 import IconHeart from "@/components/icons/IconHeart.vue";
+import IconAdd from "@/components/icons/IconAdd.vue";
 import { useFavoritesStore } from "@/stores/favoritesStore";
 
 const favoritesStore = useFavoritesStore();
@@ -72,7 +78,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['readChinese', 'readEnglish', 'openEditDialog']);
+const emit = defineEmits(['readChinese', 'readEnglish', 'openEditDialog', 'addDefinition']);
 </script>
 
 <style scoped>

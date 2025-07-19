@@ -19,6 +19,7 @@
         @readChinese="$emit('readChinese', $event)"
         @readEnglish="$emit('readEnglish', $event)"
         @openEditDialog="$emit('openEditDialog', $event)"
+        @addDefinition="$emit('addDefinition', $event)"
       />
     </ul>
   </section>
@@ -38,7 +39,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['readChinese', 'readEnglish', 'openEditDialog']);
+const emit = defineEmits(['readChinese', 'readEnglish', 'openEditDialog', 'addDefinition']);
 </script>
 
 <style scoped>

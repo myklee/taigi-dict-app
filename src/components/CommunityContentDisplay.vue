@@ -151,7 +151,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useCommunityStore } from '@/stores/communityStore';
 import { useAuthStore } from '@/stores/authStore';
 import CommunityContentFilters from '@/components/CommunityContentFilters.vue';
-import CommunityDefinitionCard from '@/components/CommunityDefinitionCard.vue';
+import CommunityDefinitionCard from '@/components/cards/CommunityDefinitionCard.vue';
 
 const props = defineProps({
   wordId: {

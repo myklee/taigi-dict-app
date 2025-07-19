@@ -1,10 +1,50 @@
 <template>
-  <div class="community-definition-form">
-    <div class="form-header">
-      <h2>Add Community Definition</h2>
-      <p class="form-description">
-        Share your knowledge by contributing a definition for this word. Your submission will be reviewed by the community.
-      </p>
+  <div v-if="visible" class="modal-overlay" @click="handleOverlayClick">
+    <div class="modal-content" @click.stop>
+      <div class="modal-header">
+        <h2>Add Community Definition</h2>
+        <button class="close-btn" @click="$emit('close')" type="button">×</button>
+      </div>
+      <div class="community-definition-form">
+        <div class="form-header">
+          <p class="form-description">
+            Share your knowledge by contributing a definition for this word. Your submission will be reviewed by the community.
+          </p>
+        </div>
+
+    <!-- Source Word Information -->
+    <div v-if="word" class="source-word-info">
+      <h3 class="source-word-title">Adding definition for:</h3>
+      <div class="source-word-details">
+        <!-- For MOE Dictionary entries -->
+        <div v-if="word.romaji" class="word-display moe-word">
+          <div class="word-taiwanese">{{ word.romaji }}</div>
+          <div class="word-chinese" v-if="word.chinese">{{ word.chinese }}</div>
+          <div class="word-english" v-if="word.english">{{ word.english }}</div>
+          <div class="word-source">Ministry of Education Dictionary</div>
+        </div>
+
+        <!-- For Maryknoll Dictionary entries -->
+        <div v-else-if="word.taiwanese" class="word-display mknoll-word">
+          <div class="word-taiwanese">{{ word.taiwanese }}</div>
+          <div class="word-chinese" v-if="word.chinese">{{ word.chinese }}</div>
+          <div class="word-english" v-if="word.english_mknoll">{{ word.english_mknoll }}</div>
+          <div class="word-source">Maryknoll Dictionary</div>
+        </div>
+
+        <!-- For CE-Dict entries -->
+        <div v-else-if="word.traditional" class="word-display cedict-word">
+          <div class="word-chinese">{{ word.traditional }}</div>
+          <div class="word-english" v-if="word.english_cedict">{{ word.english_cedict }}</div>
+          <div class="word-source">CC-CEDICT</div>
+        </div>
+
+        <!-- Fallback for unknown word types -->
+        <div v-else class="word-display unknown-word">
+          <div class="word-text">{{ word.chinese || word.english || JSON.stringify(word) }}</div>
+          <div class="word-source">Dictionary Entry</div>
+        </div>
+      </div>
     </div>
 
     <form @submit.prevent="handleSubmit" class="definition-form">
@@ -163,11 +203,13 @@
         {{ generalError }}
       </div>
 
-      <!-- Success Message -->
-      <div v-if="successMessage" class="success-message">
-        {{ successMessage }}
+        <!-- Success Message -->
+        <div v-if="successMessage" class="success-message">
+          {{ successMessage }}
+        </div>
+      </form>
       </div>
-    </form>
+    </div>
   </div>
 </template>
 
@@ -179,9 +221,13 @@ import { validateCreateDefinition, CommunityValidationError } from '@/utils/comm
 
 // Props
 const props = defineProps({
-  wordId: {
-    type: String,
+  word: {
+    type: Object,
     required: true
+  },
+  visible: {
+    type: Boolean,
+    default: false
   },
   initialData: {
     type: Object,
@@ -190,7 +236,7 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['success', 'cancel', 'draft-saved']);
+const emit = defineEmits(['success', 'cancel', 'draft-saved', 'close', 'submit']);
 
 // Stores
 const communityStore = useCommunityStore();
@@ -319,7 +365,7 @@ const handleSubmit = async () => {
   
   try {
     const submissionData = {
-      wordId: props.wordId,
+      wordId: props.word?.id?.toString() || 'unknown',
       definition: form.value.definition.trim(),
       usageExample: form.value.usageExample.trim() || undefined,
       tags: form.value.tags,
@@ -337,8 +383,9 @@ const handleSubmit = async () => {
       // Clear draft from localStorage
       clearDraft();
       
-      // Emit success event
+      // Emit success and submit events
       emit('success', result.data);
+      emit('submit', result.data);
       
       // Reset form after a delay
       setTimeout(() => {
@@ -364,7 +411,7 @@ const handleSubmit = async () => {
 };
 
 // Draft management
-const getDraftKey = () => `community-definition-draft-${props.wordId}`;
+const getDraftKey = () => `community-definition-draft-${props.word?.id || 'unknown'}`;
 
 const saveDraft = async () => {
   savingDraft.value = true;
@@ -432,6 +479,11 @@ const resetForm = () => {
   errors.value = {};
   generalError.value = '';
   successMessage.value = '';
+};
+
+const handleOverlayClick = () => {
+  // Close modal when clicking outside
+  emit('close');
 };
 
 // Auto-save draft on form changes (debounced)
@@ -508,9 +560,7 @@ onMounted(() => {
   font-size: 0.9rem;
 }
 
-.required {
-  color: #ef4444;
-}
+
 
 .form-textarea,
 .form-input {
@@ -705,6 +755,143 @@ onMounted(() => {
   border-radius: 4px;
   font-size: 0.9rem;
   margin-top: 1rem;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: var(--raisinBlack);
+  border-radius: 0.5rem;
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 1.5rem 0 1.5rem;
+  border-bottom: 1px solid var(--davysGray);
+  margin-bottom: 1rem;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: var(--white);
+  font-size: 1.5rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: var(--frenchGray);
+  cursor: pointer;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: var(--davysGray);
+  color: var(--white);
+}
+
+.community-definition-form {
+  padding: 0 1.5rem 1.5rem 1.5rem;
+}
+
+/* Source Word Information Styles */
+.source-word-info {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--gunmetal);
+  border-radius: 0.5rem;
+  border: 1px solid var(--frenchGray);
+}
+
+.source-word-title {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  color: var(--frenchGray);
+  font-weight: 500;
+}
+
+.source-word-details {
+  background: var(--black);
+  padding: 1rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--davysGray);
+}
+
+.word-display {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.word-taiwanese {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--yellow);
+}
+
+.word-chinese {
+  font-size: 1.3rem;
+  color: var(--white);
+}
+
+.word-english {
+  font-size: 1.1rem;
+  color: var(--lightGray);
+}
+
+.word-text {
+  font-size: 1.2rem;
+  color: var(--white);
+}
+
+.word-source {
+  font-size: 0.875rem;
+  color: var(--frenchGray);
+  font-style: italic;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--davysGray);
+}
+
+/* Dictionary-specific styling */
+.moe-word .word-taiwanese {
+  color: var(--yellow);
+}
+
+.mknoll-word .word-taiwanese {
+  color: var(--lightBlue);
+}
+
+.cedict-word .word-chinese {
+  color: var(--orange);
 }
 
 /* Mobile optimizations */

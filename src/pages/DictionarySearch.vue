@@ -45,12 +45,14 @@
       @readChinese="readChinese"
       @readEnglish="readEnglish"
       @openEditDialog="openEditDialog"
+      @addDefinition="openAddDefinitionDialog"
     />
 
     <!-- mknoll results -->
     <MknollSearchResults 
       :results="dictionaryStore.mknollResults"
       @openEditDialog="openEditDialogMknoll"
+      @addDefinition="openAddDefinitionDialog"
     />
 
     <!-- cedict results and cross-reference -->
@@ -58,6 +60,7 @@
       :results="dictionaryStore.cedictResults"
       :crossRefResults="dictionaryStore.crossRefResults"
       @readChinese="readChinese"
+      @addDefinition="openAddDefinitionDialog"
     />
 
     <!-- community search results -->
@@ -87,6 +90,12 @@
       :word="selectedWordMknoll"
       @close="closeDialogMknoll()"
     />
+    <CommunityDefinitionForm
+      :visible="showAddDefinitionDialog"
+      :word="selectedWordForDefinition"
+      @close="closeAddDefinitionDialog"
+      @submit="handleDefinitionSubmit"
+    />
   </div>
 </template>
 
@@ -104,6 +113,7 @@ import MoeSearchResults from "@/components/search/MoeSearchResults.vue";
 import MknollSearchResults from "@/components/search/MknollSearchResults.vue";
 import CedictSearchResults from "@/components/search/CedictSearchResults.vue";
 import CommunitySearchResults from "@/components/search/CommunitySearchResults.vue";
+import CommunityDefinitionForm from "@/components/CommunityDefinitionForm.vue";
 
 import { useFavoritesStore } from "@/stores/favoritesStore";
 import { useCommunityStore } from "@/stores/communityStore";
@@ -116,8 +126,10 @@ const loading = ref(false);
 const searchExecuted = ref(false);
 const showDialog = ref(false);
 const showDialogMknoll = ref(false);
+const showAddDefinitionDialog = ref(false);
 const selectedWord = ref(null);
 const selectedWordMknoll = ref(null);
+const selectedWordForDefinition = ref(null);
 
 // Community search state
 const communityResults = ref([]);
@@ -146,6 +158,33 @@ const openEditDialogMknoll = (word) => {
   selectedWordMknoll.value = word;
   showDialogMknoll.value = true;
   document.body.style.overflow = "hidden";
+};
+
+const openAddDefinitionDialog = (word) => {
+  selectedWordForDefinition.value = word;
+  showAddDefinitionDialog.value = true;
+  document.body.style.overflow = "hidden";
+};
+
+const closeAddDefinitionDialog = () => {
+  showAddDefinitionDialog.value = false;
+  selectedWordForDefinition.value = null;
+  document.body.style.overflow = "scroll";
+};
+
+const handleDefinitionSubmit = async (definitionData) => {
+  try {
+    // The form will handle the submission, so we just need to close the dialog
+    // and potentially refresh the community results
+    closeAddDefinitionDialog();
+    
+    // Optionally refresh community results to show the new definition
+    if (searchQuery.value.trim()) {
+      await searchCommunityDefinitions();
+    }
+  } catch (error) {
+    console.error('Error handling definition submission:', error);
+  }
 };
 
 const clearSearch = () => {
@@ -251,7 +290,7 @@ const searchCommunityDefinitions = async (loadMore = false) => {
     const searchFilters = {
       sortBy: 'score',
       sortOrder: 'desc',
-      status: ['approved'], // Only show approved content in search results
+      status: ['approved', 'pending'], // Show both approved and pending content in search results
       limit: 10,
       offset: loadMore ? communityResults.value.length : 0
     };
@@ -263,6 +302,9 @@ const searchCommunityDefinitions = async (loadMore = false) => {
     });
 
     if (result.success) {
+      console.log('Community search results:', result.data);
+      console.log('Search filters used:', searchFilters);
+      
       if (loadMore) {
         communityResults.value.push(...result.data);
       } else {
