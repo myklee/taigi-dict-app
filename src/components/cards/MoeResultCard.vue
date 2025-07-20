@@ -3,6 +3,9 @@
     <div
       v-if="word.romaji != null"
       class="word-item moe-word-taigi alphabetic"
+      @click="navigateToWordDetail"
+      style="cursor: pointer;"
+      title="Click to view full word details"
     >
       <p>{{ word.romaji }}</p>
       <audio
@@ -40,7 +43,7 @@
         </ul>
       </li>
     </ul>
-    <div class="word-actions">
+    <div class="word-actions" @click.stop>
       <IconHeart
         :isFavorited="favoritesStore.isFavorited(word.id)"
         @click="favoritesStore.toggleFavorite(word)"
@@ -61,6 +64,7 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router';
 import AudioPlayerTaigi from "@/components/AudioPlayerTaigi.vue";
 import Pinyinzhuyin from "@/components/utility/Pinyinzhuyin.vue";
 import IconPlayAudio from "@/components/icons/IconPlayAudio.vue";
@@ -69,6 +73,7 @@ import IconHeart from "@/components/icons/IconHeart.vue";
 import IconAdd from "@/components/icons/IconAdd.vue";
 import { useFavoritesStore } from "@/stores/favoritesStore";
 
+const router = useRouter();
 const favoritesStore = useFavoritesStore();
 
 const props = defineProps({
@@ -79,6 +84,12 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['readChinese', 'readEnglish', 'openEditDialog', 'addDefinition']);
+
+const navigateToWordDetail = () => {
+  if (props.word.id) {
+    router.push({ name: 'word-detail', params: { id: props.word.id.toString() } });
+  }
+};
 </script>
 
 <style scoped>

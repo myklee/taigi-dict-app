@@ -7,9 +7,24 @@
       "launchShowDuration": 2000,
       "backgroundColor": "#ffffff",
       "showSpinner": false
+    },
+    "App": {
+      "launchUrl": "index.html"
     }
   },
   "server": {
-    "androidScheme": "https"
+    "androidScheme": "https",
+    "iosScheme": "https",
+    "hostname": "localhost"
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": true
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "scrollEnabled": true,
+    "allowsLinkPreview": false
   }
 }

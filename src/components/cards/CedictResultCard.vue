@@ -1,5 +1,5 @@
 <template>
-  <li class="cedict-result-item">
+  <li class="cedict-result-item" @click="navigateToWordDetail" style="cursor: pointer;" title="Click to view full word details">
     <div class="word-content">
       <div class="word-text">
         {{ word.traditional }}
@@ -7,7 +7,7 @@
       </div>
       <div class="word-definition">{{ word.english_cedict }}</div>
     </div>
-    <div class="word-actions">
+    <div class="word-actions" @click.stop>
       <IconHeart
         :isFavorited="favoritesStore.isFavorited(word.id)"
         @click="favoritesStore.toggleFavorite(word)"
@@ -23,11 +23,13 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router';
 import Pinyinzhuyin from "@/components/utility/Pinyinzhuyin.vue";
 import IconHeart from "@/components/icons/IconHeart.vue";
 import IconAdd from "@/components/icons/IconAdd.vue";
 import { useFavoritesStore } from "@/stores/favoritesStore";
 
+const router = useRouter();
 const favoritesStore = useFavoritesStore();
 
 const props = defineProps({
@@ -38,6 +40,12 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['addDefinition']);
+
+const navigateToWordDetail = () => {
+  if (props.word.id) {
+    router.push({ name: 'word-detail', params: { id: props.word.id.toString() } });
+  }
+};
 </script>
 
 <style scoped>

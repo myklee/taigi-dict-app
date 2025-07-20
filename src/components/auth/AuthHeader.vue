@@ -13,12 +13,12 @@
     <!-- Authenticated -->
     <div v-else class="user-menu">
       <div class="user-left">
-        <div class="user-avatar" @click="goToProfile">
+        <router-link to="/profile" class="user-avatar">
           {{ userInitials }}
-        </div>
-        <button v-if="canModerate" @click="goToAdmin" class="admin-btn">
+        </router-link>
+        <router-link v-if="canModerate" to="/admin" class="admin-btn">
           Admin Dashboard
-        </button>
+        </router-link>
         <button @click="handleSignOut">
           Sign Out
         </button>
@@ -48,10 +48,6 @@ import { useAuthStore } from '@/stores/authStore';
 import { useCommunityStore } from '@/stores/communityStore';
 import { useDictionaryStore } from '@/stores/dictionaryStore';
 import AuthModal from './AuthModal.vue';
-
-const props = defineProps({
-  navigate: Function
-});
 
 const authStore = useAuthStore();
 const communityStore = useCommunityStore();
@@ -86,18 +82,6 @@ const handleAuthSuccess = async () => {
 
 const handleSignOut = () => {
   authStore.signOut();
-};
-
-const goToProfile = () => {
-  if (props.navigate) {
-    props.navigate('profile');
-  }
-};
-
-const goToAdmin = () => {
-  if (props.navigate) {
-    props.navigate('admin');
-  }
 };
 
 const toggleRandomWord = () => {
@@ -155,9 +139,11 @@ const clearCache = async () => {
   font-weight: bold;
   cursor: pointer;
   transition: all 0.2s;
+  text-decoration: none;
 }
 
-.user-avatar:hover {
+.user-avatar:hover,
+.user-avatar.router-link-active {
   background-color: var(--gunmetal);
   transform: scale(1.05);
 }
@@ -172,9 +158,13 @@ const clearCache = async () => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
 }
 
-.admin-btn:hover {
+.admin-btn:hover,
+.admin-btn.router-link-active {
   background-color: #2563eb;
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);

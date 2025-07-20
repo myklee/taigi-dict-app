@@ -121,6 +121,7 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useCommunityStore } from '@/stores/communityStore'
 import CommunityModerationPanel from './CommunityModerationPanel.vue'
 import UserManagementPanel from './UserManagementPanel.vue'
@@ -131,10 +132,8 @@ export default {
     CommunityModerationPanel,
     UserManagementPanel
   },
-  props: {
-    navigate: Function
-  },
-  setup(props) {
+  setup() {
+    const router = useRouter()
     const communityStore = useCommunityStore()
     
     // State
@@ -174,9 +173,7 @@ export default {
     }
 
     const goToDictionary = () => {
-      if (props.navigate) {
-        props.navigate('dictionary')
-      }
+      router.push({ name: 'dictionary' })
     }
 
     // Lifecycle

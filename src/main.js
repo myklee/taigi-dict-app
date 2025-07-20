@@ -1,15 +1,21 @@
 import './assets/main.css'
 
 import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import App from './App.vue'
+import router from './router'
 
-import { createPinia } from 'pinia';
-import App from './App.vue';
+const app = createApp(App)
+const pinia = createPinia()
 
-const app = createApp(App);
-const pinia = createPinia();
+// Register Pinia store
+app.use(pinia)
 
-app.use(pinia);
-app.mount('#app');
+// Register Vue Router
+app.use(router)
+
+// Mount the app - router is now available before mount
+app.mount('#app')
 
 // Supabase postgres password VaJzmCmC2uIWw6UI
 
