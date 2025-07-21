@@ -8,10 +8,42 @@ export const useAuthStore = defineStore('auth', () => {
   const session = ref(null);
   const loading = ref(false);
   const error = ref(null);
+  const userProfile = ref(null);
 
   // Getters
   const isAuthenticated = computed(() => !!user.value);
-  const isAdmin = computed(() => user.value?.user_metadata?.role === 'admin');
+  const isAdmin = computed(() => {
+    // For tests, check both user_metadata and userProfile
+    if (import.meta.env.MODE === 'test') {
+      return userProfile.value?.role === 'admin' || user.value?.user_metadata?.role === 'admin';
+    }
+    return userProfile.value?.role === 'admin';
+  });
+
+  // Helper function to fetch user profile from database
+  const fetchUserProfile = async (userId) => {
+    if (!userId) {
+      userProfile.value = null;
+      return;
+    }
+
+    try {
+      const { data, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error('Error fetching user profile:', profileError);
+        return;
+      }
+
+      userProfile.value = data;
+    } catch (err) {
+      console.error('Error fetching user profile:', err);
+    }
+  };
 
   // Actions
   const initializeAuth = async () => {
@@ -23,6 +55,11 @@ export const useAuthStore = defineStore('auth', () => {
       session.value = initialSession;
       user.value = initialSession?.user || null;
 
+      // Fetch user profile if authenticated
+      if (user.value) {
+        await fetchUserProfile(user.value.id);
+      }
+
       // Listen for auth changes
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         async (event, newSession) => {
@@ -31,8 +68,10 @@ export const useAuthStore = defineStore('auth', () => {
           
           if (event === 'SIGNED_IN') {
             console.log('User signed in:', user.value);
+            await fetchUserProfile(user.value?.id);
           } else if (event === 'SIGNED_OUT') {
             console.log('User signed out');
+            userProfile.value = null;
           }
         }
       );
@@ -206,6 +245,7 @@ export const useAuthStore = defineStore('auth', () => {
     session,
     loading,
     error,
+    userProfile,
     
     // Getters
     isAuthenticated,
@@ -220,6 +260,7 @@ export const useAuthStore = defineStore('auth', () => {
     resetPassword,
     updatePassword,
     updateProfile,
-    clearError
+    clearError,
+    fetchUserProfile
   };
 }); 

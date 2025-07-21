@@ -1,15 +1,5 @@
 <template>
   <div class="admin-dashboard">
-    <!-- Navigation Header -->
-    <div class="navigation-header">
-      <button @click="goToDictionary" class="back-btn">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="m15 18-6-6 6-6"/>
-        </svg>
-        Back to Dictionary
-      </button>
-      <div class="nav-title">Admin Dashboard</div>
-    </div>
 
     <div class="dashboard-header">
       <h1>Admin Dashboard</h1>
@@ -121,7 +111,6 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useCommunityStore } from '@/stores/communityStore'
 import CommunityModerationPanel from './CommunityModerationPanel.vue'
 import UserManagementPanel from './UserManagementPanel.vue'
@@ -133,7 +122,6 @@ export default {
     UserManagementPanel
   },
   setup() {
-    const router = useRouter()
     const communityStore = useCommunityStore()
     
     // State
@@ -172,10 +160,6 @@ export default {
       })
     }
 
-    const goToDictionary = () => {
-      router.push({ name: 'dictionary' })
-    }
-
     // Lifecycle
     onMounted(async () => {
       if (canModerate.value) {
@@ -199,8 +183,7 @@ export default {
       loadDashboardStats,
       refreshStats,
       formatAction,
-      formatDate,
-      goToDictionary
+      formatDate
     }
   }
 }

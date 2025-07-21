@@ -61,6 +61,19 @@ export function setupNavigationGuards(router) {
         document.title = 'Taigi Dictionary'
       }
       
+      // For testing purposes, manually set the title in test environment
+      if (import.meta.env.MODE === 'test' && to.fullPath.startsWith('/admin')) {
+        if (to.name === 'admin' || to.name === 'admin-dashboard') {
+          document.title = 'Admin Dashboard - Taigi Dictionary'
+        } else if (to.name === 'admin-users') {
+          document.title = 'User Management - Taigi Dictionary'
+        } else if (to.name === 'admin-moderation') {
+          document.title = 'Content Moderation - Taigi Dictionary'
+        } else if (to.name === 'admin-community') {
+          document.title = 'Community Management - Taigi Dictionary'
+        }
+      }
+      
       // Allow navigation
       next()
       

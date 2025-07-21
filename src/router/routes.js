@@ -99,7 +99,7 @@ export const routes = [
   {
     path: '/admin',
     name: 'admin',
-    component: () => import(/* webpackChunkName: "admin-dashboard" */ '@/components/AdminDashboard.vue'),
+    component: () => import(/* webpackChunkName: "admin-layout" */ '@/views/AdminLayout.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
