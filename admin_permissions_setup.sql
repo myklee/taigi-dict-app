@@ -465,38 +465,57 @@ BEGIN
         AND (role_filter IS NULL OR up.role = role_filter)
         AND (status_filter IS NULL OR up.account_status = status_filter);
 
-    -- Get users data
+    -- Get users data  
+    WITH user_data AS (
+        SELECT 
+            up.id,
+            up.username,
+            au.email,
+            up.role,
+            up.account_status,
+            up.reputation_score,
+            up.contribution_count,
+            up.is_super_admin,
+            up.last_login,
+            up.created_at,
+            up.updated_at,
+            up.notes
+        FROM user_profiles up
+        LEFT JOIN auth.users au ON up.id = au.id
+        WHERE 
+            (search_term IS NULL OR 
+             up.username ILIKE '%' || search_term || '%' OR 
+             au.email ILIKE '%' || search_term || '%')
+            AND (role_filter IS NULL OR up.role = role_filter)
+            AND (status_filter IS NULL OR up.account_status = status_filter)
+        ORDER BY up.created_at DESC
+        LIMIT limit_count
+        OFFSET offset_count
+    )
     SELECT jsonb_build_object(
-        'users', jsonb_agg(
-            jsonb_build_object(
-                'id', up.id,
-                'username', up.username,
-                'email', au.email,
-                'role', up.role,
-                'account_status', up.account_status,
-                'reputation_score', up.reputation_score,
-                'contribution_count', up.contribution_count,
-                'is_super_admin', up.is_super_admin,
-                'last_login', up.last_login,
-                'created_at', up.created_at,
-                'updated_at', up.updated_at,
-                'notes', up.notes
-            )
+        'users', COALESCE(
+            jsonb_agg(
+                jsonb_build_object(
+                    'id', ud.id,
+                    'username', ud.username,
+                    'email', ud.email,
+                    'role', ud.role,
+                    'account_status', ud.account_status,
+                    'reputation_score', ud.reputation_score,
+                    'contribution_count', ud.contribution_count,
+                    'is_super_admin', ud.is_super_admin,
+                    'last_login', ud.last_login,
+                    'created_at', ud.created_at,
+                    'updated_at', ud.updated_at,
+                    'notes', ud.notes
+                )
+            ),
+            '[]'::jsonb
         ),
         'total_count', total_count,
         'has_more', (offset_count + limit_count) < total_count
     ) INTO users_data
-    FROM user_profiles up
-    LEFT JOIN auth.users au ON up.id = au.id
-    WHERE 
-        (search_term IS NULL OR 
-         up.username ILIKE '%' || search_term || '%' OR 
-         au.email ILIKE '%' || search_term || '%')
-        AND (role_filter IS NULL OR up.role = role_filter)
-        AND (status_filter IS NULL OR up.account_status = status_filter)
-    ORDER BY up.created_at DESC
-    LIMIT limit_count
-    OFFSET offset_count;
+    FROM user_data ud;
 
     RETURN jsonb_build_object(
         'success', true,
