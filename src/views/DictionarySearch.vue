@@ -42,6 +42,8 @@
     <MoeSearchResults 
       :results="dictionaryStore.searchResults"
       :searchExecuted="searchExecuted"
+      :primaryLanguage="detectedLanguage.language"
+      :searchQuery="searchQuery"
       @readChinese="readChinese"
       @readEnglish="readEnglish"
       @openEditDialog="openEditDialog"
@@ -51,6 +53,8 @@
     <!-- mknoll results -->
     <MknollSearchResults 
       :results="dictionaryStore.mknollResults"
+      :primaryLanguage="detectedLanguage.language"
+      :searchQuery="searchQuery"
       @openEditDialog="openEditDialogMknoll"
       @addDefinition="openAddDefinitionDialog"
     />
@@ -59,6 +63,8 @@
     <CedictSearchResults 
       :results="dictionaryStore.cedictResults"
       :crossRefResults="dictionaryStore.crossRefResults"
+      :primaryLanguage="detectedLanguage.language"
+      :searchQuery="searchQuery"
       @readChinese="readChinese"
       @addDefinition="openAddDefinitionDialog"
     />
@@ -106,6 +112,7 @@ import { useDictionaryStore } from "@/stores/dictionaryStore";
 import { supabase } from "@/supabase";
 import { speakChinese } from "@/utils";
 import { speakEnglish } from "@/utils";
+import { detectSearchLanguage } from "@/utils";
 import Loader from "@/components/utility/Loader.vue";
 import EditWord from "./EditWord.vue";
 import EditWordMknoll from "./EditWordMknoll.vue";
@@ -128,6 +135,7 @@ const searchQuery = ref("");
 const exactSearch = ref(false);
 const loading = ref(false);
 const searchExecuted = ref(false);
+const detectedLanguage = ref({ language: 'unknown', confidence: 0 });
 const showDialog = ref(false);
 const showDialogMknoll = ref(false);
 const showAddDefinitionDialog = ref(false);
@@ -199,6 +207,7 @@ const clearSearch = () => {
 const searchWords = async () => {
   if (!searchQuery.value.trim()) {
     searchExecuted.value = false;
+    detectedLanguage.value = { language: 'unknown', confidence: 0 };
     // Clear results when search is empty
     await dictionaryStore.setSearchResults([]);
     await dictionaryStore.setMknollResults([]);
@@ -210,6 +219,9 @@ const searchWords = async () => {
 
   loading.value = true;
   searchExecuted.value = true;
+
+  // Detect search language
+  detectedLanguage.value = detectSearchLanguage(searchQuery.value);
 
   // Update URL with current search state (without debounce for immediate search)
   updateRouteWithSearchState(searchQuery.value, exactSearch.value);

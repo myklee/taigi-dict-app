@@ -250,6 +250,58 @@ export async function convertToneNumbersToMarks(pojString) {
   }).join(' ');
 }
 
+export function detectSearchLanguage(searchTerm) {
+  if (!searchTerm || searchTerm.trim() === '') {
+    return { language: 'unknown', confidence: 0 };
+  }
+
+  const term = searchTerm.trim();
+  
+  // Chinese character detection (CJK Unified Ideographs)
+  const chineseRegex = /[\u4e00-\u9fff]/;
+  const chineseMatches = term.match(chineseRegex);
+  const chineseRatio = chineseMatches ? chineseMatches.length / term.length : 0;
+  
+  // Taiwanese romanization patterns (POJ/Tâi-lô)
+  // Common patterns: tone numbers (1-8), diacritics, specific consonant combinations
+  const taiwanesePatterns = [
+    /[1-8]$/, // Tone numbers at end
+    /[âêîôûāēīōūàèìòùáéíóúǎěǐǒǔ]/, // Tone marks/diacritics
+    /\b[bcdfghjklmnpqrstvwxyz]*[aeiou]+[hkpnt]?\b/i, // Romanization syllable patterns
+    /chh|kh|ph|th|ng|oa|oe|ui/i // Common Taiwanese romanization combinations
+  ];
+  
+  const taiwaneseScore = taiwanesePatterns.reduce((score, pattern) => {
+    return score + (pattern.test(term) ? 0.25 : 0);
+  }, 0);
+  
+  // English detection (basic Latin alphabet)
+  const englishRegex = /^[a-zA-Z\s\-''.,!?]*$/;
+  const isEnglish = englishRegex.test(term);
+  
+  // Calculate confidence scores
+  if (chineseRatio > 0.3) {
+    return { language: 'chinese', confidence: Math.min(chineseRatio * 1.2, 1) };
+  } else if (taiwaneseScore > 0.5) {
+    return { language: 'taiwanese', confidence: Math.min(taiwaneseScore, 1) };
+  } else if (isEnglish && term.length > 1) {
+    // Higher confidence for longer English terms
+    const englishConfidence = Math.min(0.7 + (term.length / 20), 0.95);
+    return { language: 'english', confidence: englishConfidence };
+  }
+  
+  // Fallback detection with lower confidence
+  if (chineseRatio > 0) {
+    return { language: 'chinese', confidence: 0.5 };
+  } else if (taiwaneseScore > 0) {
+    return { language: 'taiwanese', confidence: 0.3 };
+  } else if (isEnglish) {
+    return { language: 'english', confidence: 0.4 };
+  }
+  
+  return { language: 'unknown', confidence: 0 };
+}
+
 // // Example usage:
 // const input = "ba8k-chiu nih-chhiauh nih-chhiauh";
 // console.log(convertToneNumbersToMarks(input));

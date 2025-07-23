@@ -1,5 +1,5 @@
 <template>
-  <div class="word-detail">
+  <div class="moe-word-detail">
     <Loader :loading="loading" />
     
     <div v-if="error" class="error-message">
@@ -12,7 +12,7 @@
 
     <div v-else-if="!loading && !word" class="not-found">
       <h2>Word Not Found</h2>
-      <p>The word you're looking for could not be found.</p>
+      <p>The MOE dictionary entry you're looking for could not be found.</p>
       <button @click="$router.push({ name: 'dictionary' })" class="back-button">
         Back to Dictionary
       </button>
@@ -23,15 +23,16 @@
         <button @click="goBack" class="back-button">
           ← Back
         </button>
-        <h1>Word Detail</h1>
+        <h1>Ministry of Education Dictionary</h1>
       </div>
 
       <!-- MOE Word Display -->
-      <div v-if="word" class="word-section">
-        <h2>Ministry of Education Dictionary</h2>
+      <div class="word-section">
         <div class="word-card">
           <MoeResultCard 
             :word="word"
+            :primaryLanguage="primaryLanguage"
+            :searchQuery="word.chinese || word.english || word.romaji"
             @readChinese="readChinese"
             @readEnglish="readEnglish"
             @openEditDialog="openEditDialog"
@@ -40,33 +41,7 @@
         </div>
       </div>
 
-      <!-- Mknoll Results if available -->
-      <div v-if="mknollWord" class="word-section">
-        <h2>Maryknoll Dictionary</h2>
-        <div class="word-card">
-          <MknollResultCard 
-            :word="mknollWord"
-            @openEditDialog="openEditDialogMknoll"
-            @addDefinition="openAddDefinitionDialog"
-          />
-        </div>
-      </div>
-
-      <!-- CEDICT Results if available -->
-      <div v-if="cedictWords.length > 0" class="word-section">
-        <h2>CEDICT Dictionary</h2>
-        <div class="word-cards">
-          <CedictResultCard 
-            v-for="cedictWord in cedictWords"
-            :key="cedictWord.id"
-            :word="cedictWord"
-            @readChinese="readChinese"
-            @addDefinition="openAddDefinitionDialog"
-          />
-        </div>
-      </div>
-
-      <!-- Community Definitions -->
+      <!-- Community Definitions for this word -->
       <div v-if="communityDefinitions.length > 0" class="word-section">
         <h2>Community Definitions</h2>
         <div class="word-cards">
@@ -89,11 +64,6 @@
       :word="selectedWord"
       @close="closeDialog"
     />
-    <EditWordMknoll
-      :visible="showDialogMknoll"
-      :word="selectedWordMknoll"
-      @close="closeDialogMknoll"
-    />
     <CommunityDefinitionForm
       :visible="showAddDefinitionDialog"
       :word="selectedWordForDefinition"
@@ -107,16 +77,13 @@
 import { ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { supabase } from '@/supabase';
-import { speakChinese, speakEnglish } from '@/utils';
+import { speakChinese, speakEnglish, detectSearchLanguage } from '@/utils';
 import { useCommunityStore } from '@/stores/communityStore';
 
 import Loader from '@/components/utility/Loader.vue';
 import MoeResultCard from '@/components/cards/MoeResultCard.vue';
-import MknollResultCard from '@/components/cards/MknollResultCard.vue';
-import CedictResultCard from '@/components/cards/CedictResultCard.vue';
 import CommunityDefinitionCard from '@/components/cards/CommunityDefinitionCard.vue';
 import EditWord from './EditWord.vue';
-import EditWordMknoll from './EditWordMknoll.vue';
 import CommunityDefinitionForm from '@/components/CommunityDefinitionForm.vue';
 
 const route = useRoute();
@@ -127,16 +94,13 @@ const communityStore = useCommunityStore();
 const loading = ref(false);
 const error = ref(null);
 const word = ref(null);
-const mknollWord = ref(null);
-const cedictWords = ref([]);
 const communityDefinitions = ref([]);
+const primaryLanguage = ref('unknown');
 
 // Dialog state
 const showDialog = ref(false);
-const showDialogMknoll = ref(false);
 const showAddDefinitionDialog = ref(false);
 const selectedWord = ref(null);
-const selectedWordMknoll = ref(null);
 const selectedWordForDefinition = ref(null);
 
 // Props validation
@@ -145,14 +109,13 @@ const props = defineProps({
     type: String,
     required: true,
     validator: (value) => {
-      // Basic validation - should be a positive integer
       const num = parseInt(value);
       return !isNaN(num) && num > 0;
     }
   }
 });
 
-// Fetch word data by ID
+// Fetch MOE word data by ID
 const fetchWordById = async (wordId) => {
   if (!wordId) {
     error.value = 'Invalid word ID provided';
@@ -163,13 +126,12 @@ const fetchWordById = async (wordId) => {
   error.value = null;
 
   try {
-    // Validate ID format
     const numericId = parseInt(wordId);
     if (isNaN(numericId) || numericId <= 0) {
       throw new Error('Invalid word ID format');
     }
 
-    // Fetch main word from MOE dictionary
+    // Fetch word from MOE dictionary
     const { data: moeData, error: moeError } = await supabase
       .from('words')
       .select(`
@@ -185,68 +147,26 @@ const fetchWordById = async (wordId) => {
       .eq('id', numericId)
       .single();
 
-    if (moeError && moeError.code !== 'PGRST116') { // PGRST116 is "not found"
+    if (moeError && moeError.code !== 'PGRST116') {
       throw moeError;
     }
 
     word.value = moeData;
 
-    // If we found a word, search for related entries in other dictionaries
     if (moeData) {
-      await fetchRelatedEntries(moeData);
-    } else {
-      // If no MOE word found, this is a 404
-      error.value = null; // Let the template handle the "not found" case
+      // Detect primary language based on the word content
+      const searchTerm = moeData.chinese || moeData.english || moeData.romaji || '';
+      primaryLanguage.value = detectSearchLanguage(searchTerm).language;
+      
+      // Fetch community definitions
+      await fetchCommunityDefinitions(moeData);
     }
 
   } catch (err) {
-    console.error('Error fetching word:', err);
+    console.error('Error fetching MOE word:', err);
     error.value = err.message || 'Failed to load word details';
   } finally {
     loading.value = false;
-  }
-};
-
-// Fetch related entries from other dictionaries
-const fetchRelatedEntries = async (moeWord) => {
-  try {
-    // Search Maryknoll dictionary for related entries
-    if (moeWord.chinese || moeWord.english || moeWord.romaji) {
-      const mknollSearchTerms = [];
-      if (moeWord.chinese) mknollSearchTerms.push(`chinese.ilike.%${moeWord.chinese}%`);
-      if (moeWord.english) mknollSearchTerms.push(`english_mknoll.ilike.%${moeWord.english}%`);
-      if (moeWord.romaji) mknollSearchTerms.push(`taiwanese.ilike.%${moeWord.romaji}%`);
-
-      if (mknollSearchTerms.length > 0) {
-        const { data: mknollData } = await supabase
-          .from('maryknoll')
-          .select('*')
-          .or(mknollSearchTerms.join(','))
-          .limit(5);
-
-        if (mknollData && mknollData.length > 0) {
-          mknollWord.value = mknollData[0]; // Take the first match
-        }
-      }
-    }
-
-    // Search CEDICT for related entries
-    if (moeWord.chinese) {
-      const { data: cedictData } = await supabase
-        .from('cedict')
-        .select('*')
-        .or(`traditional.ilike.%${moeWord.chinese}%,simplified.ilike.%${moeWord.chinese}%`)
-        .limit(5);
-
-      cedictWords.value = cedictData || [];
-    }
-
-    // Search community definitions
-    await fetchCommunityDefinitions(moeWord);
-
-  } catch (err) {
-    console.error('Error fetching related entries:', err);
-    // Don't set error here as the main word loaded successfully
   }
 };
 
@@ -260,7 +180,6 @@ const fetchCommunityDefinitions = async (moeWord) => {
       limit: 10
     };
 
-    // Search using the word's terms
     const searchTerms = [moeWord.chinese, moeWord.english, moeWord.romaji]
       .filter(Boolean)
       .join(' ');
@@ -282,7 +201,6 @@ const fetchCommunityDefinitions = async (moeWord) => {
 
 // Navigation functions
 const goBack = () => {
-  // Try to go back in history, fallback to dictionary
   if (window.history.length > 1) {
     router.go(-1);
   } else {
@@ -312,18 +230,6 @@ const closeDialog = () => {
   document.body.style.overflow = 'scroll';
 };
 
-const openEditDialogMknoll = (wordData) => {
-  selectedWordMknoll.value = wordData;
-  showDialogMknoll.value = true;
-  document.body.style.overflow = 'hidden';
-};
-
-const closeDialogMknoll = () => {
-  showDialogMknoll.value = false;
-  selectedWordMknoll.value = null;
-  document.body.style.overflow = 'scroll';
-};
-
 const openAddDefinitionDialog = (wordData) => {
   selectedWordForDefinition.value = wordData;
   showAddDefinitionDialog.value = true;
@@ -338,7 +244,6 @@ const closeAddDefinitionDialog = () => {
 
 const handleDefinitionSubmit = async () => {
   closeAddDefinitionDialog();
-  // Refresh community definitions
   if (word.value) {
     await fetchCommunityDefinitions(word.value);
   }
@@ -375,16 +280,14 @@ watch(() => route.params.id, (newId) => {
   }
 });
 
-// Load word on mount - redirect to MOE-specific detail page
+// Load word on mount
 onMounted(() => {
-  // Redirect to the MOE word detail page by default
-  // This maintains backward compatibility for existing links
-  router.replace({ name: 'moe-word-detail', params: { id: props.id } });
+  fetchWordById(props.id);
 });
 </script>
 
 <style scoped>
-.word-detail {
+.moe-word-detail {
   max-width: 1200px;
   margin: 0 auto;
   padding: 1rem;
@@ -402,6 +305,7 @@ onMounted(() => {
 .word-header h1 {
   margin: 0;
   color: var(--white);
+  font-size: 1.8rem;
 }
 
 .back-button {
@@ -463,7 +367,7 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-  .word-detail {
+  .moe-word-detail {
     padding: 0.5rem;
   }
   

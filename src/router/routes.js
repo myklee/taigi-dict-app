@@ -30,6 +30,33 @@ export const routes = [
     }
   },
   {
+    path: '/moe-word/:id',
+    name: 'moe-word-detail',
+    component: () => import(/* webpackChunkName: "moe-word-detail" */ '@/views/MoeWordDetail.vue'),
+    props: true,
+    meta: {
+      title: 'MOE Dictionary Entry'
+    }
+  },
+  {
+    path: '/mknoll-word/:id',
+    name: 'mknoll-word-detail',
+    component: () => import(/* webpackChunkName: "mknoll-word-detail" */ '@/views/MknollWordDetail.vue'),
+    props: true,
+    meta: {
+      title: 'Maryknoll Dictionary Entry'
+    }
+  },
+  {
+    path: '/cedict-word/:id',
+    name: 'cedict-word-detail',
+    component: () => import(/* webpackChunkName: "cedict-word-detail" */ '@/views/CedictWordDetail.vue'),
+    props: true,
+    meta: {
+      title: 'CEDICT Dictionary Entry'
+    }
+  },
+  {
     path: '/random',
     name: 'random-word',
     component: () => import(/* webpackChunkName: "random-word" */ '@/views/RandomWord.vue'),

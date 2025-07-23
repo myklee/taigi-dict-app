@@ -8,6 +8,8 @@
         v-for="(word, index) in results"
         :key="index"
         :word="word"
+        :primaryLanguage="primaryLanguage"
+        :searchQuery="searchQuery"
         @openEditDialog="$emit('openEditDialog', $event)"
         @addDefinition="$emit('addDefinition', $event)"
       />
@@ -22,6 +24,14 @@ const props = defineProps({
   results: {
     type: Array,
     default: () => []
+  },
+  primaryLanguage: {
+    type: String,
+    default: 'unknown'
+  },
+  searchQuery: {
+    type: String,
+    default: ''
   }
 });
 

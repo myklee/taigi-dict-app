@@ -16,6 +16,8 @@
         v-for="word in results"
         :key="word.id"
         :word="word"
+        :primaryLanguage="primaryLanguage"
+        :searchQuery="searchQuery"
         @readChinese="$emit('readChinese', $event)"
         @readEnglish="$emit('readEnglish', $event)"
         @openEditDialog="$emit('openEditDialog', $event)"
@@ -36,6 +38,14 @@ const props = defineProps({
   searchExecuted: {
     type: Boolean,
     default: false
+  },
+  primaryLanguage: {
+    type: String,
+    default: 'unknown'
+  },
+  searchQuery: {
+    type: String,
+    default: ''
   }
 });
 

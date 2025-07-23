@@ -11,6 +11,8 @@
         v-for="(word, index) in results"
         :key="index"
         :word="word"
+        :primaryLanguage="primaryLanguage"
+        :searchQuery="searchQuery"
         @addDefinition="$emit('addDefinition', $event)"
       />
     </ul>
@@ -26,6 +28,8 @@
         v-for="(wordcedict, index) in crossRefResults"
         :key="index"
         :word="wordcedict"
+        :primaryLanguage="primaryLanguage"
+        :searchQuery="searchQuery"
         @readChinese="$emit('readChinese', $event)"
         @addDefinition="$emit('addDefinition', $event)"
       />
@@ -45,6 +49,14 @@ const props = defineProps({
   crossRefResults: {
     type: Array,
     default: () => []
+  },
+  primaryLanguage: {
+    type: String,
+    default: 'unknown'
+  },
+  searchQuery: {
+    type: String,
+    default: ''
   }
 });
 
