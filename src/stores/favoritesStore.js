@@ -7,6 +7,7 @@ export const useFavoritesStore = defineStore("favorites", {
   state: () => ({
     favorites: [],
     indexedDBDisabled: false, // Flag to disable IndexedDB if persistent errors occur
+    showLoginPrompt: false, // Flag to show login prompt when user tries to favorite without authentication
   }),
   
   getters: {
@@ -300,11 +301,20 @@ export const useFavoritesStore = defineStore("favorites", {
     },
 
     async toggleFavorite(word) {
+      // Check if user is authenticated
+      const authStore = useAuthStore();
+      if (!authStore.isAuthenticated) {
+        // Show login prompt instead of proceeding
+        this.setShowLoginPrompt(true);
+        return { requiresLogin: true };
+      }
+
       if (this.isFavorited(word.id)) {
         await this.removeFavorite(word.id);
       } else {
         await this.addFavorite(word);
       }
+      return { requiresLogin: false };
     },
 
     async clearFavorites() {
@@ -327,6 +337,15 @@ export const useFavoritesStore = defineStore("favorites", {
       } catch (error) {
         console.error("Error clearing favorites:", error);
       }
+    },
+
+    // Actions for login prompt
+    setShowLoginPrompt(show) {
+      this.showLoginPrompt = show;
+    },
+
+    hideLoginPrompt() {
+      this.showLoginPrompt = false;
     }
   }
 });

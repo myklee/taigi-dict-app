@@ -9,6 +9,8 @@ export const useAuthStore = defineStore('auth', () => {
   const loading = ref(false);
   const error = ref(null);
   const userProfile = ref(null);
+  const showAuthModal = ref(false);
+  const authModalMode = ref('signin');
 
   // Getters
   const isAuthenticated = computed(() => !!user.value);
@@ -269,6 +271,16 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
+  const showAuthModalAction = (mode = 'signin') => {
+    authModalMode.value = mode;
+    showAuthModal.value = true;
+  };
+
+  const hideAuthModal = () => {
+    showAuthModal.value = false;
+    error.value = null;
+  };
+
   return {
     // State
     user,
@@ -276,6 +288,8 @@ export const useAuthStore = defineStore('auth', () => {
     loading,
     error,
     userProfile,
+    showAuthModal,
+    authModalMode,
     
     // Getters
     isAuthenticated,
@@ -292,6 +306,8 @@ export const useAuthStore = defineStore('auth', () => {
     updateProfile,
     clearError,
     clearInvalidSession,
+    showAuthModalAction,
+    hideAuthModal,
     fetchUserProfile
   };
 }); 

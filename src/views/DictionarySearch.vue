@@ -102,6 +102,9 @@
       @close="closeAddDefinitionDialog"
       @submit="handleDefinitionSubmit"
     />
+    
+    <!-- Favorites Login Prompt -->
+    <FavoritesLoginPrompt />
   </div>
 </template>
 
@@ -122,6 +125,7 @@ import MknollSearchResults from "@/components/search/MknollSearchResults.vue";
 import CedictSearchResults from "@/components/search/CedictSearchResults.vue";
 import CommunitySearchResults from "@/components/search/CommunitySearchResults.vue";
 import CommunityDefinitionForm from "@/components/CommunityDefinitionForm.vue";
+import FavoritesLoginPrompt from "@/components/FavoritesLoginPrompt.vue";
 
 import { useFavoritesStore } from "@/stores/favoritesStore";
 import { useCommunityStore } from "@/stores/communityStore";

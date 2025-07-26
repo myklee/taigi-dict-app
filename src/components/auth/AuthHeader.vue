@@ -5,7 +5,7 @@
       <button @click="toggleRandomWord">
         {{ showRandomWord ? 'Hide random word' : 'Show random word' }}
       </button>
-      <button @click="showAuthModal = true">
+      <button @click="authStore.showAuthModalAction('signin')">
         Log in
       </button>
     </div>
@@ -33,9 +33,9 @@
 
     <!-- Auth Modal -->
     <AuthModal
-      :visible="showAuthModal"
-      :initial-mode="authMode"
-      @close="showAuthModal = false"
+      :visible="authStore.showAuthModal"
+      :initial-mode="authStore.authModalMode"
+      @close="authStore.hideAuthModal"
       @success="handleAuthSuccess"
     />
 
@@ -52,8 +52,6 @@ import AuthModal from './AuthModal.vue';
 const authStore = useAuthStore();
 const communityStore = useCommunityStore();
 const dictionaryStore = useDictionaryStore();
-const showAuthModal = ref(false);
-const authMode = ref('signin');
 
 const userEmail = computed(() => {
   if (!authStore.user?.email) return '';
@@ -75,7 +73,7 @@ const isAdmin = computed(() => {
 });
 
 const handleAuthSuccess = async () => {
-  showAuthModal.value = false;
+  authStore.hideAuthModal();
   // Initialize community store after successful authentication
   await communityStore.initialize();
 };
