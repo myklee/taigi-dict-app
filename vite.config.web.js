@@ -50,11 +50,8 @@ export default defineConfig({
           
           // Component-based chunks
           if (id.includes('/components/')) {
-            if (id.includes('Admin') || id.includes('User') || id.includes('Community')) {
+            if (id.includes('Admin') || id.includes('User') || id.includes('Community') || id.includes('auth/')) {
               return 'admin-components'
-            }
-            if (id.includes('auth/')) {
-              return 'auth-components'
             }
             return 'components'
           }
