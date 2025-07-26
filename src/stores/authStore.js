@@ -50,10 +50,19 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loading.value = true;
       
-      // Get initial session
-      const { data: { session: initialSession } } = await supabase.auth.getSession();
-      session.value = initialSession;
-      user.value = initialSession?.user || null;
+      // Get initial session - handle token refresh failures gracefully
+      const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.warn('Session error (likely expired token):', sessionError.message);
+        // Clear any invalid session data
+        session.value = null;
+        user.value = null;
+        userProfile.value = null;
+      } else {
+        session.value = initialSession;
+        user.value = initialSession?.user || null;
+      }
 
       // Fetch user profile if authenticated
       if (user.value) {
@@ -72,6 +81,10 @@ export const useAuthStore = defineStore('auth', () => {
           } else if (event === 'SIGNED_OUT') {
             console.log('User signed out');
             userProfile.value = null;
+          } else if (event === 'TOKEN_REFRESHED') {
+            console.log('Token refreshed successfully');
+          } else if (event === 'PASSWORD_RECOVERY') {
+            console.log('Password recovery initiated');
           }
         }
       );
@@ -239,6 +252,23 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null;
   };
 
+  const clearInvalidSession = async () => {
+    try {
+      // Clear local state
+      user.value = null;
+      session.value = null;
+      userProfile.value = null;
+      error.value = null;
+      
+      // Clear any stored session data
+      await supabase.auth.signOut();
+      
+      console.log('Invalid session cleared');
+    } catch (err) {
+      console.error('Error clearing invalid session:', err);
+    }
+  };
+
   return {
     // State
     user,
@@ -261,6 +291,7 @@ export const useAuthStore = defineStore('auth', () => {
     updatePassword,
     updateProfile,
     clearError,
+    clearInvalidSession,
     fetchUserProfile
   };
 }); 
