@@ -48,12 +48,9 @@ export default defineConfig({
             return 'views'
           }
           
-          // Component-based chunks
+          // Component-based chunks - merge all components into admin-components to avoid circular dependencies
           if (id.includes('/components/')) {
-            if (id.includes('Admin') || id.includes('User') || id.includes('Community') || id.includes('auth/')) {
-              return 'admin-components'
-            }
-            return 'components'
+            return 'admin-components'
           }
         }
       }
