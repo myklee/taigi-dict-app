@@ -242,5 +242,8 @@ const navigateToWordDetail = () => {
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  justify-content: end;
+  z-index: 10;
 }
+
 </style>

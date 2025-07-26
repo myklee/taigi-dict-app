@@ -123,7 +123,6 @@ button:disabled {
 
 .icon-button {
   cursor: pointer;
-  /* background-color: var(--black); */
   border-radius: 50%;
   height: 2.5rem;
   width: 2.5rem;
@@ -133,28 +132,13 @@ button:disabled {
   flex-shrink: 0;
 }
 
-/* edit word button */
-.edit-word {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  cursor: pointer;
-  border: none;
-}
-
 /* different language fonts */
 .alphabetic {
   font-family: "Helvetica Neue", sans-serif;
 }
 .logographic {
   font-family: "Noto Sans", sans-serif;
-}
-
-/* global pinyin and zhuyin font styles */
-.pinyin,
-.zhuyin {
-  /* white-space: nowrap; */
-}
+} 
 .pinyin-zhuyin {
   display: flex;
   flex-wrap: wrap;

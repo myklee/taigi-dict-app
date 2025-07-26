@@ -1,9 +1,9 @@
 <template>
-  <div class="icon-button">
+  <div class="icon-button edit-icon" @click="$emit('click')">
     <!-- edit_2_fill (mingcute icon set)-->
     <svg
-      width="24"
-      height="24"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -22,5 +22,14 @@
     </svg>
   </div>
 </template>
+
 <script setup>
+const emit = defineEmits(['click']);
 </script>
+
+<style scoped>
+.edit-icon {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+</style>

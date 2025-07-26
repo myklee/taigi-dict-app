@@ -1,8 +1,8 @@
 <template>
   <div class="icon-button heart-icon" @click="$emit('click')" :class="{ 'favorited': isFavorited }">
     <svg
-      width="24"
-      height="24"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -32,10 +32,6 @@ const emit = defineEmits(['click']);
 .heart-icon {
   cursor: pointer;
   transition: all 0.2s ease;
-}
-
-.heart-icon:hover {
-  transform: scale(1.1);
 }
 
 .heart-icon.favorited {
