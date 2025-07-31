@@ -1,35 +1,27 @@
 <template>
   <section v-if="shouldShowResults" class="community-search-results">
     <!-- Section Header -->
-    <div class="section-header">
-      <h2 class="section-title">
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          class="community-icon"
-        >
-          <path
-            d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
-            fill="currentColor"
-          />
-          <path
-            d="M19 15L19.5 17L21 17.5L19.5 18L19 20L18.5 18L17 17.5L18.5 17L19 15Z"
-            fill="currentColor"
-          />
-          <path
-            d="M5 15L5.5 17L7 17.5L5.5 18L5 20L4.5 18L3 17.5L4.5 17L5 15Z"
-            fill="currentColor"
-          />
-        </svg>
-        Community Definitions
-      </h2>
-      <div class="results-count">
-        {{ visibleResults.length }} {{ visibleResults.length === 1 ? 'result' : 'results' }}
+    <header class="section-header community-header">
+      <div class="section-title-container">
+        <div class="section-icon community-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <div class="section-title-text">
+          <h3 class="section-title">Community Definitions</h3>
+          <p class="section-subtitle">User-contributed definitions and translations</p>
+        </div>
       </div>
-    </div>
+
+      <div class="results-count">
+        <span class="count-number">{{ visibleResults.length }}</span>
+        <span class="count-text">definition{{ visibleResults.length !== 1 ? 's' : '' }}</span>
+      </div>
+    </header>
 
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
@@ -279,41 +271,100 @@ watch(() => props.searchQuery, () => {
 
 <style scoped>
 .community-search-results {
-  background: var(--rw-background);
-  border-radius: 0.5rem;
-  margin-bottom: 2rem;
+  background: var(--black);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--gunmetal);
+  margin-bottom: var(--space-6);
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 /* Section Header */
 .section-header {
+  padding: var(--space-5) var(--space-6);
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  padding: 1.25rem 1.5rem;
-  background: var(--moeItemBg);
-  border-bottom: 1px solid var(--slateGray);
+  gap: var(--space-4);
 }
 
-.section-title {
+.community-header {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  border-bottom: 2px solid #5dade2;
+}
+
+.section-title-container {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--white);
+  gap: var(--space-4);
+  flex: 1;
+  min-width: 0;
 }
 
-.community-icon {
-  color: #3498db;
+.section-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
   flex-shrink: 0;
 }
 
-.results-count {
-  font-size: 0.875rem;
-  color: var(--frenchGray);
+.community-icon {
+  color: #85c1e9;
+  background: rgba(133, 193, 233, 0.15);
+}
+
+.section-title-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.section-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--white);
+  margin: 0 0 var(--space-1) 0;
+  line-height: 1.2;
+}
+
+.section-subtitle {
+  font-size: var(--font-size-sm);
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
   font-weight: 500;
+  line-height: 1.3;
+}
+
+.results-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  backdrop-filter: blur(8px);
+  flex-shrink: 0;
+}
+
+.count-number {
+  font-size: var(--font-size-2xl);
+  font-weight: 800;
+  color: var(--white);
+  line-height: 1;
+}
+
+.count-text {
+  font-size: var(--font-size-xs);
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: var(--space-1);
 }
 
 /* Loading State */
@@ -538,38 +589,92 @@ watch(() => props.searchQuery, () => {
 @media (max-width: 768px) {
   .section-header {
     flex-direction: column;
-    gap: 0.5rem;
     align-items: flex-start;
-    padding: 1rem;
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .section-title-container {
+    gap: var(--space-3);
+  }
+
+  .section-icon {
+    width: 40px;
+    height: 40px;
   }
 
   .section-title {
-    font-size: 1.125rem;
+    font-size: var(--font-size-lg);
+  }
+
+  .section-subtitle {
+    font-size: var(--font-size-xs);
+  }
+
+  .results-count {
+    align-self: stretch;
+    flex-direction: row;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .count-number {
+    font-size: var(--font-size-xl);
+  }
+
+  .count-text {
+    font-size: var(--font-size-xs);
+    margin-top: 0;
+    align-self: center;
   }
 
   .results-list {
-    padding: 1rem;
+    padding: var(--space-3) var(--space-4) var(--space-4);
   }
 
   .search-result-card {
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-3);
   }
 
   .quality-separator {
-    margin: 1.5rem 0 1rem;
+    margin: var(--space-4) 0 var(--space-3);
   }
 
   .separator-text {
-    font-size: 0.8125rem;
+    font-size: var(--font-size-xs);
   }
 
   .empty-state {
-    padding: 2rem 1rem;
+    padding: var(--space-6) var(--space-3);
   }
 
   .toggle-low-quality-button {
-    padding: 0.625rem 0.875rem;
-    font-size: 0.8125rem;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-xs);
+  }
+}
+
+@media (max-width: 480px) {
+  .section-header {
+    padding: var(--space-3);
+  }
+
+  .section-title-container {
+    gap: var(--space-2);
+  }
+
+  .section-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .section-title {
+    font-size: var(--font-size-base);
+  }
+
+  .results-list {
+    padding: var(--space-2) var(--space-3) var(--space-3);
   }
 }
 

@@ -1,90 +1,233 @@
 <template>
-  <Loader :loading="loading" />
   <div id="dictionary-search">
-    <section class="search-header">
-      <div class="search-words">
-        <input
-          type="text"
-          v-model="searchQuery"
-          @keyup.enter="searchWords"
-          placeholder="Search English, Chinese, Taiwanese · 中文或英文搜尋"
-          class="text-field search-words-text-field"
-          autocapitalize="off"
-        />
-        <button
-          v-if="searchQuery.length > 0"
-          class="clear-search"
-          @click="clearSearch"
+    <!-- Enhanced Search Header -->
+    <header class="search-header" role="banner">
+      <div class="search-container">
+        <!-- Main Search Input -->
+        <div class="search-input-wrapper">
+          <div class="search-input-container">
+            <input
+              type="text"
+              v-model="searchQuery"
+              @keyup.enter="searchWords"
+              placeholder="Search English, Chinese, Taiwanese · 中文或英文搜尋"
+              class="search-input"
+              autocapitalize="off"
+              :disabled="loading"
+              aria-label="Search dictionary"
+            />
+            <button
+              v-if="searchQuery.length > 0"
+              class="clear-search-button"
+              @click="clearSearch"
+              :disabled="loading"
+              aria-label="Clear search"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            <div v-if="loading" class="search-loading-indicator">
+              <div class="loading-spinner"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search Options -->
+        <div class="search-options">
+          <div class="search-options-left">
+            <div class="exact-search-container">
+              <input
+                type="checkbox"
+                id="exact-search"
+                v-model="exactSearch"
+                @change="searchWords"
+                :disabled="loading"
+                class="exact-search-checkbox"
+              />
+              <label for="exact-search" class="exact-search-label">
+                Strict search
+              </label>
+            </div>
+          </div>
+          
+          <div class="search-options-right">
+            <button 
+              class="search-button" 
+              @click="searchWords"
+              :disabled="loading || !searchQuery.trim()"
+              :aria-label="loading ? 'Searching...' : 'Search dictionary'"
+            >
+              <span v-if="!loading">Search</span>
+              <span v-else class="search-button-loading">
+                <div class="button-spinner"></div>
+                Searching...
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Search Status -->
+        <div v-if="searchExecuted && !loading" class="search-status">
+          <div class="search-results-summary">
+            <span class="search-query-display">"{{ searchQuery }}"</span>
+            <span class="search-results-count">
+              {{ totalResultsCount }} {{ totalResultsCount === 1 ? 'result' : 'results' }} found
+            </span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+
+    <!-- Random Word (shown when no search executed) -->
+    <RandomWord v-if="dictionaryStore.showRandomWord && !searchExecuted" />
+
+    <!-- Search Results Container -->
+    <main class="search-results-container" role="main">
+      <!-- Loading State -->
+      <div v-if="loading" class="search-loading-state">
+        <div class="loading-section">
+          <div class="loading-section-header">
+            <LoadingSkeleton variant="title" width="60%" />
+            <LoadingSkeleton variant="text" width="20%" />
+          </div>
+          <div class="loading-cards">
+            <LoadingSkeleton 
+              v-for="i in 3" 
+              :key="`moe-${i}`" 
+              variant="card" 
+              height="180px"
+              class="loading-card"
+            />
+          </div>
+        </div>
+        
+        <div class="loading-section">
+          <div class="loading-section-header">
+            <LoadingSkeleton variant="title" width="40%" />
+          </div>
+          <div class="loading-cards">
+            <LoadingSkeleton 
+              v-for="i in 2" 
+              :key="`mknoll-${i}`" 
+              variant="card" 
+              height="150px"
+              class="loading-card"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Search Results -->
+      <div v-else-if="searchExecuted">
+        <!-- Empty State -->
+        <EmptyState
+          v-if="!hasAnyResults"
+          title="No results found"
+          :description="`No dictionary entries found for '${searchQuery}'. Try a different search term or check your spelling.`"
+          size="large"
+          primary-action="Try Different Search"
+          secondary-action="Browse Random Words"
+          @primary-action="clearSearch"
+          @secondary-action="showRandomWord"
         >
-          <span class="visually-hidden">Clear</span>
-        </button>
-      </div>
-      <div class="search-options">
-        <div class="exact-search-container">
-          <input
-            type="checkbox"
-            id="exact-search"
-            v-model="exactSearch"
-            @change="searchWords"
+          <template #icon>
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+              <path d="M11 6v10"/>
+              <path d="M6 11h10"/>
+            </svg>
+          </template>
+        </EmptyState>
+
+        <!-- Results Sections -->
+        <div v-else class="search-results-sections">
+          <!-- MOE Search Results -->
+          <MoeSearchResults 
+            :results="dictionaryStore.searchResults"
+            :searchExecuted="searchExecuted"
+            :primaryLanguage="detectedLanguage.language"
+            :searchQuery="searchQuery"
+            :loading="moeLoading"
+            :error="moeError"
+            @readChinese="readChinese"
+            @readEnglish="readEnglish"
+            @openEditDialog="openEditDialog"
+            @addDefinition="openAddDefinitionDialog"
+            @retry="retryMoeSearch"
           />
-          <label for="exact-search">Strict search</label>
-        </div>
-        <div class="search-actions">
-          <button class="search-button" @click="searchWords">Search</button>
+
+          <!-- Mary Knoll Results -->
+          <MknollSearchResults 
+            :results="dictionaryStore.mknollResults"
+            :primaryLanguage="detectedLanguage.language"
+            :searchQuery="searchQuery"
+            :loading="mknollLoading"
+            :error="mknollError"
+            @openEditDialog="openEditDialogMknoll"
+            @addDefinition="openAddDefinitionDialog"
+            @retry="retryMknollSearch"
+          />
+
+          <!-- CEDICT Results and Cross-reference -->
+          <CedictSearchResults 
+            :results="dictionaryStore.cedictResults"
+            :crossRefResults="dictionaryStore.crossRefResults"
+            :primaryLanguage="detectedLanguage.language"
+            :searchQuery="searchQuery"
+            :loading="cedictLoading"
+            :error="cedictError"
+            :crossRefLoading="crossRefLoading"
+            :crossRefError="crossRefError"
+            @readChinese="readChinese"
+            @addDefinition="openAddDefinitionDialog"
+            @retry="retryCedictSearch"
+            @retry-crossref="retryCrossRefSearch"
+          />
+
+          <!-- Community Search Results -->
+          <CommunitySearchResults 
+            :results="communityResults"
+            :search-query="searchQuery"
+            :search-executed="searchExecuted"
+            :loading="communityLoading"
+            :loading-more="communityLoadingMore"
+            :error="communityError"
+            :has-more="communityHasMore"
+            @vote-submitted="handleCommunityVoteSubmitted"
+            @vote-updated="handleCommunityVoteUpdated"
+            @voting-error="handleCommunityVotingError"
+            @login-required="handleLoginRequired"
+            @load-more="loadMoreCommunityResults"
+            @retry="searchCommunityDefinitions"
+          />
         </div>
       </div>
-    </section>
 
-
-    <RandomWord v-if="dictionaryStore.showRandomWord" />
-
-    <!-- moe search results -->
-    <MoeSearchResults 
-      :results="dictionaryStore.searchResults"
-      :searchExecuted="searchExecuted"
-      :primaryLanguage="detectedLanguage.language"
-      :searchQuery="searchQuery"
-      @readChinese="readChinese"
-      @readEnglish="readEnglish"
-      @openEditDialog="openEditDialog"
-      @addDefinition="openAddDefinitionDialog"
-    />
-
-    <!-- mknoll results -->
-    <MknollSearchResults 
-      :results="dictionaryStore.mknollResults"
-      :primaryLanguage="detectedLanguage.language"
-      :searchQuery="searchQuery"
-      @openEditDialog="openEditDialogMknoll"
-      @addDefinition="openAddDefinitionDialog"
-    />
-
-    <!-- cedict results and cross-reference -->
-    <CedictSearchResults 
-      :results="dictionaryStore.cedictResults"
-      :crossRefResults="dictionaryStore.crossRefResults"
-      :primaryLanguage="detectedLanguage.language"
-      :searchQuery="searchQuery"
-      @readChinese="readChinese"
-      @addDefinition="openAddDefinitionDialog"
-    />
-
-    <!-- community search results -->
-    <CommunitySearchResults 
-      :results="communityResults"
-      :search-query="searchQuery"
-      :search-executed="searchExecuted"
-      :loading="communityLoading"
-      :loading-more="communityLoadingMore"
-      :error="communityError"
-      :has-more="communityHasMore"
-      @vote-submitted="handleCommunityVoteSubmitted"
-      @vote-updated="handleCommunityVoteUpdated"
-      @voting-error="handleCommunityVotingError"
-      @login-required="handleLoginRequired"
-      @load-more="loadMoreCommunityResults"
-      @retry="searchCommunityDefinitions"
-    />
+      <!-- Welcome State (no search executed) -->
+      <div v-else class="welcome-state">
+        <EmptyState
+          title="Search the Dictionary"
+          description="Enter a word in English, Chinese, or Taiwanese to find definitions and pronunciations from multiple dictionary sources."
+          size="large"
+          primary-action="Browse Random Words"
+          @primary-action="showRandomWord"
+        >
+          <template #icon>
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+              <path d="M8 7h8"/>
+              <path d="M8 11h8"/>
+              <path d="M8 15h5"/>
+            </svg>
+          </template>
+        </EmptyState>
+      </div>
+    </main>
 
     <EditWord
       :visible="showDialog"
@@ -109,14 +252,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from "vue";
+import { ref, onMounted, onUnmounted, watch, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useDictionaryStore } from "@/stores/dictionaryStore";
 import { supabase } from "@/supabase";
 import { speakChinese } from "@/utils";
 import { speakEnglish } from "@/utils";
 import { detectSearchLanguage } from "@/utils";
-import Loader from "@/components/utility/Loader.vue";
+import LoadingSkeleton from "@/components/utility/LoadingSkeleton.vue";
+import EmptyState from "@/components/utility/EmptyState.vue";
 import EditWord from "./EditWord.vue";
 import EditWordMknoll from "./EditWordMknoll.vue";
 import RandomWord from "./RandomWord.vue";
@@ -153,6 +297,31 @@ const communityLoading = ref(false);
 const communityLoadingMore = ref(false);
 const communityError = ref(null);
 const communityHasMore = ref(false);
+
+// Individual search loading and error states
+const moeLoading = ref(false);
+const moeError = ref(null);
+const mknollLoading = ref(false);
+const mknollError = ref(null);
+const cedictLoading = ref(false);
+const cedictError = ref(null);
+const crossRefLoading = ref(false);
+const crossRefError = ref(null);
+
+// Computed properties
+const totalResultsCount = computed(() => {
+  const moeCount = dictionaryStore.searchResults?.length || 0;
+  const mknollCount = dictionaryStore.mknollResults?.length || 0;
+  const cedictCount = dictionaryStore.cedictResults?.length || 0;
+  const crossRefCount = dictionaryStore.crossRefResults?.length || 0;
+  const communityCount = communityResults.value?.length || 0;
+  
+  return moeCount + mknollCount + cedictCount + crossRefCount + communityCount;
+});
+
+const hasAnyResults = computed(() => {
+  return totalResultsCount.value > 0;
+});
 
 const closeDialog = () => {
   showDialog.value = false;
@@ -218,11 +387,16 @@ const searchWords = async () => {
     await dictionaryStore.setCedictResults([]);
     await dictionaryStore.setCrossRefCedict([]);
     communityResults.value = [];
+    // Clear error states
+    clearAllErrors();
     return;
   }
 
   loading.value = true;
   searchExecuted.value = true;
+
+  // Clear previous errors
+  clearAllErrors();
 
   // Detect search language
   detectedLanguage.value = detectSearchLanguage(searchQuery.value);
@@ -237,8 +411,31 @@ const searchWords = async () => {
     // Determine search pattern based on exactSearch setting
     const searchPattern = exactSearch.value ? searchQuery.value : `%${searchQuery.value}%`;
 
-    // Build search queries - search all fields
-    let moeSearchQuery = supabase
+    // Execute searches in parallel with individual error handling
+    const searchPromises = [
+      searchMoeResults(searchPattern),
+      searchMknollResults(searchPattern),
+      searchCedictResults(searchPattern),
+      searchCrossRefResults(searchPattern),
+      searchCommunityDefinitions()
+    ];
+
+    await Promise.allSettled(searchPromises);
+
+  } catch (error) {
+    console.error("Search error:", error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Individual search functions with error handling
+const searchMoeResults = async (searchPattern) => {
+  moeLoading.value = true;
+  moeError.value = null;
+  
+  try {
+    const moeSearchQuery = supabase
       .from("words")
       .select(`
         *,
@@ -252,50 +449,124 @@ const searchWords = async () => {
       `)
       .or(`chinese.ilike.${searchPattern},english.ilike.${searchPattern},romaji.ilike.${searchPattern}`);
 
-    let mknollSearchQuery = supabase
+    const { data: moeResults, error } = await moeSearchQuery.limit(50);
+    
+    if (error) throw error;
+    
+    await dictionaryStore.setSearchResults(moeResults || []);
+  } catch (error) {
+    console.error("MOE search error:", error);
+    moeError.value = error.message || "Failed to search MOE dictionary";
+    await dictionaryStore.setSearchResults([]);
+  } finally {
+    moeLoading.value = false;
+  }
+};
+
+const searchMknollResults = async (searchPattern) => {
+  mknollLoading.value = true;
+  mknollError.value = null;
+  
+  try {
+    const mknollSearchQuery = supabase
       .from("maryknoll")
       .select("*")
       .or(`taiwanese.ilike.${searchPattern},chinese.ilike.${searchPattern},english_mknoll.ilike.${searchPattern}`);
 
-    let cedictSearchQuery = supabase
+    const { data: mknollResults, error } = await mknollSearchQuery.limit(20);
+    
+    if (error) throw error;
+    
+    await dictionaryStore.setMknollResults(mknollResults || []);
+  } catch (error) {
+    console.error("Mary Knoll search error:", error);
+    mknollError.value = error.message || "Failed to search Mary Knoll dictionary";
+    await dictionaryStore.setMknollResults([]);
+  } finally {
+    mknollLoading.value = false;
+  }
+};
+
+const searchCedictResults = async (searchPattern) => {
+  cedictLoading.value = true;
+  cedictError.value = null;
+  
+  try {
+    const cedictSearchQuery = supabase
       .from("cedict")
       .select("*")
       .or(`traditional.ilike.${searchPattern},simplified.ilike.${searchPattern},english_cedict.ilike.${searchPattern}`);
 
-    // Execute searches
-    const { data: moeResults, error: moeError } = await moeSearchQuery.limit(50);
-    if (moeError) throw moeError;
+    const { data: cedictResults, error } = await cedictSearchQuery.limit(20);
+    
+    if (error) throw error;
+    
+    await dictionaryStore.setCedictResults(cedictResults || []);
+  } catch (error) {
+    console.error("CEDICT search error:", error);
+    cedictError.value = error.message || "Failed to search CEDICT dictionary";
+    await dictionaryStore.setCedictResults([]);
+  } finally {
+    cedictLoading.value = false;
+  }
+};
 
-    const { data: mknollResults, error: mknollError } = await mknollSearchQuery.limit(20);
-    if (mknollError) throw mknollError;
-
-    const { data: cedictResults, error: cedictError } = await cedictSearchQuery.limit(20);
-    if (cedictError) throw cedictError;
-
-    // Cross-reference search
-    const { data: crossRefData, error: crossRefError } = await supabase
+const searchCrossRefResults = async (searchPattern) => {
+  crossRefLoading.value = true;
+  crossRefError.value = null;
+  
+  try {
+    const crossRefQuery = supabase
       .from("cedict")
       .select("*")
       .or(`traditional.ilike.${searchPattern},simplified.ilike.${searchPattern}`)
       .limit(10);
+
+    const { data: crossRefData, error } = await crossRefQuery;
     
-    if (crossRefError) throw crossRefError;
-    const crossRefResults = crossRefData || [];
-
-    // Update store
-    await dictionaryStore.setSearchResults(moeResults || []);
-    await dictionaryStore.setMknollResults(mknollResults || []);
-    await dictionaryStore.setCedictResults(cedictResults || []);
-    await dictionaryStore.setCrossRefCedict(crossRefResults);
-
-    // Search community definitions
-    await searchCommunityDefinitions();
-
+    if (error) throw error;
+    
+    await dictionaryStore.setCrossRefCedict(crossRefData || []);
   } catch (error) {
-    console.error("Search error:", error);
+    console.error("Cross-reference search error:", error);
+    crossRefError.value = error.message || "Failed to load cross-references";
+    await dictionaryStore.setCrossRefCedict([]);
   } finally {
-    loading.value = false;
+    crossRefLoading.value = false;
   }
+};
+
+const clearAllErrors = () => {
+  moeError.value = null;
+  mknollError.value = null;
+  cedictError.value = null;
+  crossRefError.value = null;
+  communityError.value = null;
+};
+
+// Retry functions
+const retryMoeSearch = async () => {
+  if (!searchQuery.value.trim()) return;
+  const searchPattern = exactSearch.value ? searchQuery.value : `%${searchQuery.value}%`;
+  await searchMoeResults(searchPattern);
+};
+
+const retryMknollSearch = async () => {
+  if (!searchQuery.value.trim()) return;
+  const searchPattern = exactSearch.value ? searchQuery.value : `%${searchQuery.value}%`;
+  await searchMknollResults(searchPattern);
+};
+
+const retryCedictSearch = async () => {
+  if (!searchQuery.value.trim()) return;
+  const searchPattern = exactSearch.value ? searchQuery.value : `%${searchQuery.value}%`;
+  await searchCedictResults(searchPattern);
+};
+
+const retryCrossRefSearch = async () => {
+  if (!searchQuery.value.trim()) return;
+  const searchPattern = exactSearch.value ? searchQuery.value : `%${searchQuery.value}%`;
+  await searchCrossRefResults(searchPattern);
 };
 
 // Community search functionality
@@ -392,6 +663,13 @@ const readChinese = async (text) => {
 
 const readEnglish = async (text) => {
   speakEnglish(text);
+};
+
+const showRandomWord = () => {
+  dictionaryStore.showRandomWord = true;
+  // Clear search to show random word
+  searchQuery.value = "";
+  searchExecuted.value = false;
 };
 
 
@@ -495,88 +773,408 @@ const updateRouteWithSearchState = (query, exact) => {
 </script>
 
 <style scoped>
-/*
-
-search
-
-*/
-
+/* Enhanced Search Header */
 .search-header {
-  background-color: var(--raisinBlack);
+  background: linear-gradient(135deg, var(--raisinBlack) 0%, var(--gunmetal) 100%);
+  border-bottom: 1px solid var(--slateGray);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(8px);
 }
-.search-words {
+
+.search-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-4);
+}
+
+/* Search Input */
+.search-input-wrapper {
+  margin-bottom: var(--space-4);
+}
+
+.search-input-container {
   position: relative;
-  padding: 0 5vw;
+  display: flex;
+  align-items: center;
+  background: var(--black);
+  border: 2px solid var(--gunmetal);
+  border-radius: var(--radius-lg);
+  transition: var(--transition-normal);
+  overflow: hidden;
 }
-.search-words-text-field {
-  width: 100%;
+
+.search-input-container:focus-within {
+  border-color: var(--slateGray);
+  box-shadow: 0 0 0 3px rgba(110, 131, 160, 0.1);
+}
+
+.search-input {
+  flex: 1;
+  background: transparent;
   border: none;
-  border-bottom: 3px solid;
-  padding: 1rem;
-  background-color: transparent;
+  padding: var(--space-4) var(--space-4);
+  font-size: var(--font-size-lg);
+  color: var(--white);
+  outline: none;
+  min-height: var(--touch-target-comfortable);
 }
-.clear-search {
-  position: absolute;
-  right: calc(5vw);
-  background-color: transparent;
+
+.search-input::placeholder {
   color: var(--frenchGray);
-  &:hover {
-    color: white;
-  }
-  &::after {
-    display: block;
-    content: "+";
-    font-size: 2.5rem;
-    transform: rotate(45deg);
-  }
+  opacity: 0.8;
 }
+
+.search-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.clear-search-button {
+  position: absolute;
+  right: var(--space-3);
+  background: transparent;
+  border: none;
+  color: var(--frenchGray);
+  cursor: pointer;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+}
+
+.clear-search-button:hover:not(:disabled) {
+  color: var(--white);
+  background: var(--gunmetal);
+}
+
+.clear-search-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.search-loading-indicator {
+  position: absolute;
+  right: var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2);
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--gunmetal);
+  border-top: 2px solid var(--slateGray);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Search Options */
 .search-options {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 5vw;
+  gap: var(--space-4);
   flex-wrap: wrap;
-  gap: 1rem;
-}
-.reset-voice {
-  justify-self: end;
 }
 
+.search-options-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
 
-/*
-
-exact search checkbox
-
-*/
+.search-options-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
 
 .exact-search-container {
   display: flex;
-  gap: 0.5rem;
   align-items: center;
-  margin-right: 1rem;
-  padding: 1rem;
-  padding-left: 0;
-  label {
-    white-space: nowrap;
-  }
+  gap: var(--space-2);
 }
-.search-history {
-  padding: 0 5vw 5vw;
+
+.exact-search-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--slateGray);
+  cursor: pointer;
 }
-.search-history-header {
+
+.exact-search-checkbox:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.exact-search-label {
+  color: var(--frenchGray);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.search-button {
+  background: var(--slateGray);
+  color: var(--white);
+  border: 1px solid var(--slateGray);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-normal);
+  min-height: var(--touch-target-min);
   display: flex;
   align-items: center;
+  gap: var(--space-2);
 }
 
-
-
-/* 
-
-admin
-
-*/
-.admin {
-  padding: 5vw;
+.search-button:hover:not(:disabled) {
+  background: var(--frenchGray);
+  border-color: var(--frenchGray);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
+.search-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.search-button-loading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.button-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Search Status */
+.search-status {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--gunmetal);
+}
+
+.search-results-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.search-query-display {
+  color: var(--white);
+  font-weight: 600;
+  font-size: var(--font-size-base);
+}
+
+.search-results-count {
+  color: var(--frenchGray);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+/* Search Results Container */
+.search-results-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+  min-height: 400px;
+}
+
+/* Loading States */
+.search-loading-state {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.loading-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.loading-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.loading-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.loading-card {
+  border-radius: var(--radius-lg);
+}
+
+/* Search Results Sections */
+.search-results-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* Welcome State */
+.welcome-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+/* Mobile Responsive Design */
+@media (max-width: 768px) {
+  .search-container {
+    padding: var(--space-3);
+  }
+
+  .search-input {
+    font-size: var(--font-size-base);
+    padding: var(--space-3);
+  }
+
+  .search-input::placeholder {
+    font-size: var(--font-size-sm);
+  }
+
+  .search-options {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .search-options-left,
+  .search-options-right {
+    justify-content: center;
+  }
+
+  .search-button {
+    width: 100%;
+    justify-content: center;
+    padding: var(--space-4) var(--space-6);
+  }
+
+  .search-results-summary {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .search-results-container {
+    padding: var(--space-4) var(--space-3);
+  }
+
+  .loading-cards {
+    gap: var(--space-3);
+  }
+}
+
+@media (max-width: 480px) {
+  .search-container {
+    padding: var(--space-2);
+  }
+
+  .search-input-wrapper {
+    margin-bottom: var(--space-3);
+  }
+
+  .search-input {
+    padding: var(--space-3) var(--space-3);
+    font-size: var(--font-size-sm);
+  }
+
+  .exact-search-label {
+    font-size: var(--font-size-xs);
+  }
+
+  .search-button {
+    font-size: var(--font-size-sm);
+    padding: var(--space-3) var(--space-4);
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .search-input-container {
+    border-width: 3px;
+  }
+
+  .search-button {
+    border-width: 2px;
+    font-weight: 700;
+  }
+
+  .exact-search-label {
+    font-weight: 600;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner,
+  .button-spinner {
+    animation: none;
+  }
+
+  .search-input-container,
+  .search-button,
+  .clear-search-button {
+    transition: none;
+  }
+}
+
+/* Focus Styles for Accessibility */
+.search-input:focus,
+.exact-search-checkbox:focus,
+.search-button:focus,
+.clear-search-button:focus {
+  outline: 2px solid var(--slateGray);
+  outline-offset: 2px;
+}
+
+/* Print Styles */
+@media print {
+  .search-header {
+    position: static;
+    background: none;
+    border-bottom: 2px solid #000;
+  }
+
+  .search-loading-state,
+  .loading-spinner,
+  .button-spinner {
+    display: none;
+  }
+}
 </style> 
