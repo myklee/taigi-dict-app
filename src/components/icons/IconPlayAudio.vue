@@ -10,7 +10,12 @@
       'is-playing': isPlaying,
       'has-indicator': showIndicator 
     }"
+    :aria-label="ariaLabel"
+    role="img"
   >
+    <!-- Alternative text for screen readers -->
+    <title>{{ altText }}</title>
+    <desc>{{ description }}</desc>
     <!-- Main speaker icon -->
     <g class="speaker-base">
       <path
@@ -73,6 +78,34 @@ export default {
     showIndicator: {
       type: Boolean,
       default: false
+    },
+    altText: {
+      type: String,
+      default: 'Audio player'
+    }
+  },
+  computed: {
+    ariaLabel() {
+      if (this.isPlaying) {
+        return 'Audio is playing';
+      } else if (this.showIndicator) {
+        return 'Audio available - click to play';
+      } else {
+        return 'Audio player';
+      }
+    },
+    description() {
+      let desc = 'Speaker icon';
+      if (this.showWaves) {
+        desc += ' with sound waves';
+      }
+      if (this.showIndicator) {
+        desc += ' and availability indicator';
+      }
+      if (this.isPlaying) {
+        desc += ' - currently playing';
+      }
+      return desc;
     }
   }
 }

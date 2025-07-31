@@ -14,6 +14,7 @@
         :aria-label="`View details for ${getPrimaryLanguageContent()}`"
         @keydown.enter="navigateToWordDetail"
         @keydown.space.prevent="navigateToWordDetail"
+        @keydown="handleCardKeydown"
       >
         <!-- Audio availability indicator -->
         <AudioAvailabilityIndicator 
@@ -231,6 +232,42 @@ const navigateToWordDetail = () => {
 const getPrimaryLanguageContent = () => {
   const primaryLang = displayOrder.value.find(lang => lang.isPrimary);
   return primaryLang ? primaryLang.content : props.word.chinese || props.word.romaji || props.word.english;
+};
+
+// Handle keyboard navigation within the card
+const handleCardKeydown = (event) => {
+  // Handle Tab key to navigate between card actions
+  if (event.key === 'Tab') {
+    const cardActions = event.currentTarget.parentElement.querySelector('.card-actions');
+    if (cardActions && !event.shiftKey) {
+      event.preventDefault();
+      const firstAction = cardActions.querySelector('button, [role="button"]');
+      if (firstAction) {
+        firstAction.focus();
+      }
+    }
+  }
+  
+  // Handle Escape key to return focus to card
+  if (event.key === 'Escape') {
+    event.currentTarget.focus();
+  }
+  
+  // Handle keyboard shortcuts for common actions
+  if (event.key === 'f' && (event.ctrlKey || event.metaKey)) {
+    event.preventDefault();
+    favoritesStore.toggleFavorite(props.word);
+  }
+  
+  if (event.key === 'e' && (event.ctrlKey || event.metaKey)) {
+    event.preventDefault();
+    emit('openEditDialog', props.word);
+  }
+  
+  if (event.key === 'a' && (event.ctrlKey || event.metaKey)) {
+    event.preventDefault();
+    emit('addDefinition', props.word);
+  }
 };
 </script>
 

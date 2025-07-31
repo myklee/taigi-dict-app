@@ -1,38 +1,70 @@
 <template>
-  <section v-if="results.length || loading" class="mknoll-search-section">
+  <section 
+    v-if="results.length || loading" 
+    class="mknoll-search-section"
+    role="region"
+    :aria-labelledby="sectionTitleId"
+    :aria-describedby="resultsCountId"
+  >
     <header class="section-header mknoll-header">
       <div class="section-title-container">
-        <div class="section-icon mknoll-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div 
+          class="section-icon mknoll-icon"
+          role="img"
+          aria-label="Mary Knoll Dictionary icon"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path d="M12 2L2 7l10 5 10-5-10-5z"/>
             <path d="M2 17l10 5 10-5"/>
             <path d="M2 12l10 5 10-5"/>
           </svg>
         </div>
         <div class="section-title-text">
-          <h3 class="section-title">Mary Knoll Dictionary</h3>
+          <h3 :id="sectionTitleId" class="section-title">Mary Knoll Dictionary</h3>
           <p class="section-subtitle">Maryknoll Taiwanese-English Dictionary</p>
         </div>
       </div>
 
-      <div class="results-count">
-        <span class="count-number">{{ results.length }}</span>
-        <span class="count-text">result{{ results.length !== 1 ? 's' : '' }}</span>
+      <div 
+        class="results-count"
+        :id="resultsCountId"
+        role="status"
+        :aria-label="`${results.length} ${results.length === 1 ? 'result' : 'results'} found in Mary Knoll Dictionary`"
+      >
+        <span class="count-number" aria-hidden="true">{{ results.length }}</span>
+        <span class="count-text" aria-hidden="true">result{{ results.length !== 1 ? 's' : '' }}</span>
       </div>
     </header>
     
     <div class="results-container mknoll-results-container">
       <!-- Loading State -->
-      <div v-if="loading" class="loading-state">
-        <div class="results-list">
-          <div v-for="i in 2" :key="`skeleton-${i}`" class="skeleton-card-container">
+      <div 
+        v-if="loading" 
+        class="loading-state"
+        role="status"
+        aria-live="polite"
+        aria-label="Loading Mary Knoll Dictionary results"
+      >
+        <div class="results-list" role="list" aria-label="Loading placeholders">
+          <div 
+            v-for="i in 2" 
+            :key="`skeleton-${i}`" 
+            class="skeleton-card-container"
+            role="listitem"
+            :aria-label="`Loading placeholder ${i} of 2`"
+          >
             <LoadingSkeleton variant="card" height="150px" class="result-skeleton" />
           </div>
         </div>
       </div>
 
       <!-- Error State -->
-      <div v-else-if="error" class="error-state">
+      <div 
+        v-else-if="error" 
+        class="error-state"
+        role="alert"
+        :aria-describedby="errorDescriptionId"
+      >
         <EmptyState
           title="Failed to load Mary Knoll results"
           :description="error"
@@ -41,26 +73,40 @@
           @primary-action="$emit('retry')"
         >
           <template #icon>
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
               <circle cx="12" cy="12" r="10"/>
               <line x1="15" y1="9" x2="9" y2="15"/>
               <line x1="9" y1="9" x2="15" y2="15"/>
             </svg>
           </template>
         </EmptyState>
+        <div :id="errorDescriptionId" class="visually-hidden">
+          Error loading Mary Knoll Dictionary results. {{ error }}
+        </div>
       </div>
 
       <!-- Results List -->
-      <ul v-else class="results-list">
-        <MknollResultCard
+      <ul 
+        v-else 
+        class="results-list"
+        role="list"
+        :aria-label="`${results.length} Mary Knoll Dictionary ${results.length === 1 ? 'result' : 'results'} for ${searchQuery}`"
+      >
+        <li
           v-for="(word, index) in results"
-          :key="index"
-          :word="word"
-          :primaryLanguage="primaryLanguage"
-          :searchQuery="searchQuery"
-          @openEditDialog="$emit('openEditDialog', $event)"
-          @addDefinition="$emit('addDefinition', $event)"
-        />
+          :key="word.id || index"
+          role="listitem"
+          :aria-setsize="results.length"
+          :aria-posinset="index + 1"
+        >
+          <MknollResultCard
+            :word="word"
+            :primaryLanguage="primaryLanguage"
+            :searchQuery="searchQuery"
+            @openEditDialog="$emit('openEditDialog', $event)"
+            @addDefinition="$emit('addDefinition', $event)"
+          />
+        </li>
       </ul>
     </div>
   </section>
@@ -95,6 +141,11 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['openEditDialog', 'addDefinition', 'retry']);
+
+// Generate unique IDs for ARIA relationships
+const sectionTitleId = `mknoll-section-title-${Date.now()}`;
+const resultsCountId = `mknoll-results-count-${Date.now()}`;
+const errorDescriptionId = `mknoll-error-description-${Date.now()}`;
 </script>
 
 <style scoped>

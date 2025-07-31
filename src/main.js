@@ -4,6 +4,8 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
+import { initializeAccessibility } from './utils/accessibility.js'
+import { initializeAccessibilityPreferences } from './utils/accessibilityPreferences.js'
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -16,6 +18,12 @@ app.use(router)
 
 // Mount the app - router is now available before mount
 app.mount('#app')
+
+// Initialize accessibility features
+initializeAccessibility()
+
+// Initialize accessibility preferences
+initializeAccessibilityPreferences()
 
 // Supabase postgres password VaJzmCmC2uIWw6UI
 

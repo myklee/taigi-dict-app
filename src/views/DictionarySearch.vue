@@ -5,37 +5,52 @@
       <div class="search-container">
         <!-- Main Search Input -->
         <div class="search-input-wrapper">
+          <label for="main-search-input" class="visually-hidden">
+            Search dictionary for English, Chinese, or Taiwanese words
+          </label>
           <div class="search-input-container">
             <input
+              id="main-search-input"
               type="text"
               v-model="searchQuery"
               @keyup.enter="searchWords"
               placeholder="Search English, Chinese, Taiwanese · 中文或英文搜尋"
               class="search-input"
               autocapitalize="off"
+              autocomplete="off"
               :disabled="loading"
-              aria-label="Search dictionary"
+              :aria-describedby="searchExecuted ? 'search-results-summary' : 'search-instructions'"
+              aria-label="Search dictionary for English, Chinese, or Taiwanese words"
             />
             <button
               v-if="searchQuery.length > 0"
               class="clear-search-button"
               @click="clearSearch"
               :disabled="loading"
-              aria-label="Clear search"
+              aria-label="Clear search input"
+              type="button"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
-            <div v-if="loading" class="search-loading-indicator">
-              <div class="loading-spinner"></div>
+            <div 
+              v-if="loading" 
+              class="search-loading-indicator"
+              role="status"
+              aria-label="Searching dictionary"
+            >
+              <div class="loading-spinner" aria-hidden="true"></div>
             </div>
+          </div>
+          <div id="search-instructions" class="visually-hidden">
+            Enter a word in English, Chinese, or Taiwanese to search across multiple dictionary sources
           </div>
         </div>
 
         <!-- Search Options -->
-        <div class="search-options">
+        <div class="search-options" role="group" aria-label="Search options">
           <div class="search-options-left">
             <div class="exact-search-container">
               <input
@@ -45,23 +60,28 @@
                 @change="searchWords"
                 :disabled="loading"
                 class="exact-search-checkbox"
+                aria-describedby="exact-search-description"
               />
               <label for="exact-search" class="exact-search-label">
                 Strict search
               </label>
+              <div id="exact-search-description" class="visually-hidden">
+                When enabled, searches for exact word matches only. When disabled, searches for partial matches.
+              </div>
             </div>
           </div>
           
           <div class="search-options-right">
             <button 
+              type="button"
               class="search-button" 
               @click="searchWords"
               :disabled="loading || !searchQuery.trim()"
-              :aria-label="loading ? 'Searching...' : 'Search dictionary'"
+              :aria-label="loading ? 'Searching dictionary...' : `Search dictionary for ${searchQuery || 'entered term'}`"
             >
               <span v-if="!loading">Search</span>
               <span v-else class="search-button-loading">
-                <div class="button-spinner"></div>
+                <div class="button-spinner" aria-hidden="true"></div>
                 Searching...
               </span>
             </button>
@@ -69,10 +89,19 @@
         </div>
 
         <!-- Search Status -->
-        <div v-if="searchExecuted && !loading" class="search-status">
-          <div class="search-results-summary">
-            <span class="search-query-display">"{{ searchQuery }}"</span>
-            <span class="search-results-count">
+        <div 
+          v-if="searchExecuted && !loading" 
+          class="search-status"
+          role="status"
+          aria-live="polite"
+        >
+          <div 
+            id="search-results-summary"
+            class="search-results-summary"
+            :aria-label="`Search results for ${searchQuery}: ${totalResultsCount} ${totalResultsCount === 1 ? 'result' : 'results'} found`"
+          >
+            <span class="search-query-display" aria-hidden="true">"{{ searchQuery }}"</span>
+            <span class="search-results-count" aria-hidden="true">
               {{ totalResultsCount }} {{ totalResultsCount === 1 ? 'result' : 'results' }} found
             </span>
           </div>
@@ -85,66 +114,97 @@
     <RandomWord v-if="dictionaryStore.showRandomWord && !searchExecuted" />
 
     <!-- Search Results Container -->
-    <main class="search-results-container" role="main">
+    <main 
+      class="search-results-container" 
+      role="main"
+      :aria-label="searchExecuted ? `Search results for ${searchQuery}` : 'Dictionary search'"
+      tabindex="-1"
+    >
+      <!-- Skip to results link for keyboard users -->
+      <a href="#search-results" class="skip-link visually-hidden-focusable">
+        Skip to search results
+      </a>
+      
       <!-- Loading State -->
-      <div v-if="loading" class="search-loading-state">
-        <div class="loading-section">
+      <div 
+        v-if="loading" 
+        class="search-loading-state"
+        role="status"
+        aria-live="polite"
+        aria-label="Loading search results from all dictionaries"
+      >
+        <div class="loading-section" aria-label="Loading Ministry of Education Dictionary results">
           <div class="loading-section-header">
             <LoadingSkeleton variant="title" width="60%" />
             <LoadingSkeleton variant="text" width="20%" />
           </div>
-          <div class="loading-cards">
+          <div class="loading-cards" role="list" aria-label="Loading placeholders">
             <LoadingSkeleton 
               v-for="i in 3" 
               :key="`moe-${i}`" 
               variant="card" 
               height="180px"
               class="loading-card"
+              role="listitem"
+              :aria-label="`Loading MOE result ${i} of 3`"
             />
           </div>
         </div>
         
-        <div class="loading-section">
+        <div class="loading-section" aria-label="Loading Mary Knoll Dictionary results">
           <div class="loading-section-header">
             <LoadingSkeleton variant="title" width="40%" />
           </div>
-          <div class="loading-cards">
+          <div class="loading-cards" role="list" aria-label="Loading placeholders">
             <LoadingSkeleton 
               v-for="i in 2" 
               :key="`mknoll-${i}`" 
               variant="card" 
               height="150px"
               class="loading-card"
+              role="listitem"
+              :aria-label="`Loading Mary Knoll result ${i} of 2`"
             />
           </div>
         </div>
       </div>
 
       <!-- Search Results -->
-      <div v-else-if="searchExecuted">
+      <div v-else-if="searchExecuted" id="search-results">
         <!-- Empty State -->
-        <EmptyState
+        <div
           v-if="!hasAnyResults"
-          title="No results found"
-          :description="`No dictionary entries found for '${searchQuery}'. Try a different search term or check your spelling.`"
-          size="large"
-          primary-action="Try Different Search"
-          secondary-action="Browse Random Words"
-          @primary-action="clearSearch"
-          @secondary-action="showRandomWord"
+          role="status"
+          aria-live="polite"
+          aria-label="No search results found"
         >
-          <template #icon>
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="m21 21-4.35-4.35"/>
-              <path d="M11 6v10"/>
-              <path d="M6 11h10"/>
-            </svg>
-          </template>
-        </EmptyState>
+          <EmptyState
+            title="No results found"
+            :description="`No dictionary entries found for '${searchQuery}'. Try a different search term or check your spelling.`"
+            size="large"
+            primary-action="Try Different Search"
+            secondary-action="Browse Random Words"
+            @primary-action="clearSearch"
+            @secondary-action="showRandomWord"
+          >
+            <template #icon>
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+                <path d="M11 6v10"/>
+                <path d="M6 11h10"/>
+              </svg>
+            </template>
+          </EmptyState>
+        </div>
 
         <!-- Results Sections -->
-        <div v-else class="search-results-sections">
+        <div 
+          v-else 
+          class="search-results-sections"
+          role="region"
+          :aria-label="`Search results for ${searchQuery} from multiple dictionaries`"
+        >
           <!-- MOE Search Results -->
           <MoeSearchResults 
             :results="dictionaryStore.searchResults"

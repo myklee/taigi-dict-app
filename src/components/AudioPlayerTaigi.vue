@@ -9,6 +9,7 @@
       @loadstart="handleLoadStart"
       @canplay="handleCanPlay"
       preload="none"
+      :aria-label="`Audio pronunciation for ${audioID}`"
     ></audio>
     
     <!-- Audio Control Button -->
@@ -24,7 +25,10 @@
       }"
       @click="togglePlay"
       :aria-label="getAriaLabel()"
+      :aria-describedby="hasError && showErrorMessage ? errorMessageId : undefined"
       :disabled="!audioSrc || (hasError && !(retryOnError && retryCount < maxRetries))"
+      role="button"
+      :aria-pressed="isPlaying"
     >
       <!-- Loading State -->
       <div v-if="isLoading" class="loading-indicator">
@@ -58,7 +62,13 @@
     </TouchTarget>
     
     <!-- Error Message (for screen readers and optional display) -->
-    <div v-if="hasError && showErrorMessage" class="error-message" role="alert">
+    <div 
+      v-if="hasError && showErrorMessage" 
+      :id="errorMessageId"
+      class="error-message" 
+      role="alert"
+      aria-live="assertive"
+    >
       {{ errorMessage }}
     </div>
   </div>
@@ -100,6 +110,7 @@ export default {
       audioLoadTimeout: null,
       networkError: false,
       fileNotFound: false,
+      errorMessageId: `audio-error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     };
   },
   computed: {

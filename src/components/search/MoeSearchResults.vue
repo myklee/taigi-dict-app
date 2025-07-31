@@ -1,9 +1,19 @@
 <template>
-  <section v-if="results.length || loading" class="moe-search-section">
+  <section 
+    v-if="results.length || loading" 
+    class="moe-search-section"
+    role="region"
+    :aria-labelledby="sectionTitleId"
+    :aria-describedby="searchExecuted ? resultsCountId : undefined"
+  >
     <header class="section-header moe-header">
       <div class="section-title-container">
-        <div class="section-icon moe-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div 
+          class="section-icon moe-icon"
+          role="img"
+          aria-label="Ministry of Education Dictionary icon"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
             <circle cx="12" cy="8" r="1"/>
@@ -12,29 +22,52 @@
           </svg>
         </div>
         <div class="section-title-text">
-          <h3 class="section-title">Ministry of Education Dictionary</h3>
-          <p class="section-subtitle">教育部臺灣台語常用詞辭典</p>
+          <h3 :id="sectionTitleId" class="section-title">Ministry of Education Dictionary</h3>
+          <p class="section-subtitle" lang="zh-TW">教育部臺灣台語常用詞辭典</p>
         </div>
       </div>
 
-      <div v-if="searchExecuted" class="results-count">
-        <span class="count-number">{{ results.length }}</span>
-        <span class="count-text">result{{ results.length !== 1 ? 's' : '' }}</span>
+      <div 
+        v-if="searchExecuted" 
+        class="results-count"
+        :id="resultsCountId"
+        role="status"
+        :aria-label="`${results.length} ${results.length === 1 ? 'result' : 'results'} found in Ministry of Education Dictionary`"
+      >
+        <span class="count-number" aria-hidden="true">{{ results.length }}</span>
+        <span class="count-text" aria-hidden="true">result{{ results.length !== 1 ? 's' : '' }}</span>
       </div>
     </header>
     
     <div class="results-container moe-results-container">
       <!-- Loading State -->
-      <div v-if="loading" class="loading-state">
-        <div class="results-list">
-          <div v-for="i in 3" :key="`skeleton-${i}`" class="skeleton-card-container">
+      <div 
+        v-if="loading" 
+        class="loading-state"
+        role="status"
+        aria-live="polite"
+        aria-label="Loading Ministry of Education Dictionary results"
+      >
+        <div class="results-list" role="list" aria-label="Loading placeholders">
+          <div 
+            v-for="i in 3" 
+            :key="`skeleton-${i}`" 
+            class="skeleton-card-container"
+            role="listitem"
+            :aria-label="`Loading placeholder ${i} of 3`"
+          >
             <LoadingSkeleton variant="card" height="180px" class="result-skeleton" />
           </div>
         </div>
       </div>
 
       <!-- Error State -->
-      <div v-else-if="error" class="error-state">
+      <div 
+        v-else-if="error" 
+        class="error-state"
+        role="alert"
+        :aria-describedby="errorDescriptionId"
+      >
         <EmptyState
           title="Failed to load MOE results"
           :description="error"
@@ -43,37 +76,56 @@
           @primary-action="$emit('retry')"
         >
           <template #icon>
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
               <circle cx="12" cy="12" r="10"/>
               <line x1="15" y1="9" x2="9" y2="15"/>
               <line x1="9" y1="9" x2="15" y2="15"/>
             </svg>
           </template>
         </EmptyState>
+        <div :id="errorDescriptionId" class="visually-hidden">
+          Error loading Ministry of Education Dictionary results. {{ error }}
+        </div>
       </div>
 
       <!-- Results List -->
-      <ul v-else class="results-list">
-        <MoeResultCard
-          v-for="word in results"
+      <ul 
+        v-else 
+        ref="resultsListRef"
+        class="results-list keyboard-navigable"
+        role="list"
+        :aria-label="`${results.length} Ministry of Education Dictionary ${results.length === 1 ? 'result' : 'results'} for ${searchQuery}`"
+        tabindex="0"
+        @keydown="handleKeyboardNavigation"
+      >
+        <li
+          v-for="(word, index) in results"
           :key="word.id"
-          :word="word"
-          :primaryLanguage="primaryLanguage"
-          :searchQuery="searchQuery"
-          @readChinese="$emit('readChinese', $event)"
-          @readEnglish="$emit('readEnglish', $event)"
-          @openEditDialog="$emit('openEditDialog', $event)"
-          @addDefinition="$emit('addDefinition', $event)"
-        />
+          role="listitem"
+          :aria-setsize="results.length"
+          :aria-posinset="index + 1"
+        >
+          <MoeResultCard
+            :word="word"
+            :primaryLanguage="primaryLanguage"
+            :searchQuery="searchQuery"
+            @readChinese="$emit('readChinese', $event)"
+            @readEnglish="$emit('readEnglish', $event)"
+            @openEditDialog="$emit('openEditDialog', $event)"
+            @addDefinition="$emit('addDefinition', $event)"
+          />
+        </li>
       </ul>
     </div>
   </section>
 </template>
 
 <script setup>
+import { ref, onMounted, nextTick } from 'vue';
 import MoeResultCard from "@/components/cards/MoeResultCard.vue";
 import LoadingSkeleton from "@/components/utility/LoadingSkeleton.vue";
 import EmptyState from "@/components/utility/EmptyState.vue";
+import { useKeyboardNavigation } from '@/composables/useKeyboardNavigation.js';
 
 const props = defineProps({
   results: {
@@ -103,6 +155,62 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['readChinese', 'readEnglish', 'openEditDialog', 'addDefinition', 'retry']);
+
+// Generate unique IDs for ARIA relationships
+const sectionTitleId = `moe-section-title-${Date.now()}`;
+const resultsCountId = `moe-results-count-${Date.now()}`;
+const errorDescriptionId = `moe-error-description-${Date.now()}`;
+
+// Keyboard navigation setup
+const resultsListRef = ref(null);
+const { initialize: initKeyboardNav, handleKeyDown } = useKeyboardNavigation({
+  orientation: 'vertical',
+  wrap: true,
+  enableTypeahead: true,
+  getSearchText: (element) => {
+    // Get text content from the card for typeahead search
+    const wordText = element.querySelector('.word-text');
+    return wordText ? wordText.textContent : '';
+  }
+});
+
+// Initialize keyboard navigation when results are loaded
+const initializeNavigation = () => {
+  nextTick(() => {
+    if (resultsListRef.value && props.results.length > 0) {
+      initKeyboardNav(resultsListRef.value);
+    }
+  });
+};
+
+// Handle keyboard navigation events
+const handleKeyboardNavigation = (event) => {
+  handleKeyDown(event);
+  
+  // Handle Enter key to activate focused card
+  if (event.key === 'Enter' || event.key === ' ') {
+    const focusedCard = event.target.closest('.moe-result-card');
+    if (focusedCard) {
+      event.preventDefault();
+      const clickableArea = focusedCard.querySelector('.primary-content');
+      if (clickableArea) {
+        clickableArea.click();
+      }
+    }
+  }
+};
+
+// Watch for results changes to reinitialize navigation
+onMounted(() => {
+  initializeNavigation();
+});
+
+// Reinitialize when results change
+const reinitializeNavigation = () => {
+  if (props.results.length > 0) {
+    initializeNavigation();
+  }
+};
 </script>
 
 <style scoped>
