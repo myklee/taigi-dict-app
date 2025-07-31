@@ -1,74 +1,136 @@
 <template>
-  <li class="entry moe-result-item">
-    <!-- Dynamic language display based on search language -->
-    <div class="language-entries" @click="navigateToWordDetail" style="cursor: pointer;" title="Click to view full word details">
+  <article 
+    class="moe-result-card"
+    role="article"
+    :aria-labelledby="`word-title-${word.id}`"
+  >
+    <!-- Card Header with Primary Content -->
+    <header class="card-header">
       <div 
-        v-for="(lang, index) in displayOrder" 
-        :key="lang.type"
-        :class="[
-          'word-item',
-          `moe-word-${lang.type}`,
-          lang.type === 'taiwanese' ? 'alphabetic' : lang.type === 'chinese' ? 'logographic' : 'alphabetic',
-          { 'primary-language': lang.isPrimary, 'secondary-language': !lang.isPrimary }
-        ]"
+        class="primary-content" 
+        @click="navigateToWordDetail" 
+        role="button"
+        tabindex="0"
+        :aria-label="`View details for ${getPrimaryLanguageContent()}`"
+        @keydown.enter="navigateToWordDetail"
+        @keydown.space.prevent="navigateToWordDetail"
       >
-        <!-- Taiwanese content -->
-        <template v-if="lang.type === 'taiwanese'">
-          <p>{{ lang.content }}</p>
-          <audio
-            v-if="word.audio_url"
-            ref="audio"
-            :src="`${word.audio_url}`"
-            controls
-            @click.stop
-          ></audio>
-          <AudioPlayerTaigi v-if="word.audioid" :audioID="word.audioid" @click.stop />
-        </template>
+        <h3 :id="`word-title-${word.id}`" class="visually-hidden">
+          Dictionary entry for {{ getPrimaryLanguageContent() }}
+        </h3>
         
-        <!-- Chinese content -->
-        <template v-else-if="lang.type === 'chinese'">
-          <span>{{ lang.content }}</span>
-          <Pinyinzhuyin :han="lang.content" />
-          <IconPlayAudio @click.stop @click="$emit('readChinese', lang.content)" />
-        </template>
-        
-        <!-- English content -->
-        <template v-else-if="lang.type === 'english'">
-          <span>{{ lang.content }}</span>
-          <IconPlayAudio @click.stop @click="$emit('readEnglish', lang.content)" />
-        </template>
+        <!-- Primary Language Display -->
+        <div 
+          v-for="(lang, index) in displayOrder" 
+          :key="lang.type"
+          :class="[
+            'language-item',
+            `moe-${lang.type}`,
+            lang.type === 'taiwanese' ? 'alphabetic' : lang.type === 'chinese' ? 'logographic' : 'alphabetic',
+            { 'primary-language': lang.isPrimary, 'secondary-language': !lang.isPrimary }
+          ]"
+        >
+          <!-- Taiwanese content -->
+          <template v-if="lang.type === 'taiwanese'">
+            <div class="word-content">
+              <span class="word-text">{{ lang.content }}</span>
+              <div class="audio-controls" @click.stop>
+                <audio
+                  v-if="word.audio_url"
+                  ref="audio"
+                  :src="`${word.audio_url}`"
+                  controls
+                  class="native-audio"
+                ></audio>
+                <AudioPlayerTaigi 
+                  v-if="word.audioid" 
+                  :audioID="word.audioid" 
+                  class="custom-audio"
+                />
+              </div>
+            </div>
+          </template>
+          
+          <!-- Chinese content -->
+          <template v-else-if="lang.type === 'chinese'">
+            <div class="word-content">
+              <span class="word-text">{{ lang.content }}</span>
+              <div class="pronunciation-section">
+                <Pinyinzhuyin :han="lang.content" />
+                <TouchTarget 
+                  size="default"
+                  rounded
+                  :aria-label="`Play Chinese pronunciation for ${lang.content}`"
+                  @click.stop="$emit('readChinese', lang.content)"
+                >
+                  <IconPlayAudio />
+                </TouchTarget>
+              </div>
+            </div>
+          </template>
+          
+          <!-- English content -->
+          <template v-else-if="lang.type === 'english'">
+            <div class="word-content">
+              <span class="word-text">{{ lang.content }}</span>
+              <TouchTarget 
+                size="default"
+                rounded
+                :aria-label="`Play English pronunciation for ${lang.content}`"
+                @click.stop="$emit('readEnglish', lang.content)"
+              >
+                <IconPlayAudio />
+              </TouchTarget>
+            </div>
+          </template>
+        </div>
       </div>
-    </div>
 
-    <!-- Definitions -->
-    <ul>
-      <li v-for="def in word.definitions" :key="def.id">
-        <ul>
-          <li class="alphabetic">{{ def.def_english }}</li>
-          <li class="logographic">{{ def.def_chinese }}</li>
-        </ul>
-      </li>
-    </ul>
-    
-    <!-- Actions -->
-    <div class="word-actions" @click.stop>
-      <IconHeart
-        :isFavorited="favoritesStore.isFavorited(word.id)"
-        @click="favoritesStore.toggleFavorite(word)"
-        title="Add to favorites"
-      />
-      <IconAdd
-        class="add-definition"
-        title="Add community definition"
-        @click="$emit('addDefinition', word)"
-      />
-      <IconEdit
-        class="edit-word"
-        title="Edit entry"
-        @click="$emit('openEditDialog', word)"
-      />
-    </div>
-  </li>
+      <!-- Card Actions -->
+      <div class="card-actions" @click.stop role="toolbar" aria-label="Word actions">
+        <TouchTarget
+          size="comfortable"
+          rounded
+          :class="{ 'is-favorited': favoritesStore.isFavorited(word.id) }"
+          @click="favoritesStore.toggleFavorite(word)"
+          :aria-label="favoritesStore.isFavorited(word.id) ? 'Remove from favorites' : 'Add to favorites'"
+        >
+          <IconHeart :isFavorited="favoritesStore.isFavorited(word.id)" />
+        </TouchTarget>
+        <TouchTarget
+          size="comfortable"
+          rounded
+          @click="$emit('addDefinition', word)"
+          aria-label="Add community definition"
+        >
+          <IconAdd />
+        </TouchTarget>
+        <TouchTarget
+          size="comfortable"
+          rounded
+          @click="$emit('openEditDialog', word)"
+          aria-label="Edit entry"
+        >
+          <IconEdit />
+        </TouchTarget>
+      </div>
+    </header>
+
+    <!-- Definitions Section -->
+    <section class="definitions-section" aria-label="Word definitions">
+      <div 
+        v-for="def in word.definitions" 
+        :key="def.id"
+        class="definition-item"
+        role="listitem"
+      >
+        <div class="definition-content">
+          <p class="definition-english alphabetic">{{ def.def_english }}</p>
+          <p class="definition-chinese logographic">{{ def.def_chinese }}</p>
+        </div>
+      </div>
+    </section>
+  </article>
 </template>
 
 <script setup>
@@ -76,6 +138,7 @@ import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import AudioPlayerTaigi from "@/components/AudioPlayerTaigi.vue";
 import Pinyinzhuyin from "@/components/utility/Pinyinzhuyin.vue";
+import TouchTarget from "@/components/utility/TouchTarget.vue";
 import IconPlayAudio from "@/components/icons/IconPlayAudio.vue";
 import IconEdit from "@/components/icons/IconEdit.vue";
 import IconHeart from "@/components/icons/IconHeart.vue";
@@ -151,99 +214,402 @@ const navigateToWordDetail = () => {
     router.push({ name: 'moe-word-detail', params: { id: props.word.id.toString() } });
   }
 };
+
+const getPrimaryLanguageContent = () => {
+  const primaryLang = displayOrder.value.find(lang => lang.isPrimary);
+  return primaryLang ? primaryLang.content : props.word.chinese || props.word.romaji || props.word.english;
+};
 </script>
 
 <style scoped>
-.moe-result-item {
-  padding: 0rem 0 2rem 0;
-  background-color: var(--black);
-  border-radius: 0.25rem;
-  display: flex;
-  flex-wrap: wrap;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  padding: 1rem;
+.moe-result-card {
+  background: var(--surface-background);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--card-border-radius);
+  padding: var(--card-padding);
+  margin-bottom: var(--space-4);
+  box-shadow: var(--card-shadow);
+  transition: var(--transition-normal);
   position: relative;
-  .pinyin-zhuyin {
-    font-size: 1rem;
+  cursor: pointer;
+}
+
+.moe-result-card:hover {
+  border-color: var(--surface-border-hover);
+  box-shadow: var(--card-shadow-hover);
+  transform: translateY(-1px);
+}
+
+.moe-result-card:focus-within {
+  border-color: var(--surface-border-hover);
+  box-shadow: var(--card-shadow-hover);
+}
+
+/* Card Header Layout */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-4);
+  gap: var(--space-3);
+}
+
+.primary-content {
+  flex: 1;
+  min-width: 0; /* Prevent flex item overflow */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  outline: none;
+  border-radius: var(--radius-md);
+  transition: var(--transition-colors);
+}
+
+.primary-content:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+/* Language Item Styling */
+.language-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  transition: var(--transition-normal);
+}
+
+.word-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.word-text {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+/* Typography Hierarchy - Primary Languages */
+.primary-language .word-text {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+}
+
+.primary-language.moe-taiwanese .word-text {
+  font-size: var(--font-size-4xl);
+  font-family: "Noto Sans", sans-serif;
+}
+
+.primary-language.moe-chinese .word-text {
+  font-size: var(--font-size-3xl);
+  font-family: "Noto Sans CJK TC", "Noto Sans", sans-serif;
+}
+
+.primary-language.moe-english .word-text {
+  font-size: var(--font-size-2xl);
+  font-family: "Helvetica Neue", "Noto Sans", sans-serif;
+}
+
+/* Typography Hierarchy - Secondary Languages */
+.secondary-language .word-text {
+  color: var(--color-secondary);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-snug);
+}
+
+.secondary-language.moe-taiwanese .word-text {
+  font-size: var(--font-size-xl);
+}
+
+.secondary-language.moe-chinese .word-text {
+  font-size: var(--font-size-lg);
+}
+
+.secondary-language.moe-english .word-text {
+  font-size: var(--font-size-base);
+}
+
+/* Audio Controls */
+.audio-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.native-audio {
+  max-width: 200px;
+  height: 32px;
+}
+
+.custom-audio {
+  flex-shrink: 0;
+}
+
+.pronunciation-section {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.pronunciation-section .touch-target,
+.word-content .touch-target {
+  flex-shrink: 0;
+  color: var(--color-secondary);
+}
+
+.pronunciation-section .touch-target:hover,
+.word-content .touch-target:hover {
+  color: var(--color-primary);
+}
+
+/* Card Actions */
+.card-actions {
+  display: flex;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  align-items: flex-start;
+}
+
+.card-actions .touch-target {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--surface-border);
+  color: var(--color-secondary);
+}
+
+.card-actions .touch-target:hover {
+  background: rgba(0, 0, 0, 0.7);
+  border-color: var(--surface-border-hover);
+  color: var(--color-primary);
+}
+
+.card-actions .touch-target.is-favorited {
+  color: var(--color-error);
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--color-error);
+}
+
+/* Definitions Section */
+.definitions-section {
+  border-top: 1px solid var(--surface-border);
+  padding-top: var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.definition-item {
+  margin-bottom: var(--space-3);
+}
+
+.definition-item:last-child {
+  margin-bottom: 0;
+}
+
+.definition-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.definition-english {
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  line-height: var(--line-height-relaxed);
+  font-family: "Helvetica Neue", sans-serif;
+}
+
+.definition-chinese {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  line-height: var(--line-height-normal);
+  font-family: "Noto Sans CJK TC", "Noto Sans", sans-serif;
+}
+
+/* Responsive Design */
+@media (max-width: 767px) {
+  .moe-result-card {
+    padding: var(--card-padding-sm);
+    margin-bottom: var(--space-3);
+  }
+  
+  .card-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+  }
+  
+  .card-actions {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: var(--radius-md);
+    padding: var(--space-1);
+    border: 1px solid var(--surface-border);
+    gap: var(--space-2); /* Increase gap for better touch targets on mobile */
+  }
+  
+  .card-actions .touch-target {
+    min-height: var(--touch-target-comfortable);
+    min-width: var(--touch-target-comfortable);
+  }
+  
+  .primary-content {
+    padding-right: var(--space-12); /* Space for actions */
+  }
+  
+  /* Adjust font sizes for mobile */
+  .primary-language.moe-taiwanese .word-text {
+    font-size: var(--font-size-3xl);
+  }
+  
+  .primary-language.moe-chinese .word-text {
+    font-size: var(--font-size-2xl);
+  }
+  
+  .primary-language.moe-english .word-text {
+    font-size: var(--font-size-xl);
+  }
+  
+  .word-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+  
+  .pronunciation-section {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 
-.language-entries {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+@media (min-width: 768px) {
+  .moe-result-card {
+    padding: var(--card-padding-lg);
+  }
+  
+  .card-header {
+    gap: var(--space-4);
+  }
+  
+  .primary-content {
+    gap: var(--space-4);
+  }
 }
 
-.word-item {
-  display: flex;
-  align-items: center;
-  gap: 0.66rem;
-  transition: all 0.3s ease;
+/* Touch Feedback for Mobile */
+@media (hover: none) and (pointer: coarse) {
+  .moe-result-card:active {
+    transform: scale(0.98);
+    transition: transform 100ms ease;
+  }
+  
+  /* Ensure proper spacing between touch targets */
+  .card-actions {
+    gap: var(--space-3);
+  }
+  
+  .pronunciation-section {
+    gap: var(--space-3);
+  }
+  
+  .word-content {
+    gap: var(--space-3);
+  }
 }
 
-/* Base sizes for each language type */
-.moe-word-taiwanese {
-  font-size: 2rem;
-  gap: 1rem;
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .moe-result-card {
+    border-width: 2px;
+  }
+  
+  .primary-language .word-text {
+    font-weight: var(--font-weight-semibold);
+  }
+  
+  .definitions-section {
+    border-top-width: 2px;
+  }
 }
 
-.moe-word-chinese {
-  font-size: 1.25rem;
-  line-height: 100%;
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .moe-result-card,
+  .primary-content,
+  .language-item,
+  .icon-button {
+    transition: none;
+  }
+  
+  .moe-result-card:hover {
+    transform: none;
+  }
 }
 
-.moe-word-english {
-  font-size: 1rem;
+/* Focus Management */
+.moe-result-card:focus-within .card-actions {
+  opacity: 1;
 }
 
-/* Primary language styling - larger and more prominent */
-.primary-language.moe-word-taiwanese {
-  font-size: 3rem;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
+/* Pinyin/Zhuyin specific styling */
+.pinyin-zhuyin {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  line-height: var(--line-height-tight);
 }
 
-.primary-language.moe-word-chinese {
-  font-size: 2rem;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
+/* Mobile-specific touch optimizations */
+@media (max-width: 767px) {
+  /* Ensure minimum touch target sizes */
+  .touch-target {
+    min-height: var(--touch-target-min);
+    min-width: var(--touch-target-min);
+  }
+  
+  /* Add more padding around interactive elements */
+  .primary-content {
+    padding: var(--space-2);
+    margin: calc(var(--space-2) * -1);
+    border-radius: var(--radius-lg);
+  }
+  
+  /* Optimize card spacing for thumb navigation */
+  .moe-result-card {
+    margin-bottom: var(--space-6);
+  }
+  
+  /* Prevent accidental taps by increasing spacing */
+  .language-item + .language-item {
+    margin-top: var(--space-4);
+  }
 }
 
-.primary-language.moe-word-english {
-  font-size: 1.5rem;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
+/* Thumb-friendly navigation zones */
+@media (max-width: 767px) and (orientation: portrait) {
+  .card-actions {
+    /* Position actions in thumb-friendly zone */
+    top: var(--space-3);
+    right: var(--space-3);
+  }
 }
 
-/* Secondary language styling - smaller and less prominent */
-.secondary-language {
-  opacity: 0.85;
-  font-size: 0.9em;
+/* Landscape mobile optimizations */
+@media (max-width: 767px) and (orientation: landscape) {
+  .moe-result-card {
+    padding: var(--space-3) var(--space-4);
+  }
+  
+  .card-header {
+    align-items: center;
+  }
+  
+  .primary-content {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
 }
-
-.secondary-language.moe-word-taiwanese {
-  font-size: 1.5rem;
-}
-
-.secondary-language.moe-word-chinese {
-  font-size: 1.1rem;
-}
-
-.secondary-language.moe-word-english {
-  font-size: 0.9rem;
-}
-
-.word-actions {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  justify-content: end;
-  z-index: 10;
-}
-
 </style>

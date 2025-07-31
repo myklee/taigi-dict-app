@@ -2,7 +2,7 @@
 
 ## Overview
 
-This design focuses on enhancing the user interface and user experience through three main areas: creating comprehensive word detail pages, fixing and improving the audio recording functionality with mobile compatibility, and implementing a cleaner, more accessible UI design system. The improvements will maintain the existing offline-first architecture while providing a more polished and reliable user experience.
+This design focuses on enhancing the user interface and user experience of the existing Taiwanese dictionary app by improving visual consistency, optimizing mobile responsiveness, enhancing search result presentation, and creating a more polished overall design. The improvements will build upon the current Vue.js architecture while maintaining the existing offline-first functionality.
 
 ## Architecture
 
@@ -10,377 +10,464 @@ This design focuses on enhancing the user interface and user experience through 
 
 ```mermaid
 graph TB
-    A[Vue Router] --> B[Word Detail Pages]
-    A --> C[Improved Search Results]
-    B --> D[Enhanced Audio Player]
-    B --> E[Fixed Audio Recorder]
-    E --> F[Mobile Audio APIs]
-    E --> G[Cross-browser Compatibility]
-    D --> H[Supabase Storage]
-    I[Design System] --> B
-    I --> C
-    I --> E
-    J[Accessibility Layer] --> I
+    A[Existing Vue App] --> B[Enhanced Search Results]
+    A --> C[Improved Mobile Layout]
+    B --> D[Better Card Design]
+    B --> E[Enhanced Audio Players]
+    C --> F[Touch-Optimized Controls]
+    C --> G[Responsive Typography]
+    H[Design System] --> B
+    H --> C
+    H --> D
+    I[Accessibility Layer] --> H
 ```
 
-### Component Architecture
+### Component Enhancement Strategy
 
-**New Page Components:**
-- `WordDetailPage.vue` - Comprehensive word information display
-- `AudioRecordingPage.vue` - Dedicated recording interface
-
-**Enhanced Components:**
-- `AudioRecorder.vue` - Rebuilt with mobile compatibility
-- `AudioPlayerTaigi.vue` - Enhanced with better UI
-- Search result cards - Improved visual hierarchy
+**Enhanced Existing Components:**
+- `MoeResultCard.vue` - Improved visual hierarchy and spacing
+- `MknollResultCard.vue` - Better typography and layout
+- `DictionarySearch.vue` - Enhanced search interface
+- `RandomWord.vue` - Improved visual presentation
+- `AudioPlayerTaigi.vue` - Better UI and controls
 
 **New Utility Components:**
-- `LoadingSkeletons.vue` - Better loading states
-- `ErrorBoundary.vue` - Graceful error handling
-- `AccessibilityWrapper.vue` - ARIA and keyboard support
+- `LoadingSkeleton.vue` - Better loading states
+- `EmptyState.vue` - Improved empty result displays
+- `TouchTarget.vue` - Consistent touch-friendly elements
 
 ## Components and Interfaces
 
-### Word Detail Page Design
+### Enhanced Search Result Cards
 
-**WordDetailPage.vue Structure:**
+**Improved MoeResultCard Design:**
 ```vue
 <template>
-  <div class="word-detail-page">
-    <!-- Header Section -->
-    <WordHeader 
-      :word="wordData"
-      :pronunciation-available="hasAudio"
-    />
+  <article class="moe-result-card">
+    <!-- Primary language content with enhanced typography -->
+    <header class="card-header">
+      <div class="primary-content">
+        <!-- Taiwanese/Chinese/English based on search language -->
+      </div>
+      <div class="card-actions">
+        <!-- Favorite, Edit, Add Definition buttons -->
+      </div>
+    </header>
     
-    <!-- Official Dictionary Sources -->
-    <OfficialDefinitions 
-      :moe-data="moeDefinitions"
-      :mknoll-data="mknollDefinitions"
-      :cedict-data="cedictDefinitions"
-    />
+    <!-- Secondary language content -->
+    <div class="secondary-content">
+      <!-- Other language variants -->
+    </div>
     
-    <!-- Community Definitions (if available) -->
-    <CommunityDefinitions 
-      v-if="communityDefinitions.length"
-      :definitions="communityDefinitions"
-    />
+    <!-- Definitions with improved formatting -->
+    <div class="definitions">
+      <!-- Enhanced definition display -->
+    </div>
     
-    <!-- Audio Section -->
-    <AudioSection 
-      :word-id="wordId"
-      :existing-audio="audioFiles"
-      @audio-recorded="handleNewAudio"
-    />
-    
-    <!-- Related Words -->
-    <RelatedWords :word="wordData" />
-  </div>
+    <!-- Audio controls with better UI -->
+    <div class="audio-section">
+      <!-- Improved audio player -->
+    </div>
+  </article>
 </template>
-```
-
-### Enhanced Audio Recording System
-
-**Mobile-Compatible Audio Recording:**
-```javascript
-class MobileAudioRecorder {
-  constructor() {
-    this.mediaRecorder = null;
-    this.audioChunks = [];
-    this.stream = null;
-  }
-
-  async initialize() {
-    // Check for mobile-specific constraints
-    const constraints = {
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        sampleRate: 44100,
-        // Mobile-specific optimizations
-        ...(this.isMobile() && {
-          channelCount: 1,
-          sampleSize: 16
-        })
-      }
-    };
-
-    try {
-      this.stream = await navigator.mediaDevices.getUserMedia(constraints);
-      this.setupMediaRecorder();
-    } catch (error) {
-      this.handlePermissionError(error);
-    }
-  }
-
-  setupMediaRecorder() {
-    // Use appropriate MIME type for mobile compatibility
-    const mimeType = this.getSupportedMimeType();
-    this.mediaRecorder = new MediaRecorder(this.stream, { mimeType });
-    
-    this.mediaRecorder.ondataavailable = (event) => {
-      this.audioChunks.push(event.data);
-    };
-  }
-
-  getSupportedMimeType() {
-    const types = [
-      'audio/webm;codecs=opus',
-      'audio/webm',
-      'audio/mp4',
-      'audio/wav'
-    ];
-    
-    return types.find(type => MediaRecorder.isTypeSupported(type)) || '';
-  }
-}
 ```
 
 ### Design System Implementation
 
-**CSS Custom Properties for Consistency:**
+**Enhanced CSS Custom Properties:**
 ```css
 :root {
-  /* Typography Scale */
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
-  --font-size-3xl: 1.875rem;
+  /* Existing colors maintained for consistency */
+  --black: #0a0a0a;
+  --raisinBlack: #1a1d29;
+  --gunmetal: #2d3143;
+  --slateGray: #6e83a0;
+  --frenchGray: #acabb5;
+  --white: #f3f3f3;
 
-  /* Spacing Scale */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
+  /* Enhanced typography scale */
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-base: 1rem;     /* 16px */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-xl: 1.25rem;    /* 20px */
+  --font-size-2xl: 1.5rem;    /* 24px */
+  --font-size-3xl: 1.875rem;  /* 30px */
+  --font-size-4xl: 2.25rem;   /* 36px */
 
-  /* Color Palette */
-  --color-primary: #3b82f6;
-  --color-secondary: #64748b;
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
-  
-  /* Semantic Colors */
-  --color-text-primary: #1f2937;
-  --color-text-secondary: #6b7280;
-  --color-background: #ffffff;
-  --color-surface: #f9fafb;
-  --color-border: #e5e7eb;
+  /* Consistent spacing scale */
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-5: 1.25rem;  /* 20px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+  --space-10: 2.5rem;  /* 40px */
+  --space-12: 3rem;    /* 48px */
 
-  /* Component-specific */
-  --color-official-content: #dbeafe;
-  --color-community-content: #fef3c7;
-  --color-recording-active: #fecaca;
+  /* Border radius scale */
+  --radius-sm: 0.125rem;  /* 2px */
+  --radius-md: 0.25rem;   /* 4px */
+  --radius-lg: 0.5rem;    /* 8px */
+  --radius-xl: 0.75rem;   /* 12px */
+
+  /* Shadow system */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+  /* Touch target sizes */
+  --touch-target-min: 44px;
+  --touch-target-comfortable: 48px;
+
+  /* Animation timing */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 350ms ease;
+}
+```
+
+### Mobile-First Responsive Design
+
+**Responsive Breakpoints:**
+```css
+/* Mobile-first approach */
+.component {
+  /* Mobile styles (default) */
+  padding: var(--space-4);
+  font-size: var(--font-size-base);
+}
+
+/* Tablet and up */
+@media (min-width: 768px) {
+  .component {
+    padding: var(--space-6);
+    font-size: var(--font-size-lg);
+  }
+}
+
+/* Desktop and up */
+@media (min-width: 1024px) {
+  .component {
+    padding: var(--space-8);
+  }
+}
+```
+
+### Enhanced Card Design System
+
+**Card Component Structure:**
+```css
+.result-card {
+  background: var(--black);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--gunmetal);
+  transition: var(--transition-normal);
+  position: relative;
+}
+
+.result-card:hover {
+  border-color: var(--slateGray);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-3);
+}
+
+.primary-content {
+  flex: 1;
+  min-width: 0; /* Prevent flex item overflow */
+}
+
+.card-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-shrink: 0;
 }
 ```
 
 ## Data Models
 
-### Enhanced Word Detail Model
+### Enhanced UI State Models
 ```typescript
-interface WordDetailData {
-  id: string;
-  chinese: string;
-  romanization: string;
-  english: string[];
-  
-  // Official sources
-  moeDefinitions: MoeDefinition[];
-  mknollDefinitions: MknollDefinition[];
-  cedictDefinitions: CedictDefinition[];
-  
-  // Community content
-  communityDefinitions: CommunityDefinition[];
-  
-  // Audio data
-  audioFiles: AudioFile[];
-  hasOfficialAudio: boolean;
-  
-  // Metadata
-  frequency: number;
-  difficulty: string;
-  tags: string[];
-  relatedWords: RelatedWord[];
+interface CardDisplayState {
+  primaryLanguage: 'taiwanese' | 'chinese' | 'english';
+  showSecondaryLanguages: boolean;
+  isExpanded: boolean;
+  audioAvailable: boolean;
+  isLoading: boolean;
+}
+
+interface TouchInteractionState {
+  isPressed: boolean;
+  touchStartTime: number;
+  touchPosition: { x: number; y: number };
+}
+
+interface ResponsiveState {
+  screenSize: 'mobile' | 'tablet' | 'desktop';
+  orientation: 'portrait' | 'landscape';
+  touchDevice: boolean;
 }
 ```
 
-### Audio Recording State Model
-```typescript
-interface AudioRecordingState {
-  status: 'idle' | 'requesting-permission' | 'recording' | 'paused' | 'processing' | 'uploading' | 'complete' | 'error';
-  duration: number;
-  audioBlob: Blob | null;
-  audioUrl: string | null;
-  error: AudioError | null;
-  uploadProgress: number;
-  waveformData: number[];
+## Visual Hierarchy and Typography
+
+### Typography System
+```css
+/* Language-specific typography */
+.taiwanese-text {
+  font-family: "Noto Sans", sans-serif;
+  font-weight: 400;
+  line-height: 1.4;
 }
 
-interface AudioError {
-  type: 'permission-denied' | 'not-supported' | 'network-error' | 'format-error';
-  message: string;
-  suggestions: string[];
+.chinese-text {
+  font-family: "Noto Sans CJK TC", "Noto Sans", sans-serif;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.english-text {
+  font-family: "Helvetica Neue", "Noto Sans", sans-serif;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* Size variations based on importance */
+.primary-language {
+  font-size: var(--font-size-2xl);
+  font-weight: 500;
+  color: var(--white);
+  margin-bottom: var(--space-2);
+}
+
+.secondary-language {
+  font-size: var(--font-size-lg);
+  color: var(--frenchGray);
+  margin-bottom: var(--space-1);
+}
+
+.definition-text {
+  font-size: var(--font-size-base);
+  color: var(--frenchGray);
+  line-height: 1.6;
 }
 ```
 
-## Error Handling
+## Touch and Mobile Optimization
 
-### Audio Recording Error Handling
-```javascript
-class AudioErrorHandler {
-  static handleRecordingError(error) {
-    switch (error.name) {
-      case 'NotAllowedError':
-        return {
-          type: 'permission-denied',
-          message: 'Microphone access was denied',
-          suggestions: [
-            'Click the microphone icon in your browser\'s address bar',
-            'Go to browser settings and allow microphone access',
-            'Try refreshing the page and allowing access when prompted'
-          ]
-        };
-      
-      case 'NotFoundError':
-        return {
-          type: 'not-supported',
-          message: 'No microphone found',
-          suggestions: [
-            'Check that your microphone is connected',
-            'Try using a different browser',
-            'Check your device\'s audio settings'
-          ]
-        };
-      
-      case 'NotSupportedError':
-        return {
-          type: 'not-supported',
-          message: 'Audio recording not supported',
-          suggestions: [
-            'Try using a modern browser like Chrome or Firefox',
-            'Update your browser to the latest version',
-            'Use the desktop version of the app'
-          ]
-        };
-      
-      default:
-        return {
-          type: 'network-error',
-          message: 'Recording failed',
-          suggestions: ['Please try again', 'Check your internet connection']
-        };
-    }
+### Touch Target Guidelines
+```css
+.touch-target {
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.touch-target::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-height: var(--touch-target-comfortable);
+  min-width: var(--touch-target-comfortable);
+  border-radius: 50%;
+  background: transparent;
+}
+
+/* Touch feedback */
+.touch-target:active {
+  transform: scale(0.95);
+  transition: transform 100ms ease;
+}
+```
+
+### Mobile Layout Adaptations
+```css
+@media (max-width: 767px) {
+  .search-results {
+    padding: var(--space-2);
+  }
+  
+  .result-card {
+    margin-bottom: var(--space-3);
+    padding: var(--space-3);
+  }
+  
+  .card-actions {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: var(--radius-md);
+    padding: var(--space-1);
+  }
+  
+  .primary-language {
+    font-size: var(--font-size-xl);
+    padding-right: var(--space-12); /* Space for actions */
   }
 }
 ```
 
-### Mobile-Specific Error Handling
-- iOS Safari audio recording limitations
-- Android Chrome permission handling
-- Cross-browser MIME type compatibility
-- Network timeout handling for uploads
+## Loading States and Feedback
 
-## Testing Strategy
+### Skeleton Loading Design
+```css
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--gunmetal) 25%,
+    var(--slateGray) 50%,
+    var(--gunmetal) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: var(--radius-md);
+}
 
-### Component Testing
-- Word detail page rendering with various data combinations
-- Audio recorder state management across different scenarios
-- Mobile touch interaction testing
-- Accessibility compliance testing
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
 
-### Cross-Browser Testing
-- Audio recording functionality across major browsers
-- Mobile browser compatibility (iOS Safari, Android Chrome)
-- Progressive enhancement for unsupported features
-- Responsive design testing on various screen sizes
+.skeleton-text {
+  height: 1em;
+  margin-bottom: var(--space-2);
+}
 
-### User Experience Testing
-- Navigation flow from search results to detail pages
-- Audio recording workflow on mobile devices
-- Loading state and error handling user experience
-- Accessibility testing with screen readers
+.skeleton-text.large {
+  height: 1.5em;
+}
 
-## Performance Considerations
-
-### Page Loading Optimization
-- Lazy loading of audio files and community content
-- Skeleton screens for better perceived performance
-- Image optimization for word illustrations
-- Code splitting for detail page components
-
-### Audio Recording Performance
-- Efficient audio chunk handling for long recordings
-- Background upload with progress indication
-- Audio compression before upload
-- Cleanup of audio resources and streams
-
-### Mobile Performance
-- Touch event optimization
-- Reduced motion for battery conservation
-- Efficient DOM updates during recording
-- Memory management for audio data
+.skeleton-text.small {
+  height: 0.75em;
+  width: 60%;
+}
+```
 
 ## Accessibility Implementation
 
-### ARIA Labels and Semantic HTML
-```html
-<section aria-labelledby="official-definitions-heading">
-  <h2 id="official-definitions-heading">Official Dictionary Definitions</h2>
-  <div role="list" aria-label="Dictionary definitions">
-    <article role="listitem" aria-labelledby="moe-definition">
-      <h3 id="moe-definition">Ministry of Education Definition</h3>
-      <!-- Definition content -->
-    </article>
-  </div>
-</section>
+### Focus Management
+```css
+.focusable {
+  outline: none;
+  position: relative;
+}
 
-<div class="audio-recorder" role="application" aria-label="Audio pronunciation recorder">
-  <button 
-    aria-describedby="record-instructions"
-    aria-pressed="false"
-    :aria-label="recordingState === 'recording' ? 'Stop recording' : 'Start recording'"
-  >
-    Record
-  </button>
-  <div id="record-instructions" class="sr-only">
-    Press to start recording your pronunciation. Press again to stop.
-  </div>
-</div>
+.focusable:focus-visible::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  pointer-events: none;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .result-card {
+    border-width: 2px;
+  }
+  
+  .primary-language {
+    font-weight: 600;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 ```
 
-### Keyboard Navigation
-- Tab order optimization for logical flow
-- Custom focus management for modal dialogs
-- Keyboard shortcuts for common actions
-- Focus trapping in recording interface
-
 ### Screen Reader Support
-- Descriptive text for audio controls
-- Status announcements for recording state
-- Alternative text for visual indicators
-- Structured heading hierarchy
+```html
+<!-- Enhanced semantic structure -->
+<article class="result-card" role="article" aria-labelledby="word-title-123">
+  <header class="card-header">
+    <h3 id="word-title-123" class="visually-hidden">
+      Dictionary entry for {{ word.chinese }}
+    </h3>
+    <div class="primary-content" aria-label="Primary word content">
+      <!-- Word content -->
+    </div>
+  </header>
+  
+  <div class="definitions" role="list" aria-label="Word definitions">
+    <div role="listitem" v-for="def in definitions">
+      <!-- Definition content -->
+    </div>
+  </div>
+  
+  <div class="audio-section" aria-label="Audio pronunciation">
+    <!-- Audio controls -->
+  </div>
+</article>
+```
 
-## Mobile-Specific Design Considerations
+## Performance Considerations
 
-### Touch Interface Design
-- Minimum 44px touch targets
-- Appropriate spacing between interactive elements
-- Swipe gestures for navigation
-- Haptic feedback for recording actions
+### Efficient Rendering
+- Use `v-memo` for expensive list items
+- Implement virtual scrolling for large result sets
+- Optimize image loading with lazy loading
+- Use CSS containment for better paint performance
 
-### iOS Safari Considerations
-- Audio recording requires user gesture
-- Specific MIME type requirements
-- Memory limitations for audio processing
-- Viewport meta tag optimization
+### Memory Management
+- Clean up event listeners on component unmount
+- Optimize audio resource cleanup
+- Use weak references where appropriate
+- Implement proper garbage collection for large datasets
 
-### Android Chrome Considerations
-- Permission request timing
-- Audio format compatibility
-- Performance optimization for older devices
-- Network handling for slow connections
+### Bundle Optimization
+- Code splitting for non-critical features
+- Tree shaking for unused utilities
+- Optimize CSS delivery
+- Compress and optimize assets
+
+## Testing Strategy
+
+### Visual Regression Testing
+- Screenshot testing for component variations
+- Cross-browser visual consistency
+- Mobile layout verification
+- Dark mode appearance testing
+
+### Accessibility Testing
+- Automated accessibility scanning
+- Screen reader testing
+- Keyboard navigation verification
+- Color contrast validation
+
+### Performance Testing
+- Core Web Vitals monitoring
+- Mobile performance benchmarking
+- Memory usage profiling
+- Network performance optimization
+
+### User Experience Testing
+- Touch interaction testing on real devices
+- Loading state user experience
+- Error handling user flows
+- Cross-platform consistency verification
