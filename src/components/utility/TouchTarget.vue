@@ -266,11 +266,50 @@ export default {
   .touch-target-small {
     min-height: var(--touch-target-min);
     min-width: var(--touch-target-min);
+    padding: var(--space-2);
   }
   
   .touch-target-default {
     min-height: var(--touch-target-comfortable);
     min-width: var(--touch-target-comfortable);
+    padding: var(--space-3);
+  }
+  
+  .touch-target-comfortable {
+    min-height: var(--touch-target-large);
+    min-width: var(--touch-target-large);
+    padding: var(--space-4);
+  }
+  
+  /* Increase spacing between touch targets on mobile */
+  .touch-target + .touch-target {
+    margin-left: var(--space-2);
+  }
+}
+
+/* Touch device specific optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .touch-target {
+    /* Enhanced touch feedback for touch devices */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  .touch-target:active {
+    transform: scale(0.95);
+    transition: transform 100ms ease-out;
+  }
+  
+  /* Ensure comfortable spacing between touch targets */
+  .touch-target {
+    margin: var(--space-1);
+  }
+  
+  /* Enhanced feedback animation for touch devices */
+  .touch-feedback-active {
+    transform: translate(-50%, -50%) scale(1.4);
+    opacity: 0.15;
+    transition: transform 150ms ease-out, opacity 150ms ease-out;
   }
 }
 

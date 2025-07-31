@@ -1,42 +1,80 @@
 <template>
-  <li class="cedict-result-item" @click="navigateToWordDetail" style="cursor: pointer;" title="Click to view full word details">
-    <div class="word-content">
+  <article 
+    class="cedict-result-card"
+    role="article"
+    :aria-labelledby="`cedict-word-title-${word.id}`"
+  >
+    <!-- Card Header with Primary Content -->
+    <header class="card-header">
       <div 
-        v-for="(lang, index) in displayOrder" 
-        :key="lang.type"
-        :class="[
-          'language-item',
-          `cedict-${lang.type}`,
-          { 'primary-language': lang.isPrimary, 'secondary-language': !lang.isPrimary }
-        ]"
+        class="primary-content" 
+        @click="navigateToWordDetail" 
+        role="button"
+        tabindex="0"
+        :aria-label="`View details for ${getPrimaryLanguageContent()}`"
+        @keydown.enter="navigateToWordDetail"
+        @keydown.space.prevent="navigateToWordDetail"
       >
-        <!-- Chinese content -->
-        <template v-if="lang.type === 'chinese'">
-          <div class="word-text">
-            <span>{{ lang.content }}</span>
-            <Pinyinzhuyin :han="lang.content" />
-          </div>
-        </template>
+        <h3 :id="`cedict-word-title-${word.id}`" class="visually-hidden">
+          CEDICT entry for {{ getPrimaryLanguageContent() }}
+        </h3>
         
-        <!-- English content -->
-        <template v-else-if="lang.type === 'english'">
-          <div class="word-definition">{{ lang.content }}</div>
-        </template>
+        <!-- Primary Language Display -->
+        <div 
+          v-for="(lang, index) in displayOrder" 
+          :key="lang.type"
+          :class="[
+            'language-item',
+            `cedict-${lang.type}`,
+            { 'primary-language': lang.isPrimary, 'secondary-language': !lang.isPrimary }
+          ]"
+        >
+          <!-- Chinese content -->
+          <template v-if="lang.type === 'chinese'">
+            <div class="word-content">
+              <span class="word-text">{{ lang.content }}</span>
+              <div class="pronunciation-section">
+                <Pinyinzhuyin :han="lang.content" />
+              </div>
+            </div>
+          </template>
+          
+          <!-- English content -->
+          <template v-else-if="lang.type === 'english'">
+            <div class="word-content">
+              <span class="word-text">{{ lang.content }}</span>
+            </div>
+          </template>
+        </div>
       </div>
+
+      <!-- Card Actions -->
+      <div class="card-actions" @click.stop role="toolbar" aria-label="Word actions">
+        <TouchTarget
+          size="comfortable"
+          rounded
+          :class="{ 'is-favorited': favoritesStore.isFavorited(word.id) }"
+          @click="favoritesStore.toggleFavorite(word)"
+          :aria-label="favoritesStore.isFavorited(word.id) ? 'Remove from favorites' : 'Add to favorites'"
+        >
+          <IconHeart :isFavorited="favoritesStore.isFavorited(word.id)" />
+        </TouchTarget>
+        <TouchTarget
+          size="comfortable"
+          rounded
+          @click="$emit('addDefinition', word)"
+          aria-label="Add community definition"
+        >
+          <IconAdd />
+        </TouchTarget>
+      </div>
+    </header>
+
+    <!-- Dictionary Source Indicator -->
+    <div class="source-indicator">
+      <span class="source-label">CEDICT Dictionary</span>
     </div>
-    <div class="word-actions" @click.stop>
-      <IconHeart
-        :isFavorited="favoritesStore.isFavorited(word.id)"
-        @click="favoritesStore.toggleFavorite(word)"
-        title="Add to favorites"
-      />
-      <IconAdd
-        class="add-definition"
-        title="Add community definition"
-        @click="$emit('addDefinition', word)"
-      />
-    </div>
-  </li>
+  </article>
 </template>
 
 <script setup>

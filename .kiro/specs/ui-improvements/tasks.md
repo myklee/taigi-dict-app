@@ -28,7 +28,7 @@
     - Improve audio control integration and positioning
     - _Requirements: 1.1, 1.3, 2.1_
 
-  - [-] 2.3 Optimize card interactions for mobile devices
+  - [ ] 2.3 Optimize card interactions for mobile devices
     - Ensure all interactive elements meet minimum 44px touch target requirements
     - Add touch feedback animations and states
     - Implement proper touch event handling for card actions
