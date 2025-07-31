@@ -57,22 +57,22 @@
     - Add loading indicators that don't block user interaction
     - _Requirements: 3.3, 5.4, 7.3_
 
-- [ ] 4. Enhance audio player components and interactions
-  - [ ] 4.1 Improve AudioPlayerTaigi component design
+- [x] 4. Enhance audio player components and interactions
+  - [x] 4.1 Improve AudioPlayerTaigi component design
     - Redesign audio player controls with better visual hierarchy
     - Add loading states and error handling for audio playback
     - Implement consistent styling that matches the overall design system
     - Optimize audio controls for touch interactions on mobile
     - _Requirements: 6.1, 6.3_
 
-  - [ ] 4.2 Enhance audio availability indicators
+  - [x] 4.2 Enhance audio availability indicators
     - Create clear visual indicators when audio is available for words
     - Implement consistent iconography across all audio controls
     - Add hover and focus states for better accessibility
     - Optimize audio button sizing for mobile touch targets
     - _Requirements: 6.1, 6.3, 2.1_
 
-  - [ ] 4.3 Improve audio error handling and feedback
+  - [x] 4.3 Improve audio error handling and feedback
     - Add user-friendly error messages when audio fails to load
     - Implement retry mechanisms for failed audio playback
     - Create fallback states when audio is not available

@@ -1,19 +1,72 @@
 <template>
-  <div class="audio-player">
+  <div class="audio-player" :class="{ 'has-error': hasError, 'is-loading': isLoading }">
     <!-- Audio Element (hidden but referenced in the script) -->
     <audio
       ref="audio"
       :src="audioSrc"
       @ended="audioEnded"
       @error="handleAudioError"
+      @loadstart="handleLoadStart"
+      @canplay="handleCanPlay"
       preload="none"
     ></audio>
-    <IconPlayAudio @click="togglePlay" :class="{ 'playing': isPlaying }"></IconPlayAudio>
+    
+    <!-- Audio Control Button -->
+    <TouchTarget
+      class="audio-control"
+      :class="{ 
+        'is-playing': isPlaying, 
+        'has-error': hasError,
+        'is-loading': isLoading,
+        'is-disabled': !audioSrc || (hasError && !(retryOnError && retryCount < maxRetries)),
+        'network-error': networkError,
+        'file-not-found': fileNotFound
+      }"
+      @click="togglePlay"
+      :aria-label="getAriaLabel()"
+      :disabled="!audioSrc || (hasError && !(retryOnError && retryCount < maxRetries))"
+    >
+      <!-- Loading State -->
+      <div v-if="isLoading" class="loading-indicator">
+        <div class="spinner"></div>
+      </div>
+      
+      <!-- Error State -->
+      <div v-else-if="hasError" class="error-indicator">
+        <!-- Retry icon if retries available -->
+        <svg v-if="retryOnError && retryCount < maxRetries" width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/>
+        </svg>
+        <!-- Error icon if no retries -->
+        <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+        </svg>
+      </div>
+      
+      <!-- Play/Pause Icon -->
+      <div v-else class="play-icon">
+        <IconPlayAudio 
+          :size="20"
+          :is-playing="isPlaying"
+          :show-waves="true"
+          :show-indicator="false"
+        />
+      </div>
+      
+      <!-- Visual feedback overlay -->
+      <div class="touch-feedback"></div>
+    </TouchTarget>
+    
+    <!-- Error Message (for screen readers and optional display) -->
+    <div v-if="hasError && showErrorMessage" class="error-message" role="alert">
+      {{ errorMessage }}
+    </div>
   </div>
 </template>
 
 <script>
 import IconPlayAudio from "./icons/IconPlayAudio.vue";
+import TouchTarget from "./utility/TouchTarget.vue";
 
 export default {
   props: {
@@ -21,15 +74,32 @@ export default {
       type: String,
       required: true,
     },
+    showErrorMessage: {
+      type: Boolean,
+      default: false,
+    },
+    retryOnError: {
+      type: Boolean,
+      default: true,
+    },
   },
+  emits: ['audio-error', 'audio-play', 'audio-ended', 'audio-retry'],
   components: {
     IconPlayAudio,
+    TouchTarget,
   },
   data() {
     return {
       isPlaying: false,
       hasError: false,
+      isLoading: false,
+      errorMessage: '',
+      retryCount: 0,
+      maxRetries: 2,
       baseSrc: "/src/assets/audio_taigi/",
+      audioLoadTimeout: null,
+      networkError: false,
+      fileNotFound: false,
     };
   },
   computed: {
@@ -46,55 +116,227 @@ export default {
     },
   },
   methods: {
-    togglePlay() {
-      if (this.hasError || !this.audioSrc) {
-        console.warn("Audio not available");
+    async togglePlay() {
+      if (this.hasError || !this.audioSrc || this.isLoading) {
+        if (this.hasError && this.retryOnError && this.retryCount < this.maxRetries) {
+          this.retryPlayback();
+        }
         return;
       }
 
       const audio = this.$refs.audio;
       if (!audio) return;
 
-      // Check if the audio file exists before playing
-      this.checkAudioExists().then(exists => {
-        if (!exists) {
-          console.warn(`Audio file not found: ${this.audioSrc}`);
-          this.hasError = true;
-          return;
-        }
-
-        try {
-          if (this.isPlaying) {
-            audio.pause();
-          } else {
-            audio.play().catch(error => {
-              console.error("Error playing audio:", error);
-              this.hasError = true;
-            });
+      try {
+        if (this.isPlaying) {
+          audio.pause();
+          this.isPlaying = false;
+        } else {
+          this.isLoading = true;
+          
+          // Set a loading timeout
+          this.audioLoadTimeout = setTimeout(() => {
+            if (this.isLoading) {
+              this.handleError('Audio loading timeout', 'network');
+            }
+          }, 10000); // 10 second timeout
+          
+          // Check if the audio file exists before playing
+          const exists = await this.checkAudioExists();
+          if (!exists) {
+            return; // Error already handled in checkAudioExists
           }
-          this.isPlaying = !this.isPlaying;
-        } catch (error) {
-          console.error("Error toggling audio:", error);
-          this.hasError = true;
+
+          await audio.play();
+          this.isPlaying = true;
+          this.hasError = false;
+          this.errorMessage = '';
+          this.networkError = false;
+          this.fileNotFound = false;
+          
+          // Clear timeout on successful play
+          if (this.audioLoadTimeout) {
+            clearTimeout(this.audioLoadTimeout);
+            this.audioLoadTimeout = null;
+          }
+          
+          // Emit success event
+          this.$emit('audio-play', { audioId: this.audioID });
         }
+      } catch (error) {
+        this.handleError(`Error playing audio: ${error.message}`);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    retryPlayback() {
+      this.retryCount++;
+      this.hasError = false;
+      this.errorMessage = '';
+      this.isLoading = false;
+      this.networkError = false;
+      this.fileNotFound = false;
+      
+      // Clear any existing timeout
+      if (this.audioLoadTimeout) {
+        clearTimeout(this.audioLoadTimeout);
+        this.audioLoadTimeout = null;
+      }
+      
+      // Reset audio element
+      const audio = this.$refs.audio;
+      if (audio) {
+        audio.load();
+      }
+      
+      // Emit retry event
+      this.$emit('audio-retry', { 
+        audioId: this.audioID, 
+        retryCount: this.retryCount 
       });
+      
+      // Try playing again after a short delay
+      setTimeout(() => {
+        this.togglePlay();
+      }, 500);
+    },
+
+    handleError(message, errorType = 'generic') {
+      console.error(message);
+      this.hasError = true;
+      this.isPlaying = false;
+      this.isLoading = false;
+      
+      // Clear any existing timeout
+      if (this.audioLoadTimeout) {
+        clearTimeout(this.audioLoadTimeout);
+        this.audioLoadTimeout = null;
+      }
+      
+      // Set error type flags
+      this.networkError = errorType === 'network';
+      this.fileNotFound = errorType === 'notfound';
+      
+      // Set user-friendly error messages
+      if (this.retryOnError && this.retryCount < this.maxRetries) {
+        if (errorType === 'network') {
+          this.errorMessage = 'Network error. Tap to retry.';
+        } else if (errorType === 'notfound') {
+          this.errorMessage = 'Audio file not found. Tap to retry.';
+        } else {
+          this.errorMessage = 'Audio failed to load. Tap to retry.';
+        }
+      } else {
+        this.errorMessage = 'Audio not available';
+      }
+      
+      // Emit error event for parent components
+      this.$emit('audio-error', {
+        message: this.errorMessage,
+        type: errorType,
+        canRetry: this.retryOnError && this.retryCount < this.maxRetries,
+        audioId: this.audioID
+      });
+    },
+
+    getAriaLabel() {
+      if (this.hasError) {
+        return this.retryOnError && this.retryCount < this.maxRetries 
+          ? 'Audio failed to load, click to retry'
+          : 'Audio not available';
+      }
+      if (this.isLoading) {
+        return 'Loading audio...';
+      }
+      if (this.isPlaying) {
+        return 'Pause audio pronunciation';
+      }
+      return 'Play audio pronunciation';
+    },
+
+    handleLoadStart() {
+      this.isLoading = true;
+    },
+
+    handleCanPlay() {
+      this.isLoading = false;
     },
     async checkAudioExists() {
       try {
-        const response = await fetch(this.audioSrc, { method: 'HEAD' });
-        return response.ok;
+        // Set a timeout for the request
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
+        const response = await fetch(this.audioSrc, { 
+          method: 'HEAD',
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            this.handleError(`Audio file not found: ${this.audioID}`, 'notfound');
+          } else {
+            this.handleError(`HTTP error ${response.status}: ${response.statusText}`, 'network');
+          }
+          return false;
+        }
+        
+        return true;
       } catch (error) {
-        console.error("Error checking audio file:", error);
+        if (error.name === 'AbortError') {
+          this.handleError('Request timeout - audio file took too long to load', 'network');
+        } else {
+          this.handleError(`Network error checking audio file: ${error.message}`, 'network');
+        }
         return false;
       }
     },
     audioEnded() {
       this.isPlaying = false;
+      this.isLoading = false;
+      
+      // Clear timeout if still active
+      if (this.audioLoadTimeout) {
+        clearTimeout(this.audioLoadTimeout);
+        this.audioLoadTimeout = null;
+      }
+      
+      // Emit ended event
+      this.$emit('audio-ended', { audioId: this.audioID });
     },
     handleAudioError(event) {
-      console.error("Audio error for path:", this.audioSrc, event);
-      this.hasError = true;
-      this.isPlaying = false;
+      let errorType = 'generic';
+      let errorMessage = `Audio error for path: ${this.audioSrc}`;
+      
+      // Determine error type based on the audio element's error
+      const audio = this.$refs.audio;
+      if (audio && audio.error) {
+        switch (audio.error.code) {
+          case audio.error.MEDIA_ERR_ABORTED:
+            errorMessage += ' - Playback aborted';
+            errorType = 'aborted';
+            break;
+          case audio.error.MEDIA_ERR_NETWORK:
+            errorMessage += ' - Network error';
+            errorType = 'network';
+            break;
+          case audio.error.MEDIA_ERR_DECODE:
+            errorMessage += ' - Decode error';
+            errorType = 'decode';
+            break;
+          case audio.error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+            errorMessage += ' - Source not supported';
+            errorType = 'unsupported';
+            break;
+          default:
+            errorMessage += ' - Unknown error';
+        }
+      }
+      
+      this.handleError(errorMessage, errorType);
     },
     getAudioFolder(audioid) {
       if (!audioid) return "Out of range";
@@ -179,12 +421,19 @@ export default {
       audio.load();
     }
   },
-  beforeDestroy() {
+  beforeUnmount() {
     // Clean up audio
     const audio = this.$refs.audio;
     if (audio) {
       audio.pause();
       audio.src = "";
+      audio.load();
+    }
+    
+    // Clear any pending timeout
+    if (this.audioLoadTimeout) {
+      clearTimeout(this.audioLoadTimeout);
+      this.audioLoadTimeout = null;
     }
   },
 };
@@ -192,16 +441,192 @@ export default {
 
 <style scoped>
 .audio-player {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+}
+
+.audio-control {
+  position: relative;
   display: flex;
   align-items: center;
-}
-svg {
-  flex-shrink: 0;
-}
-.play-taigi {
+  justify-content: center;
+  min-width: var(--touch-target-min, 44px);
+  min-height: var(--touch-target-min, 44px);
+  border-radius: var(--radius-lg, 8px);
+  background: transparent;
+  border: 1px solid var(--gunmetal, #2d3143);
+  color: var(--frenchGray, #acabb5);
   cursor: pointer;
+  transition: all var(--transition-normal, 250ms ease);
+  overflow: hidden;
 }
-.playing {
-  opacity: 0.7;
+
+.audio-control:hover:not(.is-disabled) {
+  border-color: var(--slateGray, #6e83a0);
+  color: var(--white, #f3f3f3);
+  background: rgba(110, 131, 160, 0.1);
+}
+
+.audio-control:focus-visible {
+  outline: 2px solid var(--slateGray, #6e83a0);
+  outline-offset: 2px;
+}
+
+.audio-control.is-playing {
+  background: rgba(110, 131, 160, 0.2);
+  border-color: var(--slateGray, #6e83a0);
+  color: var(--white, #f3f3f3);
+}
+
+.audio-control.is-loading {
+  cursor: wait;
+  border-color: var(--slateGray, #6e83a0);
+}
+
+.audio-control.has-error {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.audio-control.has-error:hover:not(.is-disabled) {
+  background: rgba(220, 38, 38, 0.1);
+}
+
+/* Different error state colors */
+.audio-control.has-error.network-error {
+  border-color: #f59e0b;
+  color: #f59e0b;
+}
+
+.audio-control.has-error.network-error:hover:not(.is-disabled) {
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.audio-control.has-error.file-not-found {
+  border-color: #6b7280;
+  color: #6b7280;
+}
+
+.audio-control.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.play-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.touch-feedback {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 150ms ease;
+  pointer-events: none;
+}
+
+.audio-control:active:not(.is-disabled) .touch-feedback {
+  opacity: 0.1;
+}
+
+.error-message {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: var(--space-1, 4px);
+  padding: var(--space-2, 8px);
+  background: var(--raisinBlack, #1a1d29);
+  border: 1px solid #dc2626;
+  border-radius: var(--radius-md, 4px);
+  font-size: var(--font-size-xs, 12px);
+  color: #dc2626;
+  text-align: center;
+  z-index: 10;
+}
+
+/* Mobile optimizations */
+@media (max-width: 767px) {
+  .audio-control {
+    min-width: var(--touch-target-comfortable, 48px);
+    min-height: var(--touch-target-comfortable, 48px);
+  }
+  
+  .play-icon,
+  .loading-indicator,
+  .error-indicator {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .spinner {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .audio-control {
+    border-width: 2px;
+  }
+  
+  .audio-control:focus-visible {
+    outline-width: 3px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .audio-control,
+  .touch-feedback,
+  .spinner {
+    transition: none;
+    animation: none;
+  }
+  
+  .spinner {
+    border-top-color: transparent;
+    border-right-color: currentColor;
+  }
 }
 </style>

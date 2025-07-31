@@ -15,6 +15,13 @@
         @keydown.enter="navigateToWordDetail"
         @keydown.space.prevent="navigateToWordDetail"
       >
+        <!-- Audio availability indicator -->
+        <AudioAvailabilityIndicator 
+          v-if="hasAudio"
+          :is-available="hasAudio"
+          :compact="true"
+          class="audio-indicator"
+        />
         <h3 :id="`word-title-${word.id}`" class="visually-hidden">
           Dictionary entry for {{ getPrimaryLanguageContent() }}
         </h3>
@@ -137,6 +144,7 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import AudioPlayerTaigi from "@/components/AudioPlayerTaigi.vue";
+import AudioAvailabilityIndicator from "@/components/utility/AudioAvailabilityIndicator.vue";
 import Pinyinzhuyin from "@/components/utility/Pinyinzhuyin.vue";
 import TouchTarget from "@/components/utility/TouchTarget.vue";
 import IconPlayAudio from "@/components/icons/IconPlayAudio.vue";
@@ -164,6 +172,11 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['readChinese', 'readEnglish', 'openEditDialog', 'addDefinition']);
+
+// Computed property to check if audio is available
+const hasAudio = computed(() => {
+  return !!(props.word.audioid || props.word.audio_url);
+});
 
 // Computed property to determine display order based on detected language
 const displayOrder = computed(() => {
