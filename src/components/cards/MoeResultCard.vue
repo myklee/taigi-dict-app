@@ -571,19 +571,43 @@ const getPrimaryLanguageContent = () => {
   
   /* Add more padding around interactive elements */
   .primary-content {
-    padding: var(--space-2);
-    margin: calc(var(--space-2) * -1);
+    padding: var(--space-3);
+    margin: calc(var(--space-3) * -1);
     border-radius: var(--radius-lg);
+    /* Enhanced touch feedback */
+    transition: background-color 150ms ease, transform 100ms ease;
+  }
+  
+  .primary-content:active {
+    background-color: var(--surface-background-hover);
+    transform: scale(0.98);
   }
   
   /* Optimize card spacing for thumb navigation */
   .moe-result-card {
-    margin-bottom: var(--space-6);
+    margin-bottom: var(--space-8);
+    /* Add touch-friendly padding */
+    padding: var(--space-4) var(--space-3);
   }
   
   /* Prevent accidental taps by increasing spacing */
   .language-item + .language-item {
-    margin-top: var(--space-4);
+    margin-top: var(--space-5);
+  }
+  
+  /* Ensure comfortable spacing between interactive elements */
+  .audio-controls {
+    gap: var(--space-4);
+  }
+  
+  .pronunciation-section {
+    gap: var(--space-4);
+  }
+  
+  /* Enhanced card actions spacing */
+  .card-actions {
+    gap: var(--space-3);
+    padding: var(--space-2);
   }
 }
 

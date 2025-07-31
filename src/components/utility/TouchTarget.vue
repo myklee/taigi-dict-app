@@ -219,6 +219,38 @@ export default {
   opacity: 0.1;
 }
 
+/* Enhanced ripple effect for mobile devices */
+.touch-feedback-ripple {
+  width: 20px;
+  height: 20px;
+  transform: translate(-50%, -50%) scale(0);
+  animation: ripple-expand 300ms ease-out;
+}
+
+@keyframes ripple-expand {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.2;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(4);
+    opacity: 0;
+  }
+}
+
+/* Mobile-specific pressed state */
+.touch-target-pressed {
+  transform: scale(0.95);
+  transition: transform 100ms ease-out;
+}
+
+.touch-target-mobile.touch-target-pressed {
+  background-color: var(--surface-background-hover);
+}
+
 /* Hover states */
 .touch-target:hover:not(.touch-target-disabled) {
   background-color: var(--surface-background-hover);
@@ -283,7 +315,18 @@ export default {
   
   /* Increase spacing between touch targets on mobile */
   .touch-target + .touch-target {
-    margin-left: var(--space-2);
+    margin-left: var(--space-3);
+  }
+  
+  /* Ensure thumb-friendly spacing in containers */
+  .touch-target {
+    margin: var(--space-1);
+  }
+  
+  /* Enhanced visual feedback for mobile */
+  .touch-target:active {
+    transform: scale(0.92);
+    transition: transform 100ms ease-out;
   }
 }
 
