@@ -557,14 +557,14 @@ function handleVotingError(error) {
 /* Mobile responsive design */
 @media (max-width: 768px) {
   .community-definition-card {
-    padding: 1rem;
-    margin-bottom: 0.75rem;
+    padding: var(--card-padding-sm);
+    margin-bottom: var(--space-6); /* Increased spacing for thumb navigation */
   }
 
   .definition-footer {
     flex-direction: column;
     align-items: stretch;
-    gap: 0.75rem;
+    gap: var(--space-4);
   }
 
   .author-details {
@@ -577,29 +577,84 @@ function handleVotingError(error) {
 
   .status-indicator {
     position: static;
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--space-3);
     align-self: flex-start;
   }
 
   .tags {
-    gap: 0.375rem;
+    gap: var(--space-2);
   }
 
   .tag {
-    font-size: 0.6875rem;
-    padding: 0.1875rem 0.375rem;
+    font-size: var(--font-size-xs);
+    padding: var(--space-1) var(--space-2);
+    min-height: var(--space-8); /* Ensure touch-friendly size */
   }
 
   /* Touch-friendly interactions */
   .community-definition-card {
     touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .show-hidden-button {
-    padding: 0.75rem 1.25rem;
-    font-size: 0.9375rem;
+    padding: var(--space-4) var(--space-6);
+    font-size: var(--font-size-base);
+    min-height: var(--touch-target-min);
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Ensure proper spacing between interactive elements */
+  .community-badge {
+    margin-bottom: var(--space-4);
+  }
+  
+  .definition-content {
+    margin-bottom: var(--space-4);
+  }
+}
+
+/* Touch device specific optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .community-definition-card:active {
+    transform: scale(0.99);
+    transition: transform 100ms ease;
+  }
+  
+  .show-hidden-button:active {
+    transform: scale(0.95);
+    transition: transform 100ms ease;
+  }
+  
+  /* Increase spacing between interactive elements on touch devices */
+  .tags {
+    gap: var(--space-3);
+  }
+  
+  .definition-footer {
+    gap: var(--space-5);
+  }
+}
+
+/* Thumb-friendly navigation zones */
+@media (max-width: 767px) and (orientation: portrait) {
+  .status-indicator {
+    /* Position status in thumb-friendly zone */
+    margin-bottom: var(--space-4);
+  }
+}
+
+/* Landscape mobile optimizations */
+@media (max-width: 767px) and (orientation: landscape) {
+  .community-definition-card {
+    padding: var(--space-3) var(--space-4);
+  }
+  
+  .definition-footer {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-4);
   }
 }
 
