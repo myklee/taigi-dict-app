@@ -303,16 +303,16 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem;
+  gap: 0.2rem;
+  padding: 0.375rem;
   border: 1px solid var(--slateGray);
-  border-radius: 0.5rem;
+  border-radius: 0.375rem;
   background: var(--button-background);
   color: var(--button-text-color);
   cursor: pointer;
   transition: all 0.2s ease;
-  min-width: 3rem;
-  font-size: 0.875rem;
+  min-width: 2.5rem;
+  font-size: 0.8125rem;
   font-weight: 500;
 }
 
@@ -359,11 +359,11 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 2.5rem;
-  padding: 0.25rem 0.5rem;
+  min-width: 2rem;
+  padding: 0.2rem 0.375rem;
   border-radius: 0.25rem;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
 .vote-score.positive {
@@ -487,8 +487,8 @@ onUnmounted(() => {
   }
 
   .vote-button {
-    padding: 0.625rem 0.5rem;
-    min-width: 2.75rem;
+    padding: 0.5rem 0.375rem;
+    min-width: 2.25rem;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
@@ -503,9 +503,9 @@ onUnmounted(() => {
   }
 
   .vote-score {
-    min-width: 2rem;
-    padding: 0.25rem;
-    font-size: 0.8125rem;
+    min-width: 1.75rem;
+    padding: 0.2rem;
+    font-size: 0.75rem;
   }
 
   .login-prompt {

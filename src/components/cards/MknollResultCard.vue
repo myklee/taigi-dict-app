@@ -50,7 +50,6 @@
           <!-- English content -->
           <template v-else-if="lang.type === 'english'">
             <div class="word-content">
-              <span class="word-text">{{ lang.content }}</span>
               <div class="audio-controls" @click.stop>
                 <audio
                   v-if="word.audio_url"
@@ -61,6 +60,7 @@
                   :aria-label="`Audio pronunciation for ${lang.content}`"
                 ></audio>
               </div>
+              <span class="word-text">{{ lang.content }}</span>
             </div>
           </template>
         </div>
@@ -69,7 +69,7 @@
       <!-- Card Actions -->
       <div class="card-actions" @click.stop role="toolbar" aria-label="Word actions">
         <TouchTarget
-          size="comfortable"
+          size="small"
           rounded
           :class="{ 'is-favorited': favoritesStore.isFavorited(word.id) }"
           @click="favoritesStore.toggleFavorite(word)"
@@ -78,7 +78,7 @@
           <IconHeart :isFavorited="favoritesStore.isFavorited(word.id)" />
         </TouchTarget>
         <TouchTarget
-          size="comfortable"
+          size="small"
           rounded
           @click="$emit('addDefinition', word)"
           aria-label="Add community definition"
@@ -86,7 +86,7 @@
           <IconAdd />
         </TouchTarget>
         <TouchTarget
-          size="comfortable"
+          size="small"
           rounded
           @click="$emit('openEditDialog', word)"
           aria-label="Edit entry"
@@ -324,28 +324,34 @@ const getPrimaryLanguageContent = () => {
 /* Card Actions */
 .card-actions {
   display: flex;
-  gap: var(--space-1);
+  gap: -2px;
   flex-shrink: 0;
   align-items: flex-start;
 }
 
 .card-actions .touch-target {
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  border: 1px solid var(--surface-border);
+  background: transparent !important;
+  border: none;
   color: var(--color-secondary);
+  width: 32px;
+  height: 32px;
 }
 
 .card-actions .touch-target:hover {
-  background: rgba(0, 0, 0, 0.7);
-  border-color: var(--surface-border-hover);
+  background: transparent !important;
   color: var(--color-primary);
+}
+
+.card-actions .touch-target svg {
+  transition: transform 0.2s ease;
+}
+
+.card-actions .touch-target:hover svg {
+  transform: scale(1.2);
 }
 
 .card-actions .touch-target.is-favorited {
   color: var(--color-error);
-  background: rgba(239, 68, 68, 0.1);
-  border-color: var(--color-error);
 }
 
 /* Source Indicator */
@@ -377,23 +383,27 @@ const getPrimaryLanguageContent = () => {
   }
   
   .card-actions {
-    position: absolute;
-    top: var(--space-2);
-    right: var(--space-2);
-    background: rgba(0, 0, 0, 0.8);
-    border-radius: var(--radius-md);
-    padding: var(--space-1);
-    border: 1px solid var(--surface-border);
-    gap: var(--space-2); /* Increase gap for better touch targets on mobile */
+    position: static;
+    justify-content: flex-end;
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
+    border: none;
+    gap: -2px; /* Negative gap for overlapping buttons */
+    margin-top: var(--space-3);
   }
   
   .card-actions .touch-target {
-    min-height: var(--touch-target-comfortable);
-    min-width: var(--touch-target-comfortable);
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
+    min-width: 32px;
+    background: transparent !important;
+    border: none;
   }
   
   .primary-content {
-    padding-right: var(--space-12); /* Space for actions */
+    flex: 1;
   }
   
   /* Adjust font sizes for mobile */
@@ -415,10 +425,26 @@ const getPrimaryLanguageContent = () => {
     gap: var(--space-2);
   }
   
-  .pronunciation-section {
-    width: 100%;
-    justify-content: space-between;
+  /* Override default behavior to keep audio and text on same line */
+  .word-content {
+    display: block;
   }
+  
+  .word-content > .audio-controls,
+  .word-content > .word-text {
+    display: inline-block;
+    vertical-align: middle;
+  }
+  
+  .word-content > .word-text {
+    margin-left: var(--space-2);
+  }
+  
+  .word-content > .pronunciation-section {
+    display: block;
+    margin-top: var(--space-2);
+  }
+  
 }
 
 @media (min-width: 768px) {
@@ -442,9 +468,9 @@ const getPrimaryLanguageContent = () => {
     transition: transform 100ms ease;
   }
   
-  /* Ensure proper spacing between touch targets */
+  /* Maintain negative gap for overlapping buttons */
   .card-actions {
-    gap: var(--space-3);
+    gap: -2px;
   }
   
   .pronunciation-section {
@@ -543,7 +569,7 @@ const getPrimaryLanguageContent = () => {
   
   /* Enhanced card actions spacing */
   .card-actions {
-    gap: var(--space-3);
+    gap: -2px;
     padding: var(--space-2);
   }
 }
@@ -551,9 +577,8 @@ const getPrimaryLanguageContent = () => {
 /* Thumb-friendly navigation zones */
 @media (max-width: 767px) and (orientation: portrait) {
   .card-actions {
-    /* Position actions in thumb-friendly zone */
-    top: var(--space-3);
-    right: var(--space-3);
+    /* Actions are now in natural flow at bottom of card */
+    justify-content: flex-end;
   }
 }
 
