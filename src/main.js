@@ -16,6 +16,20 @@ app.use(pinia)
 // Register Vue Router
 app.use(router)
 
+// Handle GitHub Pages SPA redirect
+router.isReady().then(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const redirect = urlParams.get('p');
+  if (redirect) {
+    // Remove the redirect parameter and navigate to the original path
+    const url = new URL(window.location);
+    url.searchParams.delete('p');
+    window.history.replaceState({}, '', url.toString());
+    // Navigate to the original path
+    router.push(decodeURIComponent(redirect));
+  }
+});
+
 // Mount the app - router is now available before mount
 app.mount('#app')
 
@@ -28,7 +42,7 @@ initializeAccessibilityPreferences()
 // Supabase postgres password VaJzmCmC2uIWw6UI
 
 // Global error handler for authentication errors
-app.config.errorHandler = (err, vm, info) => {
+app.config.errorHandler = (err, _vm, info) => {
   console.error('Global error:', err);
   console.error('Error info:', info);
   
