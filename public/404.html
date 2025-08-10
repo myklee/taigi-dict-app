@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/taigi-dict-app/favicon.ico" />
+    <link
+      rel="apple-touch-icon"
+      sizes="57x57"
+      href="/taigi-dict-app/bluewhiteslippers57.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="114x114"
+      href="/taigi-dict-app/bluewhiteslippers114.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/taigi-dict-app/bluewhiteslippers180.png"
+    />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Taigi Dictionary</title>
+    
+    <script>
+      // Single Page App GitHub Pages redirect
+      // This script stores the current URL path and redirects to the main index.html
+      // so that the Vue router can handle the routing
+      var path = window.location.pathname.replace('/taigi-dict-app', '');
+      var query = window.location.search;
+      var hash = window.location.hash;
+      var redirectTo = '/taigi-dict-app/' + (path + query + hash).substring(1);
+      window.location.replace(redirectTo);
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/taigi-dict-app/src/main.js"></script>
+  </body>
+</html>
