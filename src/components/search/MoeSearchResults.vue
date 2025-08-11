@@ -113,6 +113,10 @@
             @readEnglish="$emit('readEnglish', $event)"
             @openEditDialog="$emit('openEditDialog', $event)"
             @addDefinition="$emit('addDefinition', $event)"
+            @vote-submitted="$emit('vote-submitted', $event)"
+            @vote-updated="$emit('vote-updated', $event)"
+            @voting-error="$emit('voting-error', $event)"
+            @login-required="$emit('login-required')"
           />
         </li>
       </ul>
@@ -154,7 +158,17 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['readChinese', 'readEnglish', 'openEditDialog', 'addDefinition', 'retry']);
+const emit = defineEmits([
+  'readChinese', 
+  'readEnglish', 
+  'openEditDialog', 
+  'addDefinition', 
+  'retry',
+  'vote-submitted',
+  'vote-updated',
+  'voting-error',
+  'login-required'
+]);
 
 // Generate unique IDs for ARIA relationships
 const sectionTitleId = `moe-section-title-${Date.now()}`;

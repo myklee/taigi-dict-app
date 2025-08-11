@@ -100,6 +100,35 @@
     <div class="source-indicator">
       <span class="source-label">Mary Knoll Dictionary</span>
     </div>
+
+    <!-- Community Definitions Section -->
+    <section 
+      v-if="word.communityDefinitions && word.communityDefinitions.length > 0" 
+      class="community-definitions-section"
+      aria-label="Community contributed definitions"
+    >
+      <h4 class="section-title community-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="community-icon">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        Community Definitions
+      </h4>
+      <div class="community-definitions">
+        <CommunityDefinitionCard
+          v-for="definition in word.communityDefinitions"
+          :key="definition.id"
+          :definition="definition"
+          :compact="true"
+          @vote-submitted="handleCommunityVoteSubmitted"
+          @vote-updated="handleCommunityVoteUpdated"
+          @voting-error="handleCommunityVotingError"
+          @login-required="handleLoginRequired"
+        />
+      </div>
+    </section>
   </article>
 </template>
 
@@ -111,6 +140,7 @@ import TouchTarget from "@/components/utility/TouchTarget.vue";
 import IconEdit from "@/components/icons/IconEdit.vue";
 import IconHeart from "@/components/icons/IconHeart.vue";
 import IconAdd from "@/components/icons/IconAdd.vue";
+import CommunityDefinitionCard from "@/components/cards/CommunityDefinitionCard.vue";
 import { useFavoritesStore } from "@/stores/favoritesStore";
 
 const router = useRouter();
@@ -131,7 +161,14 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['openEditDialog', 'addDefinition']);
+const emit = defineEmits([
+  'openEditDialog', 
+  'addDefinition',
+  'vote-submitted',
+  'vote-updated',
+  'voting-error',
+  'login-required'
+]);
 
 // Computed property to determine display order based on detected language
 const displayOrder = computed(() => {
@@ -181,6 +218,23 @@ const navigateToWordDetail = () => {
   if (props.word.id) {
     router.push({ name: 'mknoll-word-detail', params: { id: props.word.id.toString() } });
   }
+};
+
+// Community event handlers
+const handleCommunityVoteSubmitted = (voteData) => {
+  emit('vote-submitted', voteData);
+};
+
+const handleCommunityVoteUpdated = (voteData) => {
+  emit('vote-updated', voteData);
+};
+
+const handleCommunityVotingError = (error) => {
+  emit('voting-error', error);
+};
+
+const handleLoginRequired = () => {
+  emit('login-required');
 };
 
 const getPrimaryLanguageContent = () => {
@@ -367,6 +421,39 @@ const getPrimaryLanguageContent = () => {
   font-weight: var(--font-weight-medium);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+/* Community Definitions Section */
+.community-definitions-section {
+  margin-top: var(--space-4);
+  border-top: 2px solid #3498db;
+  padding-top: var(--space-3);
+}
+
+.section-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--frenchGray);
+  margin: 0 0 var(--space-3) 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.community-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: #3498db;
+}
+
+.community-icon {
+  flex-shrink: 0;
+}
+
+.community-definitions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
 /* Responsive Design */

@@ -205,22 +205,7 @@
           role="region"
           :aria-label="`Search results for ${searchQuery} from multiple dictionaries`"
         >
-         <!-- Community Search Results -->
-         <CommunitySearchResults 
-            :results="communityResults"
-            :search-query="searchQuery"
-            :search-executed="searchExecuted"
-            :loading="communityLoading"
-            :loading-more="communityLoadingMore"
-            :error="communityError"
-            :has-more="communityHasMore"
-            @vote-submitted="handleCommunityVoteSubmitted"
-            @vote-updated="handleCommunityVoteUpdated"
-            @voting-error="handleCommunityVotingError"
-            @login-required="handleLoginRequired"
-            @load-more="loadMoreCommunityResults"
-            @retry="searchCommunityDefinitions"
-          />
+
           <!-- MOE Search Results -->
           <MoeSearchResults 
             :results="dictionaryStore.searchResults"
@@ -234,6 +219,10 @@
             @openEditDialog="openEditDialog"
             @addDefinition="openAddDefinitionDialog"
             @retry="retryMoeSearch"
+            @vote-submitted="handleCommunityVoteSubmitted"
+            @vote-updated="handleCommunityVoteUpdated"
+            @voting-error="handleCommunityVotingError"
+            @login-required="handleLoginRequired"
           />
 
           <!-- Mary Knoll Results -->
@@ -246,6 +235,10 @@
             @openEditDialog="openEditDialogMknoll"
             @addDefinition="openAddDefinitionDialog"
             @retry="retryMknollSearch"
+            @vote-submitted="handleCommunityVoteSubmitted"
+            @vote-updated="handleCommunityVoteUpdated"
+            @voting-error="handleCommunityVotingError"
+            @login-required="handleLoginRequired"
           />
 
           <!-- CEDICT Results and Cross-reference -->
@@ -328,7 +321,7 @@ import RandomWord from "./RandomWord.vue";
 import MoeSearchResults from "@/components/search/MoeSearchResults.vue";
 import MknollSearchResults from "@/components/search/MknollSearchResults.vue";
 import CedictSearchResults from "@/components/search/CedictSearchResults.vue";
-import CommunitySearchResults from "@/components/search/CommunitySearchResults.vue";
+
 import CommunityDefinitionForm from "@/components/CommunityDefinitionForm.vue";
 import FavoritesLoginPrompt from "@/components/FavoritesLoginPrompt.vue";
 
@@ -352,12 +345,7 @@ const selectedWord = ref(null);
 const selectedWordMknoll = ref(null);
 const selectedWordForDefinition = ref(null);
 
-// Community search state
-const communityResults = ref([]);
-const communityLoading = ref(false);
-const communityLoadingMore = ref(false);
-const communityError = ref(null);
-const communityHasMore = ref(false);
+
 
 // Individual search loading and error states
 const moeLoading = ref(false);
@@ -375,9 +363,8 @@ const totalResultsCount = computed(() => {
   const mknollCount = dictionaryStore.mknollResults?.length || 0;
   const cedictCount = dictionaryStore.cedictResults?.length || 0;
   const crossRefCount = dictionaryStore.crossRefResults?.length || 0;
-  const communityCount = communityResults.value?.length || 0;
   
-  return moeCount + mknollCount + cedictCount + crossRefCount + communityCount;
+  return moeCount + mknollCount + cedictCount + crossRefCount;
 });
 
 const hasAnyResults = computed(() => {
@@ -424,9 +411,9 @@ const handleDefinitionSubmit = async (definitionData) => {
     // and potentially refresh the community results
     closeAddDefinitionDialog();
     
-    // Optionally refresh community results to show the new definition
+    // Refresh search results to show the new definition
     if (searchQuery.value.trim()) {
-      await searchCommunityDefinitions();
+      await searchWords();
     }
   } catch (error) {
     console.error('Error handling definition submission:', error);
@@ -447,7 +434,6 @@ const searchWords = async () => {
     await dictionaryStore.setMknollResults([]);
     await dictionaryStore.setCedictResults([]);
     await dictionaryStore.setCrossRefCedict([]);
-    communityResults.value = [];
     // Clear error states
     clearAllErrors();
     return;
@@ -477,8 +463,7 @@ const searchWords = async () => {
       searchMoeResults(searchPattern),
       searchMknollResults(searchPattern),
       searchCedictResults(searchPattern),
-      searchCrossRefResults(searchPattern),
-      searchCommunityDefinitions()
+      searchCrossRefResults(searchPattern)
     ];
 
     await Promise.allSettled(searchPromises);
@@ -514,7 +499,26 @@ const searchMoeResults = async (searchPattern) => {
     
     if (error) throw error;
     
-    await dictionaryStore.setSearchResults(moeResults || []);
+    // Fetch community definitions for each MOE result
+    const resultsWithCommunity = await Promise.all(
+      (moeResults || []).map(async (word) => {
+        try {
+          const communityDefs = await fetchCommunityDefinitionsForWord(word.id.toString());
+          return {
+            ...word,
+            communityDefinitions: communityDefs
+          };
+        } catch (error) {
+          console.error(`Error fetching community definitions for MOE word ${word.id}:`, error);
+          return {
+            ...word,
+            communityDefinitions: []
+          };
+        }
+      })
+    );
+    
+    await dictionaryStore.setSearchResults(resultsWithCommunity);
   } catch (error) {
     console.error("MOE search error:", error);
     moeError.value = error.message || "Failed to search MOE dictionary";
@@ -538,7 +542,47 @@ const searchMknollResults = async (searchPattern) => {
     
     if (error) throw error;
     
-    await dictionaryStore.setMknollResults(mknollResults || []);
+    // Fetch community definitions for each Mary Knoll result
+    // Use a combination of the word fields as the word_id for community definitions
+    const resultsWithCommunity = await Promise.all(
+      (mknollResults || []).map(async (word) => {
+        // Try to match community definitions using chinese, taiwanese, or english fields
+        const searchTerms = [word.chinese, word.taiwanese, word.english_mknoll]
+          .filter(Boolean)
+          .join(' ');
+        
+        let communityDefs = [];
+        if (searchTerms && searchTerms.trim()) {
+          try {
+            // Limit search term length and clean it
+            const cleanSearchTerm = searchTerms.trim().substring(0, 100);
+            
+            console.log('Searching community definitions with term:', cleanSearchTerm);
+            
+            const result = await communityStore.searchDefinitions({
+              searchTerm: cleanSearchTerm,
+              status: ['approved'],
+              sortBy: 'score',
+              sortOrder: 'desc',
+              limit: 3,
+              offset: 0
+            });
+            communityDefs = result.success ? result.data : [];
+          } catch (error) {
+            console.error('Error fetching community definitions for Mary Knoll word:', error);
+            console.error('Search terms were:', searchTerms);
+            communityDefs = [];
+          }
+        }
+        
+        return {
+          ...word,
+          communityDefinitions: communityDefs
+        };
+      })
+    );
+    
+    await dictionaryStore.setMknollResults(resultsWithCommunity);
   } catch (error) {
     console.error("Mary Knoll search error:", error);
     mknollError.value = error.message || "Failed to search Mary Knoll dictionary";
@@ -597,12 +641,28 @@ const searchCrossRefResults = async (searchPattern) => {
   }
 };
 
+// Helper function to fetch community definitions for a specific word
+const fetchCommunityDefinitionsForWord = async (wordId) => {
+  try {
+    const result = await communityStore.fetchDefinitionsForWord(wordId, {
+      status: ['approved'], // Only show approved definitions in search results
+      sortBy: 'vote_score',
+      sortOrder: 'desc',
+      limit: 5 // Limit to top 5 community definitions per word
+    });
+    
+    return result.success ? result.data : [];
+  } catch (error) {
+    console.error(`Failed to fetch community definitions for word ${wordId}:`, error);
+    return [];
+  }
+};
+
 const clearAllErrors = () => {
   moeError.value = null;
   mknollError.value = null;
   cedictError.value = null;
   crossRefError.value = null;
-  communityError.value = null;
 };
 
 // Retry functions
@@ -630,64 +690,7 @@ const retryCrossRefSearch = async () => {
   await searchCrossRefResults(searchPattern);
 };
 
-// Community search functionality
-const searchCommunityDefinitions = async (loadMore = false) => {
-  if (!searchQuery.value.trim()) {
-    communityResults.value = [];
-    return;
-  }
 
-  try {
-    if (loadMore) {
-      communityLoadingMore.value = true;
-    } else {
-      communityLoading.value = true;
-      communityResults.value = [];
-    }
-    
-    communityError.value = null;
-
-    // Create search filters for community content
-    const searchFilters = {
-      sortBy: 'score',
-      sortOrder: 'desc',
-      status: ['approved', 'pending'], // Show both approved and pending content in search results
-      limit: 10,
-      offset: loadMore ? communityResults.value.length : 0
-    };
-
-    // Search community definitions using the search term
-    const result = await communityStore.searchDefinitions({
-      ...searchFilters,
-      searchTerm: searchQuery.value // Add search term to filters
-    });
-
-    if (result.success) {
-      
-      if (loadMore) {
-        communityResults.value.push(...result.data);
-      } else {
-        communityResults.value = result.data;
-      }
-      
-      communityHasMore.value = result.data.length === searchFilters.limit;
-    } else {
-      throw new Error(result.error?.message || 'Failed to search community definitions');
-    }
-  } catch (error) {
-    console.error('Community search error:', error);
-    communityError.value = error.message;
-  } finally {
-    communityLoading.value = false;
-    communityLoadingMore.value = false;
-  }
-};
-
-// Community event handlers
-const loadMoreCommunityResults = async () => {
-  if (!communityHasMore.value || communityLoadingMore.value) return;
-  await searchCommunityDefinitions(true);
-};
 
 const handleCommunityVoteSubmitted = (voteData) => {
   console.log('Community vote submitted:', voteData);

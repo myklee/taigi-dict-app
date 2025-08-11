@@ -377,7 +377,9 @@ export const useCommunityStore = defineStore('community', () => {
       error.value = null;
 
       // Validate filters
+      console.log('Raw search filters before validation:', filters);
       const validatedFilters = validateSearchFilters(filters);
+      console.log('Validated search filters:', validatedFilters);
 
       // Check cache
       const cacheKey = `search_${JSON.stringify(validatedFilters)}`;
@@ -453,12 +455,19 @@ export const useCommunityStore = defineStore('community', () => {
       return { success: true, data: transformedData };
     } catch (err) {
       console.error('Failed to search definitions:', err);
+      console.error('Error details:', {
+        name: err.name,
+        message: err.message,
+        field: err.field,
+        code: err.code
+      });
       error.value = err.message;
       return {
         success: false,
         error: {
           code: COMMUNITY_ERROR_CODES.VALIDATION_ERROR,
-          message: err.message
+          message: err.message,
+          field: err.field
         }
       };
     } finally {

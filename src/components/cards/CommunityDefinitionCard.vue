@@ -5,7 +5,8 @@
       'low-score': definition.voteScore < -5,
       'hidden': isHidden,
       'pending': definition.status === 'pending',
-      'rejected': definition.status === 'rejected'
+      'rejected': definition.status === 'rejected',
+      'compact': compact
     }"
   >
     <!-- Community badge -->
@@ -168,6 +169,10 @@ const props = defineProps({
   hideThreshold: {
     type: Number,
     default: -5
+  },
+  compact: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -275,6 +280,20 @@ function handleVotingError(error) {
   padding: 1.25rem;
   margin-bottom: 1rem;
   transition: all 0.2s ease;
+}
+
+/* Compact mode for displaying within result cards */
+.community-definition-card.compact {
+  padding: var(--space-3);
+  margin-bottom: var(--space-2);
+  border-radius: var(--radius-md);
+  background: rgba(52, 152, 219, 0.05);
+  border: 1px solid rgba(52, 152, 219, 0.2);
+  border-left-width: 3px;
+}
+
+.community-definition-card.compact:last-child {
+  margin-bottom: 0;
 }
 
 .community-definition-card:hover {
