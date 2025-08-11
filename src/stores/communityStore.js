@@ -432,10 +432,6 @@ export const useCommunityStore = defineStore('community', () => {
       );
 
       const { data, error: searchError } = await query;
-      
-      console.log('Community store search - Query filters:', validatedFilters);
-      console.log('Community store search - Raw results:', data);
-      console.log('Community store search - Error:', searchError);
 
       if (searchError) throw searchError;
 

@@ -205,6 +205,22 @@
           role="region"
           :aria-label="`Search results for ${searchQuery} from multiple dictionaries`"
         >
+         <!-- Community Search Results -->
+         <CommunitySearchResults 
+            :results="communityResults"
+            :search-query="searchQuery"
+            :search-executed="searchExecuted"
+            :loading="communityLoading"
+            :loading-more="communityLoadingMore"
+            :error="communityError"
+            :has-more="communityHasMore"
+            @vote-submitted="handleCommunityVoteSubmitted"
+            @vote-updated="handleCommunityVoteUpdated"
+            @voting-error="handleCommunityVotingError"
+            @login-required="handleLoginRequired"
+            @load-more="loadMoreCommunityResults"
+            @retry="searchCommunityDefinitions"
+          />
           <!-- MOE Search Results -->
           <MoeSearchResults 
             :results="dictionaryStore.searchResults"
@@ -248,22 +264,7 @@
             @retry-crossref="retryCrossRefSearch"
           />
 
-          <!-- Community Search Results -->
-          <CommunitySearchResults 
-            :results="communityResults"
-            :search-query="searchQuery"
-            :search-executed="searchExecuted"
-            :loading="communityLoading"
-            :loading-more="communityLoadingMore"
-            :error="communityError"
-            :has-more="communityHasMore"
-            @vote-submitted="handleCommunityVoteSubmitted"
-            @vote-updated="handleCommunityVoteUpdated"
-            @voting-error="handleCommunityVotingError"
-            @login-required="handleLoginRequired"
-            @load-more="loadMoreCommunityResults"
-            @retry="searchCommunityDefinitions"
-          />
+         
         </div>
       </div>
 
@@ -662,8 +663,6 @@ const searchCommunityDefinitions = async (loadMore = false) => {
     });
 
     if (result.success) {
-      console.log('Community search results:', result.data);
-      console.log('Search filters used:', searchFilters);
       
       if (loadMore) {
         communityResults.value.push(...result.data);
