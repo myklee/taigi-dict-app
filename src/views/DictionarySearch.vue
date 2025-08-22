@@ -18,7 +18,6 @@
               class="search-input"
               autocapitalize="off"
               autocomplete="off"
-              :disabled="loading"
               :aria-describedby="searchExecuted ? 'search-results-summary' : 'search-instructions'"
               aria-label="Search dictionary for English, Chinese, or Taiwanese words"
             />
@@ -26,7 +25,6 @@
               v-if="searchQuery.length > 0"
               class="clear-search-button"
               @click="clearSearch"
-              :disabled="loading"
               aria-label="Clear search input"
               type="button"
             >
@@ -58,7 +56,6 @@
                 id="exact-search"
                 v-model="exactSearch"
                 @change="searchWords"
-                :disabled="loading"
                 class="exact-search-checkbox"
                 aria-describedby="exact-search-description"
               />
@@ -76,7 +73,7 @@
               type="button"
               class="search-button" 
               @click="searchWords"
-              :disabled="loading || !searchQuery.trim()"
+              :disabled="!searchQuery.trim()"
               :aria-label="loading ? 'Searching dictionary...' : `Search dictionary for ${searchQuery || 'entered term'}`"
             >
               <span v-if="!loading">Search</span>
@@ -171,36 +168,49 @@
 
       <!-- Search Results -->
       <div v-else-if="searchExecuted" id="search-results">
-        <!-- Empty State -->
-        <div
-          v-if="!hasAnyResults"
-          role="status"
-          aria-live="polite"
-          aria-label="No search results found"
-        >
-          <EmptyState
-            title="No results found"
-            :description="`No dictionary entries found for '${searchQuery}'. Try a different search term or check your spelling.`"
-            size="large"
-            primary-action="Try Different Search"
-            secondary-action="Browse Random Words"
-            @primary-action="clearSearch"
-            @secondary-action="showRandomWord"
-          >
-            <template #icon>
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="m21 21-4.35-4.35"/>
-                <path d="M11 6v10"/>
-                <path d="M6 11h10"/>
-              </svg>
-            </template>
-          </EmptyState>
+        <!-- Empty State (when no results) -->
+        <div v-if="totalResultsCount === 0" 
+             role="status"
+             aria-live="polite"
+             aria-label="No search results found"
+             class="search-results-section empty-state-container"
+             style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center; min-height: 300px;">
+          
+          <!-- Search Icon -->
+          <div style="margin-bottom: 24px; color: #6b7280;">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+              <path d="M11 6v10"/>
+              <path d="M6 11h10"/>
+            </svg>
+          </div>
+          
+          <!-- Title -->
+          <h2 style="font-size: 24px; font-weight: 600; color: #1f2937; margin-bottom: 12px;">
+            No results found
+          </h2>
+          
+          <!-- Description -->
+          <p style="font-size: 16px; color: #6b7280; margin-bottom: 32px; max-width: 400px; line-height: 1.5;">
+            No dictionary entries found for "{{ searchQuery }}". Try a different search term or check your spelling.
+          </p>
+          
+          <!-- Action Buttons -->
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
+            <button @click="clearSearch" 
+                    style="background-color: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+              Try Different Search
+            </button>
+            <button @click="showRandomWord" 
+                    style="background-color: transparent; color: #6b7280; border: 1px solid #d1d5db; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+              Browse Random Words
+            </button>
+          </div>
         </div>
 
-        <!-- Results Sections -->
-        <div 
-          v-else 
+        <!-- Results Sections (when there are results) -->
+        <div v-else 
           class="search-results-sections"
           role="region"
           :aria-label="`Search results for ${searchQuery} from multiple dictionaries`"
@@ -327,6 +337,7 @@ import FavoritesLoginPrompt from "@/components/FavoritesLoginPrompt.vue";
 
 import { useFavoritesStore } from "@/stores/favoritesStore";
 import { useCommunityStore } from "@/stores/communityStore";
+import { withSearchTimeout, isTimeoutError } from "@/utils/searchTimeout";
 
 const route = useRoute();
 const router = useRouter();
@@ -344,6 +355,9 @@ const showAddDefinitionDialog = ref(false);
 const selectedWord = ref(null);
 const selectedWordMknoll = ref(null);
 const selectedWordForDefinition = ref(null);
+
+// Search cancellation infrastructure
+let currentSearchController = null;
 
 
 
@@ -439,11 +453,19 @@ const searchWords = async () => {
     return;
   }
 
+  // Cancel any ongoing search before starting a new one
+  cancelCurrentSearch();
+
+  // Create new AbortController for this search
+  currentSearchController = new AbortController();
+  const searchSignal = currentSearchController.signal;
+
   loading.value = true;
   searchExecuted.value = true;
 
-  // Clear previous errors
+  // Clear previous errors and reset individual loading states
   clearAllErrors();
+  resetAllLoadingStates();
 
   // Detect search language
   detectedLanguage.value = detectSearchLanguage(searchQuery.value);
@@ -452,35 +474,80 @@ const searchWords = async () => {
   updateRouteWithSearchState(searchQuery.value, exactSearch.value);
 
   try {
+    // Check if search was cancelled before starting
+    if (searchSignal.aborted) {
+      return;
+    }
+
     // Add to search history
     await dictionaryStore.addToHistory(searchQuery.value);
 
     // Determine search pattern based on exactSearch setting
     const searchPattern = exactSearch.value ? searchQuery.value : `%${searchQuery.value}%`;
 
-    // Execute searches in parallel with individual error handling
+    // Execute searches in parallel with individual error handling and timeout
     const searchPromises = [
-      searchMoeResults(searchPattern),
-      searchMknollResults(searchPattern),
-      searchCedictResults(searchPattern),
-      searchCrossRefResults(searchPattern)
+      withSearchTimeout(searchMoeResults(searchPattern, searchSignal)),
+      withSearchTimeout(searchMknollResults(searchPattern, searchSignal)),
+      withSearchTimeout(searchCedictResults(searchPattern, searchSignal)),
+      withSearchTimeout(searchCrossRefResults(searchPattern, searchSignal))
     ];
 
-    await Promise.allSettled(searchPromises);
+    const results = await Promise.allSettled(searchPromises);
+
+    // Check if search was cancelled after all searches complete
+    if (searchSignal.aborted) {
+      return;
+    }
+
+    // Handle any timeout errors at the orchestration level
+    const timeoutErrors = results
+      .filter(result => result.status === 'rejected' && isTimeoutError(result.reason))
+      .map(result => result.reason);
+
+    if (timeoutErrors.length > 0) {
+      console.warn(`${timeoutErrors.length} search(es) timed out:`, timeoutErrors);
+      // Individual search functions already handle their own timeout error display
+      // No need to show additional error messages here
+    }
 
   } catch (error) {
-    console.error("Search error:", error);
+    // Handle unexpected errors at the orchestration level
+    if (error.name === 'AbortError' || searchSignal.aborted) {
+      // Search was cancelled - don't show error, just clean up
+      console.log('Search cancelled');
+      return;
+    }
+
+    if (isTimeoutError(error)) {
+      console.error("Search orchestration timeout:", error);
+      // Individual search functions handle their own timeout messages
+    } else {
+      console.error("Unexpected search error:", error);
+    }
   } finally {
+    // Always reset loading states, even if search was cancelled or timed out
     loading.value = false;
+    resetAllLoadingStates();
+    
+    // Clear the controller reference when search completes
+    if (currentSearchController && currentSearchController.signal === searchSignal) {
+      currentSearchController = null;
+    }
   }
 };
 
 // Individual search functions with error handling
-const searchMoeResults = async (searchPattern) => {
+const searchMoeResults = async (searchPattern, abortSignal) => {
   moeLoading.value = true;
   moeError.value = null;
   
   try {
+    // Check if search was cancelled before starting
+    if (abortSignal?.aborted) {
+      return;
+    }
+
     const moeSearchQuery = supabase
       .from("words")
       .select(`
@@ -497,11 +564,21 @@ const searchMoeResults = async (searchPattern) => {
 
     const { data: moeResults, error } = await moeSearchQuery.limit(50);
     
+    // Check if search was cancelled after database query
+    if (abortSignal?.aborted) {
+      return;
+    }
+    
     if (error) throw error;
     
     // Fetch community definitions for each MOE result
     const resultsWithCommunity = await Promise.all(
       (moeResults || []).map(async (word) => {
+        // Check if search was cancelled during community definitions fetch
+        if (abortSignal?.aborted) {
+          throw new Error('Search cancelled');
+        }
+        
         try {
           const communityDefs = await fetchCommunityDefinitionsForWord(word.id.toString());
           return {
@@ -518,21 +595,43 @@ const searchMoeResults = async (searchPattern) => {
       })
     );
     
+    // Final check before setting results
+    if (abortSignal?.aborted) {
+      return;
+    }
+    
     await dictionaryStore.setSearchResults(resultsWithCommunity);
   } catch (error) {
-    console.error("MOE search error:", error);
-    moeError.value = error.message || "Failed to search MOE dictionary";
+    // Don't show error for cancelled searches
+    if (error.name === 'AbortError' || error.message === 'Search cancelled' || abortSignal?.aborted) {
+      return;
+    }
+    
+    // Handle timeout errors with user-friendly message
+    if (isTimeoutError(error)) {
+      console.error("MOE search timeout:", error);
+      moeError.value = "Search timed out. Please try again.";
+    } else {
+      console.error("MOE search error:", error);
+      moeError.value = error.message || "Failed to search MOE dictionary";
+    }
+    
     await dictionaryStore.setSearchResults([]);
   } finally {
     moeLoading.value = false;
   }
 };
 
-const searchMknollResults = async (searchPattern) => {
+const searchMknollResults = async (searchPattern, abortSignal) => {
   mknollLoading.value = true;
   mknollError.value = null;
   
   try {
+    // Check if search was cancelled before starting
+    if (abortSignal?.aborted) {
+      return;
+    }
+
     const mknollSearchQuery = supabase
       .from("maryknoll")
       .select("*")
@@ -540,12 +639,22 @@ const searchMknollResults = async (searchPattern) => {
 
     const { data: mknollResults, error } = await mknollSearchQuery.limit(20);
     
+    // Check if search was cancelled after database query
+    if (abortSignal?.aborted) {
+      return;
+    }
+    
     if (error) throw error;
     
     // Fetch community definitions for each Mary Knoll result
     // Use a combination of the word fields as the word_id for community definitions
     const resultsWithCommunity = await Promise.all(
       (mknollResults || []).map(async (word) => {
+        // Check if search was cancelled during community definitions fetch
+        if (abortSignal?.aborted) {
+          throw new Error('Search cancelled');
+        }
+        
         // Try to match community definitions using chinese, taiwanese, or english fields
         const searchTerms = [word.chinese, word.taiwanese, word.english_mknoll]
           .filter(Boolean)
@@ -582,21 +691,43 @@ const searchMknollResults = async (searchPattern) => {
       })
     );
     
+    // Final check before setting results
+    if (abortSignal?.aborted) {
+      return;
+    }
+    
     await dictionaryStore.setMknollResults(resultsWithCommunity);
   } catch (error) {
-    console.error("Mary Knoll search error:", error);
-    mknollError.value = error.message || "Failed to search Mary Knoll dictionary";
+    // Don't show error for cancelled searches
+    if (error.name === 'AbortError' || error.message === 'Search cancelled' || abortSignal?.aborted) {
+      return;
+    }
+    
+    // Handle timeout errors with user-friendly message
+    if (isTimeoutError(error)) {
+      console.error("Mary Knoll search timeout:", error);
+      mknollError.value = "Search timed out. Please try again.";
+    } else {
+      console.error("Mary Knoll search error:", error);
+      mknollError.value = error.message || "Failed to search Mary Knoll dictionary";
+    }
+    
     await dictionaryStore.setMknollResults([]);
   } finally {
     mknollLoading.value = false;
   }
 };
 
-const searchCedictResults = async (searchPattern) => {
+const searchCedictResults = async (searchPattern, abortSignal) => {
   cedictLoading.value = true;
   cedictError.value = null;
   
   try {
+    // Check if search was cancelled before starting
+    if (abortSignal?.aborted) {
+      return;
+    }
+
     const cedictSearchQuery = supabase
       .from("cedict")
       .select("*")
@@ -604,23 +735,45 @@ const searchCedictResults = async (searchPattern) => {
 
     const { data: cedictResults, error } = await cedictSearchQuery.limit(20);
     
+    // Check if search was cancelled after database query
+    if (abortSignal?.aborted) {
+      return;
+    }
+    
     if (error) throw error;
     
     await dictionaryStore.setCedictResults(cedictResults || []);
   } catch (error) {
-    console.error("CEDICT search error:", error);
-    cedictError.value = error.message || "Failed to search CEDICT dictionary";
+    // Don't show error for cancelled searches
+    if (error.name === 'AbortError' || error.message === 'Search cancelled' || abortSignal?.aborted) {
+      return;
+    }
+    
+    // Handle timeout errors with user-friendly message
+    if (isTimeoutError(error)) {
+      console.error("CEDICT search timeout:", error);
+      cedictError.value = "Search timed out. Please try again.";
+    } else {
+      console.error("CEDICT search error:", error);
+      cedictError.value = error.message || "Failed to search CEDICT dictionary";
+    }
+    
     await dictionaryStore.setCedictResults([]);
   } finally {
     cedictLoading.value = false;
   }
 };
 
-const searchCrossRefResults = async (searchPattern) => {
+const searchCrossRefResults = async (searchPattern, abortSignal) => {
   crossRefLoading.value = true;
   crossRefError.value = null;
   
   try {
+    // Check if search was cancelled before starting
+    if (abortSignal?.aborted) {
+      return;
+    }
+
     const crossRefQuery = supabase
       .from("cedict")
       .select("*")
@@ -629,12 +782,29 @@ const searchCrossRefResults = async (searchPattern) => {
 
     const { data: crossRefData, error } = await crossRefQuery;
     
+    // Check if search was cancelled after database query
+    if (abortSignal?.aborted) {
+      return;
+    }
+    
     if (error) throw error;
     
     await dictionaryStore.setCrossRefCedict(crossRefData || []);
   } catch (error) {
-    console.error("Cross-reference search error:", error);
-    crossRefError.value = error.message || "Failed to load cross-references";
+    // Don't show error for cancelled searches
+    if (error.name === 'AbortError' || error.message === 'Search cancelled' || abortSignal?.aborted) {
+      return;
+    }
+    
+    // Handle timeout errors with user-friendly message
+    if (isTimeoutError(error)) {
+      console.error("Cross-reference search timeout:", error);
+      crossRefError.value = "Search timed out. Please try again.";
+    } else {
+      console.error("Cross-reference search error:", error);
+      crossRefError.value = error.message || "Failed to load cross-references";
+    }
+    
     await dictionaryStore.setCrossRefCedict([]);
   } finally {
     crossRefLoading.value = false;
@@ -665,29 +835,56 @@ const clearAllErrors = () => {
   crossRefError.value = null;
 };
 
+const resetAllLoadingStates = () => {
+  moeLoading.value = false;
+  mknollLoading.value = false;
+  cedictLoading.value = false;
+  crossRefLoading.value = false;
+};
+
+// Search cancellation function
+const cancelCurrentSearch = () => {
+  if (currentSearchController) {
+    currentSearchController.abort();
+    currentSearchController = null;
+    
+    // Reset loading states when cancelling search
+    loading.value = false;
+    resetAllLoadingStates();
+  }
+};
+
 // Retry functions
 const retryMoeSearch = async () => {
   if (!searchQuery.value.trim()) return;
   const searchPattern = exactSearch.value ? searchQuery.value : `%${searchQuery.value}%`;
-  await searchMoeResults(searchPattern);
+  // Use current search controller signal if available, otherwise create a temporary one
+  const signal = currentSearchController?.signal || new AbortController().signal;
+  await withSearchTimeout(searchMoeResults(searchPattern, signal));
 };
 
 const retryMknollSearch = async () => {
   if (!searchQuery.value.trim()) return;
   const searchPattern = exactSearch.value ? searchQuery.value : `%${searchQuery.value}%`;
-  await searchMknollResults(searchPattern);
+  // Use current search controller signal if available, otherwise create a temporary one
+  const signal = currentSearchController?.signal || new AbortController().signal;
+  await withSearchTimeout(searchMknollResults(searchPattern, signal));
 };
 
 const retryCedictSearch = async () => {
   if (!searchQuery.value.trim()) return;
   const searchPattern = exactSearch.value ? searchQuery.value : `%${searchQuery.value}%`;
-  await searchCedictResults(searchPattern);
+  // Use current search controller signal if available, otherwise create a temporary one
+  const signal = currentSearchController?.signal || new AbortController().signal;
+  await withSearchTimeout(searchCedictResults(searchPattern, signal));
 };
 
 const retryCrossRefSearch = async () => {
   if (!searchQuery.value.trim()) return;
   const searchPattern = exactSearch.value ? searchQuery.value : `%${searchQuery.value}%`;
-  await searchCrossRefResults(searchPattern);
+  // Use current search controller signal if available, otherwise create a temporary one
+  const signal = currentSearchController?.signal || new AbortController().signal;
+  await withSearchTimeout(searchCrossRefResults(searchPattern, signal));
 };
 
 
@@ -743,11 +940,13 @@ onMounted(async () => {
   await favoritesStore.loadFromSupabase();
 });
 
-// Cleanup timeout on unmount
+// Cleanup timeout and search controller on unmount
 onUnmounted(() => {
   if (updateRouteTimeout) {
     clearTimeout(updateRouteTimeout);
   }
+  // Cancel any ongoing search when component unmounts
+  cancelCurrentSearch();
 });
 
 // Initialize search query and options from route
